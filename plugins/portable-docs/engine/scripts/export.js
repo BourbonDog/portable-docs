@@ -21,7 +21,7 @@ function candidateBrowsers() {
       path.join(pf, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
       path.join(pf, 'Google', 'Chrome', 'Application', 'chrome.exe'),
       path.join(pfx86, 'Google', 'Chrome', 'Application', 'chrome.exe'),
-      local && path.join(local, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+      local ? path.join(local, 'Google', 'Chrome', 'Application', 'chrome.exe') : null,
     ].filter(Boolean);
   }
   if (p === 'darwin') {
@@ -39,7 +39,7 @@ function detectBrowser() {
     if (path.isAbsolute(c)) {
       if (fs.existsSync(c)) return c;
     } else {
-      const r = spawnSync(c, ['--version'], { stdio: 'ignore' });
+      const r = spawnSync(c, ['--version'], { stdio: 'ignore', timeout: 3000 });
       if (!r.error && r.status === 0) return c;
     }
   }
@@ -57,15 +57,18 @@ function buildPdfArgs(htmlAbs, outAbs) {
   ];
 }
 
-// Completed in Task 3 — stub kept minimal so runExport can reference it.
 function detectFormat(htmlAbs) {
   try {
     const m = fs.readFileSync(htmlAbs, 'utf-8').match(/data-pd-format="(\w+)"/);
     return m ? m[1] : 'proposal';
   } catch (_) { return 'proposal'; }
 }
-function buildPngArgs(htmlAbs, outAbs /*, opts */) {
-  return ['--headless=new', '--disable-gpu', '--hide-scrollbars', `--screenshot=${outAbs}`, toFileUrl(htmlAbs)];
+
+function buildPngArgs(htmlAbs, outAbs, opts = {}) {
+  const args = ['--headless=new', '--disable-gpu', '--hide-scrollbars'];
+  if (opts.windowSize) args.push(`--window-size=${opts.windowSize}`);
+  args.push(`--screenshot=${outAbs}`, toFileUrl(htmlAbs));
+  return args;
 }
 
 function runExport({ htmlPath, browser, pdf = false, png = false, outDir } = {}) {
@@ -82,9 +85,19 @@ function runExport({ htmlPath, browser, pdf = false, png = false, outDir } = {})
     const out = `${base}.pdf`;
     const r = spawnSync(browser, buildPdfArgs(htmlAbs, out), { stdio: ['ignore', 'ignore', 'pipe'] });
     if (r.status === 0 && fs.existsSync(out)) result.pdf = out;
-    else { console.warn(`export: PDF failed${r.stderr ? ': ' + r.stderr.toString().slice(-300) : ''}`); result.skipped = 'export-failed'; }
+    else console.warn(`export: PDF failed${r.stderr && r.stderr.length ? ': ' + r.stderr.toString().slice(-300) : ''}`);
   }
-  // PNG branch added in Task 3.
+
+  if (png) {
+    const out = `${base}.png`;
+    const fmt = detectFormat(htmlAbs);
+    const windowSize = fmt === 'slides' ? '1600,900' : undefined; // slides: hero of slide 0
+    const r = spawnSync(browser, buildPngArgs(htmlAbs, out, { windowSize }), { stdio: ['ignore', 'ignore', 'pipe'] });
+    if (r.status === 0 && fs.existsSync(out)) result.png = out;
+    else console.warn(`export: PNG failed${r.stderr && r.stderr.length ? ': ' + r.stderr.toString().slice(-300) : ''}`);
+  }
+
+  if ((pdf || png) && !result.pdf && !result.png) result.skipped = 'export-failed';
   return result;
 }
 
