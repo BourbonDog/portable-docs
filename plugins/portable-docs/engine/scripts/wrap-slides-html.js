@@ -40,7 +40,7 @@ function wrapSlidesHtml({ jsx, title, out, theme }) {
   // generateHTML produces the classic-runtime HTML shell with theme body-bg.
   // The noScroll option adds `html, body { height: 100%; overflow: hidden; }`
   // to the <style> block so the deck never scrolls before React mounts.
-  const html = generateHTML(stripped, resolvedTitle, resolvedTheme, { noScroll: true });
+  const html = generateHTML(stripped, resolvedTitle, resolvedTheme, { noScroll: true, format: 'slides' });
 
   const outDir = path.dirname(out);
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });

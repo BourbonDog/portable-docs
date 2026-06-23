@@ -16,6 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 const { compileToJs } = require('./compile-jsx.js');
+const { PRINT_CSS, SLIDES_PRINT_CSS } = require('./print-css.js');
 
 // React/ReactDOM production UMD, read once and inlined into every output so the
 // document is fully self-contained and renders offline (no CDN, no in-browser Babel).
@@ -65,8 +66,10 @@ const THEME_BODY_BG = {
  */
 function generateHTML(bundle, title, theme, opts) {
   const resolvedTheme = theme || 'editorial';
-  const themeAttr = ` data-pd-theme="${resolvedTheme}"`;
+  const format = (opts && opts.format) || 'proposal';
+  const themeAttr = ` data-pd-theme="${resolvedTheme}" data-pd-format="${format}"`;
   const bodyBg = THEME_BODY_BG[resolvedTheme] || THEME_BODY_BG.editorial;
+  const printCss = PRINT_CSS + (format === 'slides' ? SLIDES_PRINT_CSS : '');
   const noScrollRule = (opts && opts.noScroll)
     ? '    html, body { height: 100%; overflow: hidden; }\n'
     : '';
@@ -96,6 +99,7 @@ root.render(<App />);`;
   <style>
 ${noScrollRule}    * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: system-ui, -apple-system, sans-serif; background: ${bodyBg}; }
+${printCss}
   </style>
 </head>
 <body>

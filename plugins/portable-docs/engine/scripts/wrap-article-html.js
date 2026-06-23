@@ -37,7 +37,7 @@ function wrapArticleHtml({ jsx, title, out, theme }) {
   const outDir = path.dirname(out);
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
-  const html = generateHTML(stripped, resolvedTitle, theme);
+  const html = generateHTML(stripped, resolvedTitle, theme, { format: 'article' });
   fs.writeFileSync(out, html, 'utf-8');
 
   const sizeKB = (fs.statSync(out).size / 1024).toFixed(1);

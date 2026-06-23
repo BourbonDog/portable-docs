@@ -242,6 +242,7 @@ const ProfileCard = ({ card, index, isExpanded, onToggle, hasExpandedContent }) 
       {/* Expanded content with smooth animation */}
       {canExpand && (
         <div
+          className="pd-collapsible"
           style={{
             maxHeight: isExpanded ? '600px' : '0px',
             opacity: isExpanded ? 1 : 0,
