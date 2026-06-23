@@ -301,7 +301,7 @@ async function exportFile(htmlPath, opts = {}) {
   return runExport({ ...opts, htmlPath, browser: detectBrowser() });
 }
 
-module.exports = { detectBrowser, toFileUrl, buildPdfArgs, buildPngArgs, detectFormat, runExport, exportFile, killAndClean, withTimeout, cdpNavError };
+module.exports = { detectBrowser, toFileUrl, buildPdfArgs, buildPngArgs, detectFormat, runExport, exportFile, killAndClean, withTimeout, cdpNavError, exceedsCaptureLimit };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);

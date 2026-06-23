@@ -71,11 +71,13 @@ test('killAndClean kills the browser, waits for exit, then removes its profile d
   child.kill = () => { killed = true; setTimeout(() => { child.exitCode = 0; child.emit('exit', 0, null); }, 20); };
   let wsClosed = false;
   const ws = { close() { wsClosed = true; } };
-  const ok = await exp.killAndClean(child, ws, dir);
-  assert.ok(wsClosed, 'ws closed');
-  assert.ok(killed, 'child killed');
-  assert.strictEqual(ok, true);
-  assert.ok(!fs.existsSync(dir), 'profile dir removed after exit');
+  try {
+    const ok = await exp.killAndClean(child, ws, dir);
+    assert.ok(wsClosed, 'ws closed');
+    assert.ok(killed, 'child killed');
+    assert.strictEqual(ok, true);
+    assert.ok(!fs.existsSync(dir), 'profile dir removed after exit');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); } // don't leak if an assertion fails
 });
 
 test('withTimeout passes a fast result through and rejects a slow one', async () => {
