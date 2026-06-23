@@ -1,19 +1,41 @@
-const test=require('node:test');const assert=require('node:assert');
-const fs=require('fs');const os=require('os');const path=require('path');
-const {validate}=require('../scripts/validate.js');
-const GOOD=`<!doctype html><html><head>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script>Babel.registerPreset('react-classic',{presets:[[Babel.availablePresets.react,{runtime:'classic'}]]});</script>
-</head><body><div id="root"></div>
-<script type="text/babel" data-presets="react-classic">const App=()=>null;const root=ReactDOM.createRoot(document.getElementById('root'));root.render(React.createElement(App));</script>
-</body></html>`;
-function tmp(name,content){const p=path.join(os.tmpdir(),name);fs.writeFileSync(p,content);return p;}
-test('valid HTML passes',()=>{const r=validate({htmlPath:tmp('pd-good.html',GOOD)});assert.equal(r.ok,true,JSON.stringify(r.errors));});
-test('HTML missing classic-runtime preset fails',()=>{
-  const bad=GOOD.replace(/<script>Babel\.registerPreset[\s\S]*?<\/script>/,'').replace('data-presets="react-classic"','');
-  const r=validate({htmlPath:tmp('pd-bad.html',bad)});
-  assert.equal(r.ok,false);
-  assert.ok(r.errors.some(e=>/classic/i.test(e)),'expected a classic-runtime error');
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { validate } = require('../scripts/validate.js');
+
+const ENGINE = path.join(__dirname, '..');
+const FIXTURE = path.join(__dirname, 'fixtures', 'sample.md');
+
+async function build() {
+  const out = path.join(os.tmpdir(), `pd-validate-${process.hrtime.bigint()}.html`);
+  const { main } = require(path.join(ENGINE, 'scripts/build-doc.js'));
+  const argv = process.argv;
+  try {
+    process.argv = ['node', 'build-doc.js', '--input', FIXTURE, '--out', out, '--no-open'];
+    await main();
+  } finally { process.argv = argv; }
+  return out;
+}
+
+test('validate: a built offline doc passes all checks', async () => {
+  const out = await build();
+  const r = validate({ htmlPath: out });
+  assert.ok(r.ok, 'built doc must pass: ' + r.errors.join('; '));
+});
+
+test('validate: an injected CDN reference fails', async () => {
+  const good = fs.readFileSync(await build(), 'utf8');
+  const tmp = path.join(os.tmpdir(), `pd-bad-cdn-${process.hrtime.bigint()}.html`);
+  fs.writeFileSync(tmp, good + '\n<script src="https://unpkg.com/react@18"></script>');
+  assert.ok(!validate({ htmlPath: tmp }).ok, 'unpkg.com must fail validation');
+});
+
+test('validate: removing inlined React fails', async () => {
+  const good = fs.readFileSync(await build(), 'utf8');
+  const tmp = path.join(os.tmpdir(), `pd-no-react-${process.hrtime.bigint()}.html`);
+  fs.writeFileSync(tmp, good.split('react.production.min.js').join('REMOVED'));
+  assert.ok(!validate({ htmlPath: tmp }).ok, 'missing React banner must fail');
 });

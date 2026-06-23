@@ -127,7 +127,9 @@ test('slides: --slides --theme dark has dark body bg and no hardcoded light hex'
 test('slides: default build (no --slides) is still the proposal format', async () => {
   const html = await runBuild({ input: PROPOSAL_FIXTURE });
   assert.ok(html.includes('The Adaptive Engineer'), 'proposal title must be present in default build');
-  assert.ok(!html.includes('ArrowRight'), 'slide keyboard nav must NOT appear in a proposal build');
+  // "ArrowRight" now appears in every doc inside the inlined ReactDOM UMD key-map.
+  // Use the slide-specific switch branch as the discriminator instead.
+  assert.ok(!html.includes("case 'ArrowRight':"), 'slide keyboard nav must NOT appear in a proposal build');
 });
 
 // ── Test 8: --style article build unchanged ───────────────────────────────────
@@ -135,8 +137,9 @@ test('slides: default build (no --slides) is still the proposal format', async (
 test('slides: --style article build is the article format, not slides', async () => {
   const html = await runBuild({ style: 'article', input: ARTICLE_FIXTURE });
   assert.ok(html.includes('Designing Resilient Systems'), 'article title must be present');
-  // Article doesn't have full-viewport deck chrome
-  assert.ok(!html.includes('ArrowRight'), 'slide keyboard nav must NOT appear in an article build');
+  // "ArrowRight" now appears in every doc inside the inlined ReactDOM UMD key-map.
+  // Use the slide-specific switch branch as the discriminator instead.
+  assert.ok(!html.includes("case 'ArrowRight':"), 'slide keyboard nav must NOT appear in an article build');
 });
 
 // ── Test 9: --slides wins over --style article ────────────────────────────────

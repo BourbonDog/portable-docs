@@ -54,11 +54,11 @@ async function getHtml() {
 test('icons: built HTML contains search icon definition', async () => {
   const html = await getHtml();
   assert.ok(html.includes('search:'), 'Icons map must include a `search:` key');
-  // Distinctive magnifying-glass: a circle cx="11" cy="11" r="8"
-  assert.ok(
-    html.includes('cx="11" cy="11" r="8"'),
-    'search icon must have magnifying-glass circle (cx=11 cy=11 r=8)',
-  );
+  // Distinctive magnifying-glass: a circle with cx=11 cy=11 r=8.
+  // JSX is precompiled to React.createElement props, so check JS prop form:
+  assert.ok(html.includes('cx: "11"'), 'search icon must have magnifying-glass circle cx: "11"');
+  assert.ok(html.includes('cy: "11"'), 'search icon must have magnifying-glass circle cy: "11"');
+  assert.ok(html.includes('r: "8"'), 'search icon must have magnifying-glass circle r: "8"');
 });
 
 // ── 2. compass icon is present ───────────────────────────────────────────────
@@ -76,10 +76,11 @@ test('icons: built HTML contains compass icon definition', async () => {
 test('icons: built HTML contains placeholder icon definition', async () => {
   const html = await getHtml();
   assert.ok(html.includes('placeholder:'), 'Icons map must include a `placeholder:` key');
-  // Distinctive dashed rect: exact value strokeDasharray="3 2"
+  // Distinctive dashed rect: strokeDasharray="3 2".
+  // JSX is precompiled to React.createElement props, so check JS prop form:
   assert.ok(
-    html.includes('strokeDasharray="3 2"'),
-    'placeholder icon must have strokeDasharray="3 2" (dashed border, exact value)',
+    html.includes('strokeDasharray: "3 2"'),
+    'placeholder icon must have strokeDasharray: "3 2" (dashed border, Babel-compiled prop form)',
   );
 });
 

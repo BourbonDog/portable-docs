@@ -2,12 +2,11 @@
 /**
  * wrap-html.js — wraps a bundled JSX file into a self-contained HTML file.
  *
- * IMPORTANT: Preserves the classic JSX runtime fix from the original
- * northwestern/scripts/update-preview.js. React/ReactDOM are loaded as UMD
- * globals; newer @babel/standalone defaults preset-react to the "automatic"
- * runtime which injects `import { jsx } from "react/jsx-runtime"` and renders
- * blank. We register a classic-runtime preset and reference it via
- * data-presets="react-classic" to fix this.
+ * React + ReactDOM production UMD files are inlined directly into the output so
+ * the document is fully self-contained and renders offline (no CDN). JSX is
+ * compiled to plain JS at BUILD TIME via compile-jsx.js (vendored
+ * @babel/standalone), so no in-browser Babel and no type="text/babel" are
+ * needed.
  *
  * API:  wrapHtml({ jsx, title, out, theme })
  * CLI:  reads PD_JSX_OUT (input bundle), PD_HTML_OUT (output html),
@@ -16,6 +15,13 @@
 
 const fs = require('fs');
 const path = require('path');
+const { compileToJs } = require('./compile-jsx.js');
+
+// React/ReactDOM production UMD, read once and inlined into every output so the
+// document is fully self-contained and renders offline (no CDN, no in-browser Babel).
+const VENDOR = path.join(__dirname, '..', 'vendor');
+const REACT_UMD = fs.readFileSync(path.join(VENDOR, 'react.production.min.js'), 'utf-8');
+const REACTDOM_UMD = fs.readFileSync(path.join(VENDOR, 'react-dom.production.min.js'), 'utf-8');
 
 /**
  * Strip ESM import/export lines that are not valid in a UMD/browser context.
@@ -65,6 +71,17 @@ function generateHTML(bundle, title, theme, opts) {
     ? '    html, body { height: 100%; overflow: hidden; }\n'
     : '';
 
+  // Build the script body as JSX, then compile it to plain JS at BUILD TIME.
+  // React/ReactDOM are inlined above, so the output needs no CDN and no
+  // in-browser Babel — it renders offline and instantly.
+  const scriptBodyJsx = `const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+${bundle}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);`;
+  const compiled = compileToJs(scriptBodyJsx);
+
   return `<!DOCTYPE html>
 <html lang="en"${themeAttr}>
 <head>
@@ -72,19 +89,9 @@ function generateHTML(bundle, title, theme, opts) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
 
-  <!-- React production builds -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- Force the classic JSX runtime. React/ReactDOM are loaded as UMD globals (not ES modules),
-       but newer @babel/standalone defaults preset-react to the "automatic" runtime, which injects
-       \`import { jsx } from "react/jsx-runtime"\` into this inline script and renders the page blank.
-       Registering a classic-runtime preset and referencing it via data-presets fixes it. -->
-  <script>
-    Babel.registerPreset('react-classic', {
-      presets: [[Babel.availablePresets.react, { runtime: 'classic' }]],
-    });
-  </script>
+  <!-- React + ReactDOM (production UMD) inlined for offline, self-contained output. -->
+  <script>${REACT_UMD}</script>
+  <script>${REACTDOM_UMD}</script>
 
   <style>
 ${noScrollRule}    * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -93,14 +100,8 @@ ${noScrollRule}    * { margin: 0; padding: 0; box-sizing: border-box; }
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel" data-presets="react-classic">
-    const { useState, useEffect, useRef, useCallback, useMemo } = React;
-
-${bundle}
-
-    // Render the app
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+  <script>
+${compiled}
   </script>
 </body>
 </html>`;
