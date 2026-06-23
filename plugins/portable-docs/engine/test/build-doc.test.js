@@ -32,6 +32,17 @@ test('parseArgs recognizes --pdf and --png', () => {
   assert.strictEqual(b.png, false);
 });
 
+test('parseArgs recognizes --brand, --config, --no-config', () => {
+  const a = parseArgs(['--input', 'x.md', '--brand', 'work', '--config', 'c.json', '--no-config']);
+  assert.strictEqual(a.brand, 'work');
+  assert.strictEqual(a.config, 'c.json');
+  assert.strictEqual(a.noConfig, true);
+  const b = parseArgs(['--input', 'x.md']);
+  assert.strictEqual(b.brand, null);
+  assert.strictEqual(b.config, null);
+  assert.strictEqual(b.noConfig, false);
+});
+
 test('build-doc: PD_THEME is restored in finally even when build() throws', async () => {
   const ENGINE = path.join(__dirname, '..');
   const FIXTURE = path.join(__dirname, 'fixtures', 'sample.md');

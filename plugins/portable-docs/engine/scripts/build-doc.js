@@ -54,6 +54,9 @@ function parseArgs(argv) {
     jsx:    false,
     pdf:    false,
     png:    false,
+    brand:    null,
+    config:   null,
+    noConfig: false,
     open:   true,        // default open=true; --no-open sets false
   };
   for (let i = 0; i < argv.length; i++) {
@@ -68,6 +71,9 @@ function parseArgs(argv) {
       case '--jsx':    opts.jsx    = true;       break;
       case '--pdf':    opts.pdf    = true;       break;
       case '--png':    opts.png    = true;       break;
+      case '--brand':     opts.brand    = argv[++i]; break;
+      case '--config':    opts.config   = argv[++i]; break;
+      case '--no-config': opts.noConfig = true;      break;
       case '--no-open':opts.open   = false;      break;
     }
   }
@@ -316,6 +322,72 @@ async function runArticle(args, md) {
   }
 }
 
+// ── Proposal pipeline (extracted from main; byte-identical behavior) ─────────
+async function runProposal(args, md) {
+  // 2. Parse content
+  const { extractContent, generateOutput } = require('../src/utils/parser.js');
+  const content = extractContent(md);
+  inlineLocalImages(content, path.dirname(path.resolve(args.input)));
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-build-'));
+  const prevContentOut = process.env.PD_CONTENT_OUT;
+  const prevJsxOut     = process.env.PD_JSX_OUT;
+  const prevTheme      = process.env.PD_THEME;
+  const prevAccent     = process.env.PD_ACCENT;
+
+  try {
+    const contentJsPath = path.join(tmpDir, 'content.js');
+    fs.writeFileSync(contentJsPath, generateOutput(content), 'utf-8');
+    process.env.PD_CONTENT_OUT = contentJsPath;
+
+    const slug = require('./slug.js').slugify(
+      args.title || content.header?.title || path.basename(args.input).replace(/\.md$/i, '')
+    );
+    const jsxTmpPath = path.join(tmpDir, 'bundle.jsx');
+    process.env.PD_JSX_OUT = jsxTmpPath;
+
+    if (args.theme) process.env.PD_THEME = args.theme;
+    else if (!process.env.PD_THEME) process.env.PD_THEME = 'editorial';
+
+    const { build } = require('../src/utils/build.js');
+    build();
+
+    const outPath = resolveOutPath({
+      out:   args.out || process.env.PORTABLE_DOCS_OUT,
+      title: args.title || content.header?.title,
+      input: args.input,
+    });
+    const outDir = path.dirname(outPath);
+    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+    const jsx = fs.readFileSync(jsxTmpPath, 'utf-8');
+    const { wrapHtml } = require('./wrap-html.js');
+    wrapHtml({ jsx, title: args.title || content.header?.title || slug, out: outPath, theme: args.theme });
+
+    const { validate } = require('./validate.js');
+    const result = validate({ htmlPath: outPath });
+    if (!result.ok) throw new Error(`build-doc: HTML validation failed:\n  ${result.errors.join('\n  ')}`);
+
+    if (args.jsx) {
+      const jsxOut = path.join(outDir, slug + '.jsx');
+      fs.copyFileSync(jsxTmpPath, jsxOut);
+      console.log(`build-doc: JSX bundle copied to ${jsxOut}`);
+    }
+
+    await maybeExport(args, outPath);
+
+    if (args.open) { const { openFile } = require('./open.js'); openFile(outPath); }
+
+    console.log(path.resolve(outPath));
+  } finally {
+    if (prevTheme !== undefined) process.env.PD_THEME  = prevTheme; else delete process.env.PD_THEME;
+    if (prevAccent !== undefined) process.env.PD_ACCENT = prevAccent; else delete process.env.PD_ACCENT;
+    if (prevContentOut !== undefined) process.env.PD_CONTENT_OUT = prevContentOut; else delete process.env.PD_CONTENT_OUT;
+    if (prevJsxOut !== undefined) process.env.PD_JSX_OUT = prevJsxOut; else delete process.env.PD_JSX_OUT;
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
+  }
+}
+
 // ── Orchestration ────────────────────────────────────────────────────────────
 
 async function main() {
@@ -344,124 +416,9 @@ async function main() {
     return runSlides(args, md);
   }
 
-  if (args.style === 'article') {
-    return runArticle(args, md);
-  }
-
-  // 2. Parse content
-  const { extractContent, generateOutput } = require('../src/utils/parser.js');
-  const content = extractContent(md);
-  inlineLocalImages(content, path.dirname(mdPath));
-
-  // 3. Create a unique temp directory for this invocation so parallel builds
-  //    (e.g. multiple test files running concurrently with `node --test`) never
-  //    clobber each other's intermediate files.  Both the content.js snapshot
-  //    and the JSX bundle go here.  The directory is removed in the finally
-  //    block after all work that needs the files is complete.
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-build-'));
-
-  // Save previous env values so repeated main() calls in tests don't bleed state.
-  const prevContentOut = process.env.PD_CONTENT_OUT;
-  const prevJsxOut     = process.env.PD_JSX_OUT;
-  const prevTheme      = process.env.PD_THEME;
-  const prevAccent     = process.env.PD_ACCENT;
-
-  try {
-    // 4. Write content snapshot into the per-invocation temp dir and point
-    //    PD_CONTENT_OUT there so build.js picks it up (not the shared
-    //    engine/src/content.js, which caused the cross-process race).
-    const contentJsPath = path.join(tmpDir, 'content.js');
-    fs.writeFileSync(contentJsPath, generateOutput(content), 'utf-8');
-    process.env.PD_CONTENT_OUT = contentJsPath;
-
-    // 5. Prepare the JSX bundle path inside the same temp dir; set PD_JSX_OUT.
-    const slug = require('./slug.js').slugify(
-      args.title || content.header?.title || path.basename(args.input).replace(/\.md$/i, '')
-    );
-    const jsxTmpPath = path.join(tmpDir, 'bundle.jsx');
-    process.env.PD_JSX_OUT = jsxTmpPath;
-
-    // Forward --theme to PD_THEME so build.js injects the right literal.
-    // PD_ACCENT is read directly from env (set by caller or inherited).
-    if (args.theme) {
-      process.env.PD_THEME = args.theme;
-    } else if (!process.env.PD_THEME) {
-      // Ensure a default so injection is deterministic
-      process.env.PD_THEME = 'editorial';
-    }
-
-    // Call build() — it reads PD_CONTENT_OUT and writes PD_JSX_OUT.
-    const { build } = require('../src/utils/build.js');
-    build();
-
-    // 6. Resolve output HTML path.
-    const outPath = resolveOutPath({
-      out:   args.out || process.env.PORTABLE_DOCS_OUT,
-      title: args.title || content.header?.title,
-      input: args.input,
-    });
-
-    // Ensure parent directory exists.
-    const outDir = path.dirname(outPath);
-    if (!fs.existsSync(outDir)) {
-      fs.mkdirSync(outDir, { recursive: true });
-    }
-
-    // Read the JSX bundle that build() just wrote.
-    const jsx = fs.readFileSync(jsxTmpPath, 'utf-8');
-
-    // Wrap to HTML.
-    const { wrapHtml } = require('./wrap-html.js');
-    wrapHtml({
-      jsx,
-      title: args.title || content.header?.title || slug,
-      out:   outPath,
-      theme: args.theme,
-    });
-
-    // 7. Validate (reads the final HTML outPath, not a temp file).
-    const { validate } = require('./validate.js');
-    const result = validate({ htmlPath: outPath });
-    if (!result.ok) {
-      throw new Error(`build-doc: HTML validation failed:\n  ${result.errors.join('\n  ')}`);
-    }
-
-    // 8. --jsx: copy the bundle next to the HTML output BEFORE the temp dir is
-    //    removed (copy must precede the finally cleanup below).
-    if (args.jsx) {
-      const jsxOut = path.join(outDir, slug + '.jsx');
-      fs.copyFileSync(jsxTmpPath, jsxOut);
-      console.log(`build-doc: JSX bundle copied to ${jsxOut}`);
-    }
-
-    // 9. Optionally export to PDF/PNG.
-    await maybeExport(args, outPath);
-
-    // 10. Optionally open.
-    if (args.open) {
-      const { openFile } = require('./open.js');
-      openFile(outPath);
-    }
-
-    // 11. Report.
-    console.log(path.resolve(outPath));
-  } finally {
-    // Restore ALL four PD_* env vars to their pre-call values so repeated
-    // main() calls in the same process (e.g. the themes test suite) never
-    // inherit stale values — even when build() or anything after it throws.
-    if (prevTheme !== undefined) process.env.PD_THEME  = prevTheme;
-    else delete process.env.PD_THEME;
-    if (prevAccent !== undefined) process.env.PD_ACCENT = prevAccent;
-    else delete process.env.PD_ACCENT;
-    if (prevContentOut !== undefined) process.env.PD_CONTENT_OUT = prevContentOut;
-    else delete process.env.PD_CONTENT_OUT;
-    if (prevJsxOut !== undefined) process.env.PD_JSX_OUT = prevJsxOut;
-    else delete process.env.PD_JSX_OUT;
-
-    // Best-effort cleanup of the per-invocation temp directory.
-    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
-  }
+  if (args.style === 'article') return runArticle(args, md);
+  return runProposal(args, md);
 }
 
-module.exports = { parseArgs, resolveOutPath, main };
+module.exports = { parseArgs, resolveOutPath, runProposal, main };
 if (require.main === module) main().catch((err) => { console.error(err.message); process.exit(1); });
