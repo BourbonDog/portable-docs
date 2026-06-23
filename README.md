@@ -57,10 +57,96 @@ Override the accent color for any theme: set `PD_ACCENT=#HEX` before running the
 |---------|-------------|
 | `/doc <source> [flags]` | Build a polished HTML document from a file or inline content. Supports all three formats via flags. |
 | `/slides <source> [flags]` | Alias for `/doc --slides`. Structures content as a navigable slide deck; defaults to `--theme dark`. |
+| `/lint <source.md>` | Check a source file for malformed, unknown, or under-specified markers — line-numbered output, exits non-zero on errors. No build. |
+| `/watch <source.md> [flags]` | Start a local live-preview server. Rebuilds on save and auto-refreshes the browser via Server-Sent Events. |
 | `/export <file.html> [--pdf] [--png] [--out <dir>]` | Export a previously built HTML file to PDF, PNG, or both (default: both). Drives a system browser you already have — no extra deps. |
 | `/from-repo [path] [flags]` | Scan a codebase, draft a recap, and build it as a deck or article. No content needed — the agent reads the repo. |
 | `/share <html-file>` | Publish an HTML file to a public URL via GitHub Gist (`gh`) or Vercel. Prints install instructions if neither is available. |
-| `/doctor` | Run the portable-docs self-test. Verifies Node version, engine path, and all three build pipelines. |
+| `/doctor` | Run the portable-docs self-test. Verifies Node version, engine path, and all three build pipelines (including a lint check). |
+
+---
+
+## Authoring config
+
+Drop a `portable-docs.config.json` at your project root (or repo root) to set
+project-wide defaults for theme, accent color, output directory, and author identity:
+
+```json
+{
+  "theme": "brand",
+  "accent": "#0057B8",
+  "identity": {
+    "from":   "Your Name",
+    "email":  "you@example.com",
+    "brand":  "Acme Corp",
+    "footer": "Confidential"
+  }
+}
+```
+
+The config is discovered by walking up from the input file's directory; falling back to
+`~/.portable-docs.config.json` if no project file is found.
+
+**Named brand presets** — add a `brands` map and switch contexts with `--brand <name>`:
+
+```bash
+/doc my-pitch.md --brand work      # deep-merges brands.work over the top-level defaults
+```
+
+**Precedence:** `flag > env (PD_THEME / PD_ACCENT / PORTABLE_DOCS_OUT) > config > built-in default`.
+Use `--no-config` or `PD_NO_CONFIG=1` to skip config loading entirely.
+
+See [`references/config.md`](plugins/portable-docs/references/config.md) for the full schema and examples.
+
+---
+
+## Lint
+
+Every `/doc` and `/slides` build **auto-lints** the source and prints line-numbered
+warnings to stderr (the build still completes). Add `--strict` to abort the build on
+lint errors instead:
+
+```bash
+/doc my-pitch.md --strict          # aborts if there are lint errors
+```
+
+To lint without building, use `/lint`:
+
+```bash
+/lint my-pitch.md                  # line-numbered errors + warnings; exits non-zero on errors
+```
+
+**What it catches:**
+
+| Severity | Code | Condition |
+|----------|------|-----------|
+| error | `unclosed-block` | Paired marker opened but never closed |
+| error | `unknown-marker` | Unrecognised marker name (e.g. `@stas`) |
+| error | `missing-attr` | Required attribute absent (e.g. `@stat` without `value`) |
+| error | `bad-enum` | Attribute value not in allowed set |
+| warning | `unknown-icon` | `icon=` name not in the icon set (falls back to placeholder) |
+| warning | `unnumbered-section` | `## Heading` without the required `N.` prefix |
+| warning | `duplicate-header` | More than one `@header` block |
+
+---
+
+## Live preview
+
+`/watch` starts a local dev server and keeps a browser tab live while you edit:
+
+```bash
+/watch my-pitch.md                 # opens http://127.0.0.1:<port>/ and rebuilds on save
+/watch my-pitch.md --brand work    # watch with a brand preset
+```
+
+- Auto-refreshes the browser tab on every save via Server-Sent Events (zero npm deps).
+- The on-disk HTML stays a pristine self-contained file — the reload script is injected
+  only into the served HTTP response, never written to disk.
+- A build error shows a banner in the preview without crashing the watcher; fix and save
+  to recover.
+- Preview-only: `--pdf` and `--png` are ignored while watching.
+- Also watches `portable-docs.config.json` — brand/theme/identity changes hot-reload too.
+- Press `Ctrl-C` to stop.
 
 ---
 
@@ -145,8 +231,14 @@ node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
 | `--slides` | off | Slide deck format (takes priority over `--style article`) |
 | `--jsx` | off | Copy the JSX bundle alongside the HTML output |
 | `--no-open` | _(opens by default)_ | Suppress auto-open in browser |
+| `--lint` | off | Lint only — report diagnostics without building; exits non-zero on errors |
+| `--strict` | off | Abort the build when there are lint errors (auto-lint still runs by default) |
+| `--watch` | off | Start a live-preview server; rebuilds and refreshes on save |
+| `--brand <name>` | _(none)_ | Select a named preset from `portable-docs.config.json`'s `brands` map |
+| `--config <path>` | _(walk-up discovery)_ | Use a specific config file instead of auto-discovery |
+| `--no-config` | off | Skip config file loading for this invocation |
 
-**Env vars:** `PORTABLE_DOCS_OUT` (output path), `PD_THEME` (session theme), `PD_ACCENT` (hex accent override).
+**Env vars:** `PORTABLE_DOCS_OUT` (output path), `PD_THEME` (session theme), `PD_ACCENT` (hex accent override), `PD_NO_CONFIG=1` (skip config loading).
 
 ---
 

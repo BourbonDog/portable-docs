@@ -480,3 +480,27 @@ tables, images.
 
 `###` headings within a slide body create subsection groupings (same
 `groupSubsections()` logic shared with the article parser).
+
+---
+
+## Linting
+
+Every `/doc` and `/slides` build **auto-lints** the source and prints line-numbered
+diagnostics to stderr. The build still completes unless `--strict` is passed.
+
+Use `/lint <file>` (or `--lint`) to check without building; exits non-zero on errors.
+
+**Diagnostic codes:**
+
+| Severity | Code | Condition |
+|----------|------|-----------|
+| error | `unclosed-block` | Paired marker opened but never closed (e.g. `<!-- @stats -->` with no `<!-- /@stats -->`) |
+| error | `unknown-marker` | Unrecognised marker name (e.g. `<!-- @stas -->`) |
+| error | `missing-attr` | Required attribute absent (e.g. `@card` without `icon` or `title`) |
+| error | `bad-enum` | Attribute value not in the allowed set (e.g. `@cards type="grid"`) |
+| warning | `unknown-icon` | `icon=` name not in the icon set — falls back to the placeholder glyph |
+| warning | `unnumbered-section` | `## Heading` in a proposal without the required `N.` number prefix |
+| warning | `duplicate-header` | More than one `@header` block in the document |
+
+Article and slides formats are plain markdown; only the shared `@header` block and
+structural balance are linted (the `@`-marker DSL linting applies to proposal format).

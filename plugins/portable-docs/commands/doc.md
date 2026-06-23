@@ -1,6 +1,6 @@
 ---
 description: Generate a polished, self-contained HTML document from a source file or inline content
-argument-hint: <source> [--style proposal|article] [--slides] [--theme editorial|dark|brand] [--jsx]
+argument-hint: <source> [--style proposal|article] [--slides] [--theme editorial|dark|brand] [--brand <name>] [--lint] [--strict] [--watch] [--jsx]
 ---
 
 Turn `$ARGUMENTS` into a polished, portable HTML file using the portable-docs engine.
@@ -24,6 +24,12 @@ Extract any flags the user passed:
 | `--theme editorial` | `--theme editorial` | Default theme (paper-white, violet accent) |
 | `--theme dark` | `--theme dark` | Near-black, cyan accent — best for technical docs |
 | `--theme brand` | `--theme brand` | Neutral slate with `PD_ACCENT` override support |
+| `--brand <name>` | `--brand <name>` | Select a named preset from `portable-docs.config.json` |
+| `--config <path>` | `--config <path>` | Use a specific config file instead of auto-discovery |
+| `--no-config` | `--no-config` | Skip config file loading for this build |
+| `--lint` | `--lint` | Lint only — print diagnostics without building |
+| `--strict` | `--strict` | Abort the build on lint errors (auto-lint still runs by default) |
+| `--watch` | `--watch` | Start a live-preview server; rebuilds + refreshes on save |
 | `--jsx` | `--jsx` | Copy JSX bundle next to the HTML output |
 
 **Content intents → engine flags:**

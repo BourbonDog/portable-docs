@@ -121,6 +121,37 @@ for the complete syntax. The key rules per format:
 
 ---
 
+## Step 2b — Authoring config
+
+portable-docs discovers a `portable-docs.config.json` by walking up from the input
+file's directory (then falls back to `~/.portable-docs.config.json`). It is optional
+and all fields are optional. It can set:
+
+- `theme`, `accent`, `outDir`, `style` — project-wide defaults
+- `identity` — author name, email, LinkedIn, GitHub, headshot path, logo path, brand, brandsub, footer
+- `brands` — named presets (e.g. `"work"`, `"personal"`) that override top-level defaults
+
+Identity fills **blank** `@header` fields — the document's own `@header` always wins per-field.
+If a document has no `@header` at all, one is synthesized from identity + the filename as title.
+
+Relative `headshot` / `logo` paths resolve against the config file's directory.
+
+**Select a preset** with `--brand <name>` (deep-merges the named entry over top-level defaults):
+
+```bash
+node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
+  --input path/to/doc.md \
+  --brand work \
+  --no-open
+```
+
+**Precedence:** `flag > env (PD_THEME / PD_ACCENT / PORTABLE_DOCS_OUT) > config > built-in default`
+
+Use `--config <path>` to point at a specific file, or `--no-config` / `PD_NO_CONFIG=1` to skip
+config loading entirely (e.g. in CI or when you need byte-stable output).
+
+---
+
 ## Step 3 — Choose a theme
 
 See `references/theming.md` for full palette details. Three themes ship:
@@ -181,6 +212,12 @@ node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
 | `--slides` | off | Slide deck format. If combined with `--style article`, `--slides` silently wins (no error). |
 | `--jsx` | off | Copy the JSX bundle next to the HTML output |
 | `--no-open` | (opens by default) | Suppress auto-open in browser |
+| `--lint` | off | Lint only — print diagnostics without building; exits non-zero on errors |
+| `--strict` | off | Abort the build when lint finds errors (auto-lint still runs on every build) |
+| `--watch` | off | Live-preview server — rebuilds and refreshes the browser on save |
+| `--brand <name>` | _(none)_ | Select a named preset from `portable-docs.config.json`'s `brands` map |
+| `--config <path>` | _(walk-up discovery)_ | Use a specific config file instead of auto-discovery |
+| `--no-config` | off | Skip config file loading |
 
 **Env vars:**
 
@@ -189,6 +226,7 @@ node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
 | `PORTABLE_DOCS_OUT` | Session-wide output path override (same as `--out`) |
 | `PD_THEME` | Session-wide theme default. An explicit `--theme` flag always wins over `PD_THEME`. |
 | `PD_ACCENT` | Hex accent color override (e.g. `PD_ACCENT=#E63946`) |
+| `PD_NO_CONFIG` | Set to `1` to skip config file loading (same as `--no-config`) |
 
 On success the engine prints the resolved output path and exits 0. The HTML
 file is fully self-contained — React and all scripts are inlined, and JSX is
@@ -254,6 +292,54 @@ Tries Chrome → Edge → Chromium in order. Override: `PD_BROWSER=/path/to/brow
 
 ---
 
+## Step 5b — Lint check
+
+Every `/doc` and `/slides` build **auto-lints** the source and prints any
+line-numbered warnings to stderr. The build still completes.
+
+To make lint **errors** abort the build, add `--strict`:
+
+```bash
+node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
+  --input path/to/doc.md \
+  --out path/to/output.html \
+  --strict \
+  --no-open
+```
+
+To lint without building (for pre-flight checks):
+
+```bash
+node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
+  --input path/to/doc.md \
+  --lint
+```
+
+Diagnostic codes: `unclosed-block`, `unknown-marker`, `missing-attr`, `bad-enum`
+(errors); `unknown-icon`, `unnumbered-section`, `duplicate-header` (warnings).
+
+---
+
+## Step 5c — Live preview with `--watch`
+
+For an iterative authoring loop, use `--watch` instead of repeatedly rebuilding:
+
+```bash
+node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
+  --input path/to/doc.md \
+  --watch
+```
+
+- Opens `http://127.0.0.1:<port>/` in the browser and rebuilds + refreshes on every save.
+- The on-disk HTML stays a pristine self-contained file — the reload script is injected
+  only into the served HTTP response, never written to disk.
+- A build error displays a banner in the preview without crashing; fix and save to recover.
+- Preview-only: `--pdf` and `--png` are ignored while watching.
+- Also watches `portable-docs.config.json` so brand/theme changes hot-reload.
+- Press `Ctrl-C` to stop.
+
+---
+
 ## Step 6 — Auto-open and iterate (proposals / articles / slides)
 
 Without `--no-open`, the engine opens the output in the default browser
@@ -299,3 +385,4 @@ All reference docs live alongside this skill in `$CLAUDE_PLUGIN_ROOT/references/
 | `components.md` | Component catalog: what each renders, when to use it |
 | `theming.md` | Theme palette details + `PD_ACCENT` override instructions |
 | `icons.md` | Valid icon names for `@card icon="…"` and `@workitem icon="…"` |
+| `config.md` | Full schema + examples for `portable-docs.config.json` and `--brand` presets |

@@ -67,6 +67,12 @@ from every real icon, so authors who mistype a name get an obvious marker rather
 than a misleading real glyph (the old fallback was `lightbulb`, which could go
 unnoticed).
 
+**Lint warning:** The marker linter flags unknown icon names with a `unknown-icon`
+**warning** (not an error) before the build. The document still builds and the
+placeholder is rendered, but the warning lets you catch typos early. Use
+`/lint <file>` to check without building, or add `--strict` to the build to treat
+all lint errors (not warnings) as fatal.
+
 The `placeholder` name is also valid as an explicit icon value if needed, but it
 is not part of the content icon vocabulary — it exists solely as the fallback.
 

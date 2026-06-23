@@ -6,6 +6,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.4.0] — 2026-06-23
+
+### Added
+
+- **Marker linter.** Every `/doc` and `/slides` build now auto-lints and prints line-numbered
+  diagnostics to stderr (the build still completes). Add `--strict` to abort the build on lint
+  errors. Use `/lint <file>` (or `--lint`) to check without building; exits non-zero on errors.
+  `/doctor` includes a lint check over `sample.md`. Seven diagnostic codes: `unclosed-block`,
+  `unknown-marker`, `missing-attr`, `bad-enum` (errors); `unknown-icon`, `unnumbered-section`,
+  `duplicate-header` (warnings).
+
+- **`--watch` live-reload dev server.** `/watch <source.md>` (or `--watch`) opens a localhost
+  live-preview that rebuilds and auto-refreshes the browser tab on every save via Server-Sent
+  Events — zero npm dependencies (Node built-ins only). The on-disk HTML stays a pristine
+  self-contained file (reload script is response-only). A build error shows a banner without
+  crashing the watcher; save to recover. Also watches `portable-docs.config.json` for hot
+  brand/theme reloads.
+
+- **`portable-docs.config.json` brand-kit.** A discoverable project-level (or global) config
+  file carrying theme, accent, output directory, default style, and author identity defaults.
+  Identity fills blank `@header` fields per-field (the doc's own header always wins); a header
+  is synthesized when absent. Named presets (`brands` map) allow switching branded contexts
+  with a single `--brand <name>` flag (deep-merges over top-level defaults). Relative
+  `headshot`/`logo` paths resolve against the config file's directory. Escape hatches:
+  `--config <path>`, `--no-config`, `PD_NO_CONFIG=1`. Precedence:
+  **flag > env > config > built-in default**.
+
+### Not included (intentionally deferred)
+- Linter auto-fix (report-only for now)
+- Export-under-watch (`--pdf` / `--png` are ignored while `--watch` is active)
+
+---
+
 ## [0.3.0] — 2026-06-23
 
 ### Added

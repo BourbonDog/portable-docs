@@ -1,6 +1,6 @@
 ---
 description: Build a slide deck from a source file or outline
-argument-hint: <source> [--theme editorial|dark|brand] [--jsx]
+argument-hint: <source> [--theme editorial|dark|brand] [--brand <name>] [--lint] [--strict] [--watch] [--jsx]
 ---
 
 Alias for `/doc $ARGUMENTS --slides`. Builds a slide deck from `$ARGUMENTS`.
@@ -18,7 +18,22 @@ node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
   --out path/to/output.html \
   --slides \
   --theme <dark|editorial|brand> \
+  [--brand <name>] \
+  [--lint] \
+  [--strict] \
+  [--watch] \
   [--jsx]
 ```
 
 The engine opens the deck in the browser automatically on success. For full flag and markup reference see SKILL.md and `$CLAUDE_PLUGIN_ROOT/references/markers.md`.
+
+**Phase 3 flags (also available on `/slides`):**
+
+| Flag | Purpose |
+|------|---------|
+| `--brand <name>` | Select a named preset from `portable-docs.config.json` |
+| `--config <path>` | Use a specific config file instead of auto-discovery |
+| `--no-config` | Skip config loading for this build |
+| `--lint` | Lint only — no build; exits non-zero on errors |
+| `--strict` | Abort build on lint errors |
+| `--watch` | Live-preview server (preview-only; `--pdf`/`--png` ignored) |
