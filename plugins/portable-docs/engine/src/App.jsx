@@ -47,6 +47,7 @@ import {
   TerminalWindow,
   SectionNav,
   WorkList,
+  ReadingProgress,
 } from './components';
 
 
@@ -280,6 +281,9 @@ const App = () => {
         overflowX: 'hidden',
       }}
     >
+      {/* Reading progress bar */}
+      <ReadingProgress />
+
       {/* Section Navigation */}
       <SectionNav sections={CONTENT.document.filter((item) => item.type === 'section').map((s) => ({ number: s.number, title: s.title }))} />
 

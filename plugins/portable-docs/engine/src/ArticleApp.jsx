@@ -24,6 +24,7 @@ import { COLORS, FONTS, TYPE_SCALE, LAYOUT, SPACE, EFFECTS } from './design-toke
 import { Section, SectionDivider, Subsection, Paragraph, BulletList } from './components/Section';
 import Table from './components/Table';
 import RichText from './components/RichText';
+import ReadingProgress from './components/ReadingProgress';
 
 // =============================================================================
 // ARTICLE HEADER — full-viewport hero, data-driven title/subtitle/nav
@@ -1065,6 +1066,7 @@ const App = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: COLORS.surface.paper }}>
+      <ReadingProgress />
       <ArticleSectionNav sections={CONTENT.sections} />
       <ArticleHeader data={CONTENT.header} />
 

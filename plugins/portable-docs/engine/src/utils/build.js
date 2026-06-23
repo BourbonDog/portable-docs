@@ -191,6 +191,7 @@ function build() {
     'TerminalWindow',
     'SectionNav',
     'WorkList',
+    'ReadingProgress',
   ];
 
   // Read all components

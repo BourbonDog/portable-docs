@@ -46,7 +46,7 @@ function readFileOrDie(filePath) {
 // useInView hook that Table relies on). RichText is referenced by Section,
 // Table, and ArticleApp. This set is intentionally minimal — the article is
 // long-form prose; rich charts/cards stay the proposal format's job.
-const ARTICLE_COMPONENTS = ['Section', 'RichText', 'Table'];
+const ARTICLE_COMPONENTS = ['Section', 'RichText', 'Table', 'ReadingProgress'];
 
 function buildArticle() {
   const outputFile = process.env.PD_JSX_OUT || path.join(DIST_DIR, 'Article.jsx');
