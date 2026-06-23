@@ -26,9 +26,11 @@ function readComponent(name) {
   return fs.readFileSync(filePath, 'utf-8');
 }
 
-// Read content file
-// Honors PD_CONTENT_OUT (set by build-doc.js to a per-invocation temp path)
-// so parallel builds do not race on the shared engine/src/content.js file.
+// Read content file.
+// The build-doc pipeline ALWAYS sets PD_CONTENT_OUT to a per-invocation temp
+// path, so the src/content.js fallback below is for legacy standalone runs only.
+// src/content.js is generated scratch (gitignored), never a source file — do not
+// commit or hand-edit it.
 function readContent() {
   const filePath = process.env.PD_CONTENT_OUT || path.join(SRC_DIR, 'content.js');
   if (!fs.existsSync(filePath)) {
