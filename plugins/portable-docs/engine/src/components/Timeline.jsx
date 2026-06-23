@@ -29,7 +29,7 @@ const getCompanyLogo = (company, size = 20) => {
         y="12"
         dominantBaseline="central"
         textAnchor="middle"
-        fill="#FFFFFF"
+        fill={COLORS.ink[50]}
         fontFamily="sans-serif"
         fontSize={fontSize}
         fontWeight="600"
@@ -148,7 +148,7 @@ const TimelineEntry = ({ entry, index, total }) => {
                   fontSize: '0.85rem',
                   fontWeight: 500,
                   fontStyle: 'italic',
-                  color: entry.highlight ? '#FFFFFF' : COLORS.ink[700],
+                  color: entry.highlight ? COLORS.ink[50] : COLORS.ink[700],
                   letterSpacing: '-0.02em',
                 }}
               >
@@ -159,7 +159,7 @@ const TimelineEntry = ({ entry, index, total }) => {
                   fontFamily: FONTS.display,
                   fontSize: '0.65rem',
                   fontWeight: 400,
-                  color: entry.highlight ? 'rgba(255,255,255,0.6)' : COLORS.ink[400],
+                  color: entry.highlight ? COLORS.ink[200] : COLORS.ink[400],
                 }}
               >
                 –
@@ -170,7 +170,7 @@ const TimelineEntry = ({ entry, index, total }) => {
                   fontSize: '0.85rem',
                   fontWeight: 500,
                   fontStyle: 'italic',
-                  color: entry.highlight ? '#FFFFFF' : COLORS.ink[700],
+                  color: entry.highlight ? COLORS.ink[50] : COLORS.ink[700],
                   letterSpacing: '-0.02em',
                 }}
               >
@@ -184,7 +184,7 @@ const TimelineEntry = ({ entry, index, total }) => {
                 fontSize: entry.year === 'Current' ? '0.875rem' : '1.25rem',
                 fontWeight: 500,
                 fontStyle: 'italic',
-                color: entry.highlight ? '#FFFFFF' : COLORS.ink[700],
+                color: entry.highlight ? COLORS.ink[50] : COLORS.ink[700],
                 letterSpacing: '-0.02em',
               }}
             >
@@ -305,24 +305,27 @@ const TimelineCard = ({ entry, isHovered, setIsHovered, align }) => {
             gap: SPACE[2],
           }}
         >
-          {/* Company logo */}
-          {getCompanyLogo(entry.company) && (
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: EFFECTS.radius.md,
-                background: entry.highlight ? COLORS.ink[800] : COLORS.surface.elevated,
-                border: `1px solid ${entry.highlight ? COLORS.ink[700] : COLORS.ink[200]}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              {getCompanyLogo(entry.company, 20)}
-            </div>
-          )}
+          {/* Company logo (computed once) */}
+          {(() => {
+            const logo = getCompanyLogo(entry.company, 20);
+            return logo && (
+              <div
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: EFFECTS.radius.md,
+                  background: entry.highlight ? COLORS.ink[800] : COLORS.surface.elevated,
+                  border: `1px solid ${entry.highlight ? COLORS.ink[700] : COLORS.ink[200]}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                {logo}
+              </div>
+            );
+          })()}
 
           {/* Company name badge */}
           <div
