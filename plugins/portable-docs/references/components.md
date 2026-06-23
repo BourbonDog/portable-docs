@@ -225,6 +225,44 @@ wherever paragraph body text appears.
 **What it is:** A sticky side navigation bar listing all document sections with
 short labels. Used in the proposal format to let readers jump between sections.
 Not triggered by a marker — always rendered when the proposal has sections.
+- Section labels are data-driven (read from parsed section titles — no hardcoded strings).
+- Hidden automatically in PDF/print output (`pd-no-print` class).
+
+---
+
+---
+
+## Viewer affordances (Phase 2)
+
+These features are added automatically at build time — no markers needed.
+
+### Reading progress bar
+
+- Renders on proposals and articles as a thin accent-colored bar fixed to the top of the page.
+- Tracks scroll position; fills left-to-right as the reader scrolls.
+- Hidden in PDF/print output (`pd-no-print` class).
+
+### Heading anchors
+
+- `##` and `###` headings show a `#` anchor icon on hover.
+- Clicking the anchor copies a deep-link (`#section-id`) to the clipboard.
+- Hidden in PDF/print output (`pd-no-print` class).
+
+### Copy-code button
+
+- Appears on `@terminal` and code blocks on hover.
+- Clicking copies the block's text to the clipboard.
+- Hidden in PDF/print output (`pd-no-print` class).
+
+---
+
+## Print / PDF behavior
+
+When the document is exported to PDF (or printed via the browser):
+- Components with the `pd-no-print` class are hidden: `SectionNav`, reading progress bar, heading anchors, copy buttons.
+- Collapsed `@cards` bodies (cards with `@expanded` inner content) are expanded so no content is cut off.
+- Page breaks are avoided mid-component.
+- Theme colors are preserved via explicit color values.
 
 ---
 

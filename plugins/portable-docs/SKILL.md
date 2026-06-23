@@ -198,7 +198,63 @@ are embedded as base64 data URIs; remote image URLs are kept as references.
 
 ---
 
-## Step 5 — Auto-open and iterate
+## Step 5 — Export to PDF or PNG (optional)
+
+portable-docs can export any built HTML file to PDF and/or PNG using a headless
+browser already installed on the system. **No extra npm packages are required.**
+
+### `/export` command
+
+```bash
+/export path/to/output.html              # both PDF and PNG (default)
+/export path/to/output.html --pdf        # PDF only
+/export path/to/output.html --png        # PNG only
+/export path/to/output.html --out ~/Desktop/exports
+```
+
+### Build-and-export in one pass
+
+Add `--pdf` and/or `--png` to any `/doc` or `/slides` invocation:
+
+```bash
+/doc my-pitch.md --theme editorial --pdf --png
+/slides my-outline.md --pdf
+```
+
+Or via the engine directly:
+
+```bash
+node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
+  --input my-pitch.md \
+  --out output.html \
+  --pdf \
+  --no-open
+```
+
+### Export behavior by format
+
+| Format | PDF | PNG |
+|--------|-----|-----|
+| Proposal / article | Full multi-page document | Full-page capture of the entire scrollable page |
+| Slide deck | Landscape, one slide per page | Hero PNG of the title slide only |
+
+### Print stylesheet
+
+When a PDF is rendered:
+- On-screen chrome is hidden: table of contents, reading-progress bar, copy buttons, heading anchors (`pd-no-print` class).
+- All collapsed `@cards` bodies are expanded so no content is cut off.
+- Page breaks are avoided mid-component.
+- Theme colors are preserved.
+
+### Browser detection
+
+Tries Chrome → Edge → Chromium in order. Override: `PD_BROWSER=/path/to/browser`.
+
+**Graceful fallback:** if no supported browser is detected, the export command warns and suggests: install a browser, set `PD_BROWSER`, or use the browser's Print → Save as PDF. It never crashes.
+
+---
+
+## Step 6 — Auto-open and iterate (proposals / articles / slides)
 
 Without `--no-open`, the engine opens the output in the default browser
 immediately after a successful build.

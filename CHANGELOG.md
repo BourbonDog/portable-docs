@@ -6,6 +6,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.0] — 2026-06-23
+
+### Added
+
+- **PDF/PNG export via system headless browser.** `/export <file.html> [--pdf] [--png] [--out <dir>]` drives Chrome, Edge, or Chromium already installed on the system — zero extra npm deps. Both formats are produced by default; pass `--pdf` or `--png` alone to export one. Set `PD_BROWSER` to override the detected browser path.
+- **Build-and-export in one pass.** `--pdf` and `--png` flags are also available on `/doc` and `/slides`, so you can build and export without a separate step.
+- **`/export` command.** Accepts any previously built `.html` file, detects the format from the content, and produces PDF, PNG, or both in the same directory (or `--out <dir>`).
+- **`@media print` stylesheet.** PDFs produced by the headless browser hide on-screen chrome (table of contents, reading-progress bar, copy buttons, heading anchors), expand all collapsed `@cards` bodies, avoid awkward mid-component page breaks, and preserve the document's theme colors.
+- **Full-page PNG for proposals and articles.** The PNG captures the entire scrollable page via the browser's DevTools protocol (not just the viewport).
+- **Slide-deck export.** Slide decks export to a landscape PDF with one slide per page (a dedicated print render mode renders all slides at once). The PNG export captures a single hero shot of the title slide.
+- **Data-driven proposal table of contents.** The `SectionNav` sidebar now reads section labels from the parsed content instead of hardcoded strings — section titles always match the document.
+- **Reading-progress bar.** A thin accent-colored progress indicator appears at the top of proposals and articles as the reader scrolls.
+- **Hover heading anchors with deep-linking.** `##` and `###` headings show a `#` anchor on hover; clicking copies a `#section-id` deep-link to the clipboard.
+- **Copy-code button on terminal/code blocks.** A clipboard icon appears on `@terminal` and code blocks on hover; clicking copies the text to the clipboard.
+- **`</script>` escaping.** The string `</script>` in any content field is escaped to `<\/script>` before being embedded in the inline JS bundle, preventing it from breaking the offline page.
+
+### Not included (intentionally deferred)
+- Client-side search
+- Runtime light/dark theme toggle
+
+---
+
 ## [0.2.0] — 2026-06-23
 
 ### Changed

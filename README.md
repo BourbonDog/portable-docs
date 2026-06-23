@@ -57,9 +57,52 @@ Override the accent color for any theme: set `PD_ACCENT=#HEX` before running the
 |---------|-------------|
 | `/doc <source> [flags]` | Build a polished HTML document from a file or inline content. Supports all three formats via flags. |
 | `/slides <source> [flags]` | Alias for `/doc --slides`. Structures content as a navigable slide deck; defaults to `--theme dark`. |
+| `/export <file.html> [--pdf] [--png] [--out <dir>]` | Export a previously built HTML file to PDF, PNG, or both (default: both). Drives a system browser you already have — no extra deps. |
 | `/from-repo [path] [flags]` | Scan a codebase, draft a recap, and build it as a deck or article. No content needed — the agent reads the repo. |
 | `/share <html-file>` | Publish an HTML file to a public URL via GitHub Gist (`gh`) or Vercel. Prints install instructions if neither is available. |
 | `/doctor` | Run the portable-docs self-test. Verifies Node version, engine path, and all three build pipelines. |
+
+---
+
+## Export & print
+
+portable-docs can export any built document to PDF or PNG using a headless
+browser already installed on your system (Chrome, Edge, or Chromium).
+**No extra npm packages are required.**
+
+```bash
+# Export a built HTML file (produces both PDF and PNG by default)
+/export ~/Documents/portable-docs/my-pitch.html
+
+# PDF only, custom output directory
+/export my-pitch.html --pdf --out ~/Desktop/exports
+
+# Build and export in one pass
+/doc my-pitch.md --theme editorial --pdf --png
+/slides my-outline.md --pdf
+```
+
+**Format behavior:**
+- **Proposals and articles** — PDF is the full multi-page document. PNG is a full-page capture of the entire scrollable page (not just the viewport).
+- **Slide decks** — PDF is landscape with one slide per page. PNG is a single hero shot of the title slide.
+- **Print stylesheet** — on-screen chrome (table of contents, reading-progress bar, copy buttons, heading anchors) is hidden in PDFs. Collapsed card bodies are expanded. Theme colors are preserved.
+
+**Browser detection order:** Chrome → Edge → Chromium. Override with `PD_BROWSER=/path/to/browser`.
+
+**Graceful fallback:** if no supported browser is found, the export command warns and tells you how to install one, set `PD_BROWSER`, or use the browser's built-in Print → Save as PDF — it never crashes.
+
+---
+
+## Viewer features
+
+Every built document includes interactive on-screen affordances:
+
+- **Data-driven table of contents** (proposals) — the sticky sidebar reads section titles directly from the document; labels always match the content.
+- **Reading-progress bar** (proposals and articles) — a thin accent-colored indicator at the top of the page tracks scroll position.
+- **Hover heading anchors** (`##` and `###` headings) — a `#` link appears on hover; clicking copies a deep-link to the clipboard.
+- **Copy-code button** — appears on `@terminal` and code blocks on hover; copies the text to the clipboard.
+
+These affordances are hidden automatically when printing or exporting to PDF.
 
 ---
 
