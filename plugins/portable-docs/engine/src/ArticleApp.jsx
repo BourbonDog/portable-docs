@@ -766,6 +766,7 @@ const ArticleSectionNav = ({ sections }) => {
 const ArticleFigure = ({ src, caption }) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -799,7 +800,31 @@ const ArticleFigure = ({ src, caption }) => {
           overflow: 'hidden',
         }}
       >
-        <img src={src} alt={caption || ''} style={{ width: '100%', height: 'auto', display: 'block' }} />
+        {imgError ? (
+          <div
+            style={{
+              width: '100%',
+              minHeight: '160px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: COLORS.ink[100],
+              borderRadius: EFFECTS.radius.lg,
+              fontFamily: FONTS.ui,
+              fontSize: TYPE_SCALE.ui.sm.size,
+              color: COLORS.ink[400],
+            }}
+          >
+            Image unavailable
+          </div>
+        ) : (
+          <img
+            src={src}
+            alt={caption || ''}
+            onError={() => setImgError(true)}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+          />
+        )}
       </div>
       {caption && (
         <figcaption
