@@ -10,16 +10,6 @@
 import React, { useState, useEffect } from 'react';
 import { COLORS, FONTS, TYPE_SCALE, EFFECTS, SPACE } from '../design-tokens';
 
-// Section data - derived from document structure
-const SECTIONS = [
-  { number: 1, short: 'Market', title: 'The Market & Student Need' },
-  { number: 2, short: 'Crisis', title: 'The Talent Crisis' },
-  { number: 3, short: 'Alignment', title: 'Strategic Alignment' },
-  { number: 4, short: 'Profile', title: 'Who Should Teach This' },
-  { number: 5, short: 'Building', title: 'What John Builds Today' },
-  { number: 6, short: 'Teaching', title: 'What John Can Teach' },
-  { number: 7, short: 'Voices', title: 'What Others Say' },
-];
 
 // Hook to track current section based on scroll position
 const useCurrentSection = () => {
@@ -80,7 +70,12 @@ const injectNavStyles = (() => {
   };
 })();
 
-const SectionNav = () => {
+const SectionNav = ({ sections = [] }) => {
+  const items = sections.map((s) => ({
+    number: s.number,
+    title: s.title,
+    short: (s.short || s.title || '').split(' ')[0] || `§${s.number}`,
+  }));
   const currentSection = useCurrentSection();
   const [isVisible, setIsVisible] = useState(false);
   const [hoveredSection, setHoveredSection] = useState(null);
@@ -113,7 +108,7 @@ const SectionNav = () => {
 
   return (
     <nav
-      className="section-nav-wrapper"
+      className="section-nav-wrapper pd-no-print"
       style={{
         position: 'fixed',
         left: SPACE[6],
@@ -163,7 +158,7 @@ const SectionNav = () => {
         </div>
 
         {/* Section links */}
-        {SECTIONS.map((section) => {
+        {items.map((section) => {
           const isActive = currentSection === section.number;
           const isHovered = hoveredSection === section.number;
 
@@ -258,7 +253,7 @@ const SectionNav = () => {
             <div
               style={{
                 height: '100%',
-                width: `${(currentSection / SECTIONS.length) * 100}%`,
+                width: `${items.length ? (currentSection / items.length) * 100 : 0}%`,
                 background: `linear-gradient(90deg, ${COLORS.accent.primary} 0%, ${COLORS.accent.light} 100%)`,
                 borderRadius: EFFECTS.radius.full,
                 transition: `width ${EFFECTS.transition.base}`,

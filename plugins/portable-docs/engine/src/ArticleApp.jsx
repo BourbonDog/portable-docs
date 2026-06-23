@@ -624,7 +624,7 @@ const ArticleSectionNav = ({ sections }) => {
 
   return (
     <nav
-      className="article-nav-wrapper"
+      className="article-nav-wrapper pd-no-print"
       style={{
         position: 'fixed',
         left: SPACE[6],

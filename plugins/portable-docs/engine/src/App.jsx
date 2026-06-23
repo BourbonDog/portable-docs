@@ -281,7 +281,7 @@ const App = () => {
       }}
     >
       {/* Section Navigation */}
-      <SectionNav />
+      <SectionNav sections={CONTENT.document.filter((item) => item.type === 'section').map((s) => ({ number: s.number, title: s.title }))} />
 
       {/* Render document from CONTENT.document */}
       {CONTENT.document.map((item, i) => {
