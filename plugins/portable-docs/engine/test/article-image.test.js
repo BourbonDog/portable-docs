@@ -30,7 +30,7 @@ test('article figure placeholder exposes image semantics to assistive tech', asy
   // JSX is precompiled to React.createElement props, so role="img" becomes role: "img".
   assert.ok(html.includes('role: "img"'), 'ArticleFigure placeholder must have role: "img" (Babel-compiled prop form)');
   assert.ok(
-    html.includes('"Image unavailable"'),
-    'ArticleFigure placeholder must carry aria-label "Image unavailable"',
+    html.includes('"aria-label": "Image unavailable"'),
+    'broken-image placeholder must emit aria-label="Image unavailable"',
   );
 });
