@@ -34,6 +34,8 @@ const injectKeyframes = (() => {
         from { opacity: 0; transform: translateY(8px); }
         to { opacity: 1; transform: translateY(0); }
       }
+      .pd-section-heading:hover .pd-anchor { opacity: 1 !important; }
+      @media print { .pd-anchor { display: none !important; } }
     `;
     document.head.appendChild(style);
     injected = true;
@@ -394,6 +396,7 @@ const Section = ({ number, title, children, className = '' }) => {
           {/* Title with bottom rule - typewriter effect */}
           <h2
             id={slugify(title)}
+            className="pd-section-heading"
             style={{
               fontFamily: FONTS.headline,
               fontSize: TYPE_SCALE.headline.lg.size,
@@ -427,8 +430,6 @@ const Section = ({ number, title, children, className = '' }) => {
                 fontSize: TYPE_SCALE.headline.lg.size,
                 fontWeight: 400,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = 1; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = 0; }}
             >#</a>
           </h2>
         </header>

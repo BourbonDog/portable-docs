@@ -18,7 +18,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Slide-deck export.** Slide decks export to a landscape PDF with one slide per page (a dedicated print render mode renders all slides at once). The PNG export captures a single hero shot of the title slide.
 - **Data-driven proposal table of contents.** The `SectionNav` sidebar now reads section labels from the parsed content instead of hardcoded strings — section titles always match the document.
 - **Reading-progress bar.** A thin accent-colored progress indicator appears at the top of proposals and articles as the reader scrolls.
-- **Hover heading anchors with deep-linking.** `##` and `###` headings show a `#` anchor on hover; clicking copies a `#section-id` deep-link to the clipboard.
+- **Hover heading anchors with deep-linking.** Proposal `##` section headings show a `#` anchor on hover; clicking navigates to that section via the URL hash (a shareable deep-link you can copy from the address bar).
 - **Copy-code button on terminal/code blocks.** A clipboard icon appears on `@terminal` and code blocks on hover; clicking copies the text to the clipboard.
 - **`</script>` escaping.** The string `</script>` in any content field is escaped to `<\/script>` before being embedded in the inline JS bundle, preventing it from breaking the offline page.
 

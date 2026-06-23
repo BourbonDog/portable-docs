@@ -99,7 +99,7 @@ Every built document includes interactive on-screen affordances:
 
 - **Data-driven table of contents** (proposals) — the sticky sidebar reads section titles directly from the document; labels always match the content.
 - **Reading-progress bar** (proposals and articles) — a thin accent-colored indicator at the top of the page tracks scroll position.
-- **Hover heading anchors** (`##` and `###` headings) — a `#` link appears on hover; clicking copies a deep-link to the clipboard.
+- **Hover heading anchors** (proposal `##` section headings) — a `#` link appears on hover; clicking navigates to that section via the URL hash (a shareable deep-link).
 - **Copy-code button** — appears on `@terminal` and code blocks on hover; copies the text to the clipboard.
 
 These affordances are hidden automatically when printing or exporting to PDF.
