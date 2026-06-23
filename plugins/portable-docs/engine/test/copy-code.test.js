@@ -42,6 +42,6 @@ test('terminal blocks render a copy-code button using the clipboard API', async 
   const html = await buildProposalWithTerminalToString();
   assert.ok(html.includes('navigator.clipboard'), 'uses clipboard API');
   assert.ok(html.includes('pd-copy-btn'), 'copy button present');
-  assert.ok(html.includes('Copy code'), 'accessible label present');
+  assert.ok(html.includes('aria-label": "Copy code"'), 'accessible label present as aria-label attribute');
   assert.ok(html.includes('pd-no-print'), 'hidden in print');
 });

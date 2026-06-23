@@ -184,10 +184,13 @@ const TerminalWindow = ({
 }) => {
   const [ref, inView] = useTerminalInView();
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef(null);
 
   useEffect(() => {
     injectTerminalKeyframes();
   }, []);
+
+  useEffect(() => () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); }, []);
 
   const contentLines = Array.isArray(lines) ? lines : [lines];
   const copyText = contentLines.join('\n');
@@ -195,7 +198,8 @@ const TerminalWindow = ({
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(copyText).then(() => {
         setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
+        if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+        copyTimerRef.current = setTimeout(() => setCopied(false), 1500);
       });
     }
   };
