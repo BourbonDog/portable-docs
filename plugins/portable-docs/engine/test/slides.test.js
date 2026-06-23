@@ -196,3 +196,12 @@ test('slides: ### subsection heading text appears in built slide output', async 
   assert.ok(html.includes('Zero-downtime deploys'),
     'bullet content nested under the ### subsection must appear in slide output');
 });
+
+// ── Test 12: print mode (beforeprint, pd-slide-page) ─────────────────────────
+
+test('slide deck output supports print mode (all slides, beforeprint)', async () => {
+  const html = await runBuild({ slides: true });
+  assert.ok(html.includes('beforeprint'), 'registers a beforeprint listener');
+  assert.ok(html.includes('pd-slide-page'), 'wraps slides in paginated print pages');
+  assert.ok(html.includes('data-pd-format="slides"'), 'format marker present');
+});

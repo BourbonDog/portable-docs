@@ -443,7 +443,19 @@ const App = () => {
   ];
 
   const [current, setCurrent] = useState(0);
+  const [printing, setPrinting] = useState(false);
   const total = allSlides.length;
+
+  useEffect(() => {
+    const on  = () => setPrinting(true);
+    const off = () => setPrinting(false);
+    window.addEventListener('beforeprint', on);
+    window.addEventListener('afterprint', off);
+    return () => {
+      window.removeEventListener('beforeprint', on);
+      window.removeEventListener('afterprint', off);
+    };
+  }, []);
 
   const goTo = useCallback((idx) => {
     setCurrent(Math.max(0, Math.min(total - 1, idx)));
@@ -498,6 +510,28 @@ const App = () => {
     document.head.appendChild(style);
   }, []);
 
+  // Render a single slide — shared by screen and print paths.
+  const renderSlide = (slide, index) => (
+    slide._isTitleSlide ? (
+      <TitleSlide key={index} header={CONTENT.header} />
+    ) : (
+      <ContentSlide key={index} slide={slide} />
+    )
+  );
+
+  // Print path: all slides stacked, one per landscape page via SLIDES_PRINT_CSS.
+  if (printing) {
+    return (
+      <div>
+        {allSlides.map((s, i) => (
+          <div key={i} className="pd-slide-page" style={{ position: 'relative', width: '100vw', minHeight: '100vh' }}>
+            {renderSlide(s, i)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const slide = allSlides[current];
 
   return (
@@ -514,11 +548,7 @@ const App = () => {
     >
       {/* Slide viewport */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        {slide._isTitleSlide ? (
-          <TitleSlide header={CONTENT.header} />
-        ) : (
-          <ContentSlide slide={slide} />
-        )}
+        {renderSlide(slide, current)}
       </div>
 
       {/* Chrome: progress bar, counter, dot nav */}
