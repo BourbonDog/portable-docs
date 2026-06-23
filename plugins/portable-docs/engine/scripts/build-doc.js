@@ -19,6 +19,7 @@ const os   = require('os');
 const { inlineLocalImages } = require('./inline-assets.js');
 const { exportFile } = require('./export.js');
 const { loadConfig, selectBrand, pick, applyIdentity } = require('./config.js');
+const { lintMarkdown, loadIconNames, formatDiagnostics } = require('./lint.js');
 
 /**
  * Load + resolve config; mutate args with effective theme/style/out/identity.
@@ -72,6 +73,18 @@ async function maybeExport(args, outPath) {
   if (r.png) console.log(`build-doc: PNG → ${r.png}`);
 }
 
+/** Lint the input; print diagnostics to stderr; return the result. */
+function runLint(args, md, mdPath) {
+  const format = args.slides ? 'slides' : (args.style === 'article' ? 'article' : 'proposal');
+  const result = lintMarkdown(md, { format, iconNames: loadIconNames() });
+  const total = result.errors.length + result.warnings.length;
+  if (total > 0) {
+    console.error(`lint: ${result.errors.length} error(s), ${result.warnings.length} warning(s)`);
+    console.error(formatDiagnostics(result, path.basename(mdPath)));
+  }
+  return result;
+}
+
 // ── Pure helpers (no I/O — unit-testable) ───────────────────────────────────
 
 /**
@@ -101,6 +114,8 @@ function parseArgs(argv) {
     brand:    null,
     config:   null,
     noConfig: false,
+    lint:     false,
+    strict:   false,
     open:   true,        // default open=true; --no-open sets false
   };
   for (let i = 0; i < argv.length; i++) {
@@ -118,6 +133,8 @@ function parseArgs(argv) {
       case '--brand':     opts.brand    = argv[++i]; break;
       case '--config':    opts.config   = argv[++i]; break;
       case '--no-config': opts.noConfig = true;      break;
+      case '--lint':   opts.lint   = true; break;
+      case '--strict': opts.strict = true; break;
       case '--no-open':opts.open   = false;      break;
     }
   }
@@ -460,6 +477,18 @@ async function main() {
 
   // Resolve brand-kit config (mutates args defaults; no-op without a config file).
   loadAndResolveConfig(args, mdPath);
+
+  // Lint (after config so the effective format/style is known).
+  if (args.lint) {
+    const result = runLint(args, md, mdPath);
+    process.exitCode = result.errors.length ? 1 : 0;
+    if (result.errors.length === 0) console.log('lint: clean');
+    return; // --lint never builds
+  }
+  const lintResult = runLint(args, md, mdPath);
+  if (args.strict && lintResult.errors.length) {
+    throw new Error(`build aborted: ${lintResult.errors.length} lint error(s) (--strict). Fix them or drop --strict.`);
+  }
 
   // ── Format routing ─────────────────────────────────────────────────────────
   // --slides routes to the slide deck pipeline (Task 2.4b). Precedence: --slides

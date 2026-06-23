@@ -94,6 +94,15 @@ else
   fail "build proposal  (sample.md not found at $SAMPLE_MD)"
 fi
 
+# ── Check 3b: proposal fixture lints clean ────────────────────────────────────
+if [ -f "$SAMPLE_MD" ]; then
+  if node "$BUILD" --input "$SAMPLE_MD" --lint --no-config >/dev/null 2>&1; then
+    pass "lint proposal   (sample.md clean)"
+  else
+    fail "lint proposal   (sample.md has lint errors)"
+  fi
+fi
+
 # ── Check 4: article fixture ──────────────────────────────────────────────────
 SAMPLE_ARTICLE="$FIXTURES/sample-article.md"
 if [ -f "$SAMPLE_ARTICLE" ]; then

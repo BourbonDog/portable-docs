@@ -3,6 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { lintMarkdown, MARKER_SPEC, extractIconNames } = require('../scripts/lint.js');
 
 const codes = (r) => [...r.errors, ...r.warnings].map((d) => d.code);
@@ -108,4 +109,37 @@ test('formatDiagnostics renders sorted, labeled lines', () => {
   const lines = out.split('\n');
   assert.ok(lines[0].includes('doc.md:2') && lines[0].includes('[unknown-icon]'));
   assert.ok(lines[1].includes('doc.md:5') && lines[1].includes('ERROR'));
+});
+
+test('--lint exits non-zero on a malformed file and does not build', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-lintcli-'));
+  const mdPath = path.join(dir, 'bad.md');
+  const outHtml = path.join(dir, 'out.html');
+  fs.writeFileSync(mdPath, '<!-- @stats -->\n<!-- @stat value="3" label="x" source="y" -->'); // unclosed @stats
+  const { main } = require('../scripts/build-doc.js');
+  const origArgv = process.argv, origCode = process.exitCode;
+  try {
+    process.argv = ['node', 'build-doc.js', '--input', mdPath, '--out', outHtml, '--no-open', '--lint', '--no-config'];
+    await main();
+    assert.strictEqual(process.exitCode, 1, '--lint sets exit code 1 on errors');
+    assert.ok(!fs.existsSync(outHtml), '--lint must not build');
+  } finally {
+    process.argv = origArgv; process.exitCode = origCode;
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('--strict aborts a build with lint errors', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-strict-'));
+  const mdPath = path.join(dir, 'bad.md');
+  fs.writeFileSync(mdPath, '<!-- @stats -->'); // unclosed
+  const { main } = require('../scripts/build-doc.js');
+  const origArgv = process.argv;
+  let threw = false;
+  try {
+    process.argv = ['node', 'build-doc.js', '--input', mdPath, '--out', path.join(dir, 'o.html'), '--no-open', '--strict', '--no-config'];
+    await main();
+  } catch (_) { threw = true; }
+  finally { process.argv = origArgv; fs.rmSync(dir, { recursive: true, force: true }); }
+  assert.ok(threw, '--strict must throw on lint errors');
 });

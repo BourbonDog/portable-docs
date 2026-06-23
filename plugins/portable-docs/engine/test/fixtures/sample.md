@@ -124,7 +124,9 @@ Across the technology sector, internal research shows [1][2]:
 
 Leading organizations now **hire for judgment over syntax** because "many traditional programming skills are less relevant when AI handles implementation details." [1]
 
-<!-- @pullquote author="Dr. Casey Park" title="Principal Engineer, Apex Systems" -->I described the system architecture in plain language; the AI built what we prototyped last quarter — in an afternoon.<!-- /@pullquote -->
+<!-- @pullquote author="Dr. Casey Park" title="Principal Engineer, Apex Systems" -->
+I described the system architecture in plain language; the AI built what we prototyped last quarter — in an afternoon.
+<!-- /@pullquote -->
 
 Northwind students will enter this world in two to three years. We need to prepare them now.
 
@@ -193,7 +195,9 @@ The opportunity is clear. But there's a problem: the traditional path into engin
 
 As AI makes senior engineers more productive, it eliminates the entry points where new engineers used to learn their craft.
 
-<!-- @pullquote author="S. Moreau" title="CTO, Cascade.io" -->The cost of software production is trending toward zero. The cost of the wrong decision is not.<!-- /@pullquote -->
+<!-- @pullquote author="S. Moreau" title="CTO, Cascade.io" -->
+The cost of software production is trending toward zero. The cost of the wrong decision is not.
+<!-- /@pullquote -->
 
 Entry-level tech hiring has dropped sharply over the past two years. [7] Graduate employment in software roles shows rising underemployment rates, and a major labor study of 50 million workers found that when companies adopt generative AI, junior developer employment drops 8–10% within six quarters. Senior employment barely changes.
 
@@ -263,7 +267,9 @@ AI is one of Northwind's grand challenge focus areas. This curriculum advances A
 
 AI-augmented development is becoming the default method for how engineers work. Context engineering, agentic systems, and production AI workflows are the tools engineers will use across every discipline. This curriculum teaches those methods before they become standard.
 
-<!-- @pullquote -->The shift is comparable to when CAD replaced drafting tables or when simulation replaced physical prototyping.<!-- /@pullquote -->
+<!-- @pullquote -->
+The shift is comparable to when CAD replaced drafting tables or when simulation replaced physical prototyping.
+<!-- /@pullquote -->
 
 Engineers who master AI-augmented methods will define the next generation of engineering practice. Northwind can lead in codifying these methods rather than adopting them later.
 
