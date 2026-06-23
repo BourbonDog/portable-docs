@@ -102,3 +102,35 @@ test('applyIdentity absolutizes relative asset paths against assetBaseDir', () =
   const remote = cfg.applyIdentity({ title: 'T', logo: '' }, { logo: 'https://x/y.png' }, { assetBaseDir: base });
   assert.strictEqual(remote.logo, 'https://x/y.png'); // remote left as-is
 });
+
+test('build inherits identity from config when @header omits fields', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-cfgbuild-'));
+  fs.writeFileSync(path.join(dir, cfg.CONFIG_NAME), JSON.stringify({
+    theme: 'editorial',
+    identity: { from: 'Config Author', brand: 'ConfigBrand' },
+  }));
+  const md = [
+    '<!-- @header -->',
+    '<!-- @title value="Doc From Config" -->',
+    '<!-- /@header -->',
+    '',
+    '## 1. Intro',
+    '',
+    'Body text.',
+  ].join('\n');
+  const mdPath = path.join(dir, 'doc.md');
+  const outHtml = path.join(dir, 'out.html');
+  fs.writeFileSync(mdPath, md);
+
+  const { main } = require('../scripts/build-doc.js');
+  const origArgv = process.argv;
+  try {
+    process.argv = ['node', 'build-doc.js', '--input', mdPath, '--out', outHtml, '--no-open'];
+    await main();
+  } finally { process.argv = origArgv; }
+
+  const html = fs.readFileSync(outHtml, 'utf8');
+  assert.ok(html.includes('Config Author'), 'identity.from inherited from config');
+  assert.ok(html.includes('ConfigBrand'), 'identity.brand inherited from config');
+  fs.rmSync(dir, { recursive: true, force: true });
+});

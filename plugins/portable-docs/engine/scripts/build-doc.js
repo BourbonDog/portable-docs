@@ -18,6 +18,50 @@ const path = require('path');
 const os   = require('os');
 const { inlineLocalImages } = require('./inline-assets.js');
 const { exportFile } = require('./export.js');
+const { loadConfig, selectBrand, pick, applyIdentity } = require('./config.js');
+
+/**
+ * Load + resolve config; mutate args with effective theme/style/out/identity.
+ * Precedence per setting: CLI flag > env (PD_*) > config > built-in default.
+ */
+function loadAndResolveConfig(args, mdPath) {
+  const startDir = mdPath ? path.dirname(path.resolve(mdPath)) : process.cwd();
+  const { config, path: cfgPath } = loadConfig({
+    startDir, explicitPath: args.config, noConfig: args.noConfig,
+  });
+  const eff = selectBrand(config, args.brand); // null when no config
+  if (!eff) return;
+
+  // theme: flag > env > config (build pipelines fall back to 'editorial')
+  if (!args.theme) {
+    const t = pick(null, process.env.PD_THEME, eff.theme, null);
+    if (t) args.theme = t;
+  }
+  // accent: flag(none) > env PD_ACCENT > config.accent
+  if ((process.env.PD_ACCENT == null || process.env.PD_ACCENT === '') && eff.accent) {
+    process.env.PD_ACCENT = eff.accent;
+  }
+  // style: only when the user did not pass an explicit non-default --style or --slides
+  if (!args.slides && args.style === 'proposal' && eff.style) {
+    args.style = eff.style;
+  }
+  // output directory default (used by resolveOutPath when --out / PORTABLE_DOCS_OUT unset)
+  args._outDir = eff.outDir || null;
+  // identity defaults for @header
+  args._identity = eff.identity || null;
+  args._assetBaseDir = cfgPath ? path.dirname(cfgPath) : null;
+}
+
+/** Apply config identity to parsed content (header wins per-field; synthesize if absent). */
+function applyConfigToContent(args, content) {
+  if (!args._identity) return;
+  const fallbackTitle = args.title ||
+    (content.header && content.header.title) ||
+    path.basename(args.input || 'document').replace(/\.md$/i, '');
+  content.header = applyIdentity(content.header, args._identity, {
+    fallbackTitle, assetBaseDir: args._assetBaseDir,
+  });
+}
 
 /** Build-time export hook: PDF/PNG via system browser when --pdf/--png set.
  *  exportFile is async (full-page PNG uses CDP), so this is awaited below. */
@@ -86,12 +130,14 @@ function parseArgs(argv) {
  * @param {{ out?:string, title?:string, input:string }} opts
  * @returns {string}
  */
-function resolveOutPath({ out, title, input }) {
+function resolveOutPath({ out, title, input, outDir }) {
   if (out) return out;
   const { slugify } = require('./slug.js');
+  const { expandHome } = require('./config.js');
   const base = title || path.basename(input || 'document').replace(/\.md$/i, '');
   const slug = slugify(base);
-  return path.join(os.homedir(), 'Documents', 'portable-docs', slug + '.html');
+  const dir = outDir ? expandHome(outDir) : path.join(os.homedir(), 'Documents', 'portable-docs');
+  return path.join(dir, slug + '.html');
 }
 
 // ── Slides pipeline (Task 2.4b) ──────────────────────────────────────────────
@@ -114,6 +160,7 @@ async function runSlides(args, md) {
   // 1. Parse the slides into a content object.
   const { parseSlides, generateSlidesOutput } = require('./parse-slides.js');
   const content = parseSlides(md);
+  applyConfigToContent(args, content);
   inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 
   // 2. Per-invocation temp dir so parallel builds never clobber each other.
@@ -151,9 +198,10 @@ async function runSlides(args, md) {
 
     // 6. Resolve output HTML path.
     const outPath = resolveOutPath({
-      out:   args.out || process.env.PORTABLE_DOCS_OUT,
-      title: args.title || content.header?.title,
-      input: args.input,
+      out:    args.out || process.env.PORTABLE_DOCS_OUT,
+      title:  args.title || content.header?.title,
+      input:  args.input,
+      outDir: args._outDir,
     });
     const outDir = path.dirname(outPath);
     if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
@@ -228,6 +276,7 @@ async function runArticle(args, md) {
   // 1. Parse the article into a content object (no slug registry).
   const { parseArticle, generateArticleOutput } = require('./parse-article.js');
   const content = parseArticle(md);
+  applyConfigToContent(args, content);
   inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 
   // 2. Per-invocation temp dir so parallel builds never clobber each other.
@@ -266,9 +315,10 @@ async function runArticle(args, md) {
 
     // 6. Resolve output HTML path (same resolver as the proposal path).
     const outPath = resolveOutPath({
-      out:   args.out || process.env.PORTABLE_DOCS_OUT,
-      title: args.title || content.header?.title,
-      input: args.input,
+      out:    args.out || process.env.PORTABLE_DOCS_OUT,
+      title:  args.title || content.header?.title,
+      input:  args.input,
+      outDir: args._outDir,
     });
     const outDir = path.dirname(outPath);
     if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
@@ -327,6 +377,7 @@ async function runProposal(args, md) {
   // 2. Parse content
   const { extractContent, generateOutput } = require('../src/utils/parser.js');
   const content = extractContent(md);
+  applyConfigToContent(args, content);
   inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-build-'));
@@ -353,9 +404,10 @@ async function runProposal(args, md) {
     build();
 
     const outPath = resolveOutPath({
-      out:   args.out || process.env.PORTABLE_DOCS_OUT,
-      title: args.title || content.header?.title,
-      input: args.input,
+      out:    args.out || process.env.PORTABLE_DOCS_OUT,
+      title:  args.title || content.header?.title,
+      input:  args.input,
+      outDir: args._outDir,
     });
     const outDir = path.dirname(outPath);
     if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
@@ -405,6 +457,9 @@ async function main() {
     process.exit(1);
   }
   const md = fs.readFileSync(mdPath, 'utf-8');
+
+  // Resolve brand-kit config (mutates args defaults; no-op without a config file).
+  loadAndResolveConfig(args, mdPath);
 
   // ── Format routing ─────────────────────────────────────────────────────────
   // --slides routes to the slide deck pipeline (Task 2.4b). Precedence: --slides
