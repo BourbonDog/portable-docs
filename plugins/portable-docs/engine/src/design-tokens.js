@@ -153,16 +153,14 @@ export const COLORS = THEMES[ACTIVE_THEME] || THEMES.editorial;
 (function applyAccentOverride() {
   const accent = (typeof process !== 'undefined' && process.env && process.env.PD_ACCENT) || '';
   if (accent && /^#[0-9A-Fa-f]{3,8}$/.test(accent)) {
-    COLORS.accent.primary = accent;
-    // Derive light by blending towards white (simplified: lighter hex not computed,
-    // so we set light = primary for the bundle; brand palettes should supply full sets).
-    // NOTE: accent.light and accent.muted intentionally echo the primary accent until a
-    // hex-lightening utility exists. Under a PD_ACCENT override the hover/muted shades
-    // will NOT be lighter than the primary — they will be identical to it.
-    COLORS.accent.light = accent;
-    COLORS.accent.muted = accent;
-    COLORS.accent.wash = accent.slice(0, 7) + '14'; // ~8% opacity suffix
-    COLORS.accent.glow = accent.slice(0, 7) + '29'; // ~16% opacity suffix
+    // Normalize to #RRGGBB so wash/glow alpha suffixes are always valid, then
+    // derive lighter hover/muted shades by blending toward white.
+    const primary = normalizeHex(accent);
+    COLORS.accent.primary = primary;
+    COLORS.accent.light = lighten(primary, 0.20); // ~20% toward white (hover)
+    COLORS.accent.muted = lighten(primary, 0.40); // ~40% toward white (muted)
+    COLORS.accent.wash = primary + '14'; // ~8% opacity
+    COLORS.accent.glow = primary + '29'; // ~16% opacity
   }
 })();
 

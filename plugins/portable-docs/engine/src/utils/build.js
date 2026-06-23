@@ -58,6 +58,20 @@ function readDesignTokens() {
   return fs.readFileSync(filePath, 'utf-8');
 }
 
+// Read the color helper (color.js) and strip its CommonJS wrapper so it can be
+// inlined ahead of the design tokens in the browser bundle. This makes
+// normalizeHex()/lighten() available to the design-tokens accent-override IIFE.
+function readColorHelper() {
+  const src = fs.readFileSync(path.join(SRC_DIR, 'color.js'), 'utf-8');
+  return src
+    .replace(/^'use strict';?\s*$/m, '')
+    // Strip block comments (/** … */) so no comment text leaks into the bundle.
+    // This removes the JSDoc header that contains "process.env" in a note.
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^module\.exports\s*=.*$/m, '')
+    .trim();
+}
+
 // Extract design tokens code (remove imports/exports for inline bundling)
 // Also injects build-time literals for PD_THEME and PD_ACCENT so the browser
 // bundle contains no `process.env` / `typeof process` references.
@@ -90,7 +104,9 @@ function extractDesignTokensCode(source) {
     `const accent = ${JSON.stringify(resolvedAccent)};`
   );
 
-  return code.trim();
+  // Inline the color helper BEFORE the design-tokens source so the accent
+  // override IIFE can call normalizeHex()/lighten() at view time.
+  return (readColorHelper() + '\n\n' + code).trim();
 }
 
 // Extract component code (remove imports/exports for inline bundling)
