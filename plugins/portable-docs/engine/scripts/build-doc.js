@@ -16,6 +16,7 @@
 const fs   = require('fs');
 const path = require('path');
 const os   = require('os');
+const { inlineLocalImages } = require('./inline-assets.js');
 
 // ── Pure helpers (no I/O — unit-testable) ───────────────────────────────────
 
@@ -93,6 +94,7 @@ async function runSlides(args, md) {
   // 1. Parse the slides into a content object.
   const { parseSlides, generateSlidesOutput } = require('./parse-slides.js');
   const content = parseSlides(md);
+  inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 
   // 2. Per-invocation temp dir so parallel builds never clobber each other.
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-slides-'));
@@ -203,6 +205,7 @@ async function runArticle(args, md) {
   // 1. Parse the article into a content object (no slug registry).
   const { parseArticle, generateArticleOutput } = require('./parse-article.js');
   const content = parseArticle(md);
+  inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 
   // 2. Per-invocation temp dir so parallel builds never clobber each other.
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-article-'));
@@ -328,6 +331,7 @@ async function main() {
   // 2. Parse content
   const { extractContent, generateOutput } = require('../src/utils/parser.js');
   const content = extractContent(md);
+  inlineLocalImages(content, path.dirname(mdPath));
 
   // 3. Create a unique temp directory for this invocation so parallel builds
   //    (e.g. multiple test files running concurrently with `node --test`) never
