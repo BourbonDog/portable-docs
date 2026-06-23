@@ -140,6 +140,21 @@ const SlideBlockRenderer = ({ block }) => {
           )}
         </figure>
       );
+    case 'heading':
+      return (
+        <h4
+          style={{
+            fontFamily: FONTS.headline,
+            fontSize: 'clamp(1rem, 2vw, 1.4rem)',
+            fontWeight: 600,
+            lineHeight: 1.25,
+            color: COLORS.ink[600],
+            margin: `${SPACE[4]} 0 ${SPACE[2]}`,
+          }}
+        >
+          {block.text}
+        </h4>
+      );
     case 'subsection':
       return (
         <div style={{ margin: `${SPACE[5]} 0 ${SPACE[3]}` }}>

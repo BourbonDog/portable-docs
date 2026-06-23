@@ -70,6 +70,13 @@ function parseBlocks(text) {
       continue;
     }
 
+    // H4 sub-subsection marker (non-grouping heading block)
+    if (line.startsWith('#### ')) {
+      blocks.push({ type: 'heading', level: 4, text: line.slice(5).trim() });
+      i++;
+      continue;
+    }
+
     // YouTube embed — ![caption](https://www.youtube.com/watch?v=VIDEO_ID)
     const ytMatch = line.match(/^!\[([^\]]*)\]\(https?:\/\/(?:www\.)?youtube\.com\/watch\?v=([A-Za-z0-9_-]+)\)/);
     if (ytMatch) {
@@ -145,6 +152,7 @@ function parseBlocks(text) {
       i < lines.length &&
       lines[i].trim() !== '' &&
       !lines[i].startsWith('### ') &&
+      !lines[i].startsWith('#### ') &&
       !lines[i].trim().startsWith('|') &&
       !lines[i].trim().startsWith('>') &&
       !/^[-*]\s/.test(lines[i].trim()) &&

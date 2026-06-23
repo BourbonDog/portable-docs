@@ -936,6 +936,26 @@ const ArticleBlockquote = ({ text }) => {
 };
 
 // =============================================================================
+// HEADING — h4 sub-subsection head (deeper than ### Subsection)
+// =============================================================================
+
+const ArticleHeading = ({ text }) => (
+  <h4
+    style={{
+      fontFamily: FONTS.headline,
+      fontSize: TYPE_SCALE.headline.sm.size,
+      fontWeight: 600,
+      lineHeight: 1.3,
+      color: COLORS.ink[700],
+      margin: `${SPACE[5]} 0 ${SPACE[2]}`,
+      maxWidth: LAYOUT.maxWidth.prose,
+    }}
+  >
+    {text}
+  </h4>
+);
+
+// =============================================================================
 // BLOCK RENDERER — maps parsed content blocks to components
 // =============================================================================
 
@@ -955,6 +975,8 @@ const BlockRenderer = ({ block }) => {
       return <ArticleFigure src={block.src} caption={block.caption} />;
     case 'youtube':
       return <ArticleYouTube videoId={block.videoId} caption={block.caption} />;
+    case 'heading':
+      return <ArticleHeading text={block.text} />;
     case 'subsection':
       return (
         <Subsection title={block.title}>
