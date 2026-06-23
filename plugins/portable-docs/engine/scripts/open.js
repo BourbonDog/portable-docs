@@ -35,4 +35,12 @@ function openFile(filePath) {
   }
 }
 
-module.exports = { openFile };
+/** Open an http(s) URL in the OS default browser. */
+function openUrl(url) {
+  const cb = (err) => { if (err) console.error('open: could not open url:', err.message); };
+  if (process.platform === 'win32') execFile('cmd', ['/c', 'start', '', url], { windowsHide: true }, cb);
+  else if (process.platform === 'darwin') execFile('open', [url], cb);
+  else execFile('xdg-open', [url], cb);
+}
+
+module.exports = { openFile, openUrl };

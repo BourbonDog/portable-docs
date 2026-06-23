@@ -47,4 +47,75 @@ function debounce(fn, ms) {
   return wrapped;
 }
 
-module.exports = { RELOAD_CLIENT, injectReloadClient, sseFrame, debounce };
+function createServer(htmlPath, clients) {
+  return http.createServer((req, res) => {
+    if (req.url === '/__pd_reload') {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      });
+      res.write(': connected\n\n');
+      clients.add(res);
+      req.on('close', () => clients.delete(res));
+      return;
+    }
+    if (req.url === '/' || req.url === '/index.html') {
+      try {
+        const html = injectReloadClient(fs.readFileSync(htmlPath, 'utf-8'));
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(html);
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('portable-docs: no build yet (' + e.message + ')');
+      }
+      return;
+    }
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('not found');
+  });
+}
+
+/**
+ * Start the live-reload server + file watchers.
+ * @returns {Promise<{port:number, server:http.Server, close:()=>Promise<void>,
+ *                     notifyReload:()=>void, notifyError:(t:string)=>void}>}
+ */
+async function startWatch({ htmlPath, watchPaths = [], rebuild, onError } = {}) {
+  const clients = new Set();
+  const server = createServer(htmlPath, clients);
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+
+  const notifyReload = () => { for (const res of clients) { try { res.write(sseFrame('reload')); } catch (_) {} } };
+  const notifyError = (text) => { for (const res of clients) { try { res.write(sseFrame(text, 'builderror')); } catch (_) {} } };
+
+  const trigger = debounce(async () => {
+    try { await rebuild(); notifyReload(); }
+    catch (e) { if (onError) onError(e); notifyError(e.message); }
+  }, 200);
+
+  // Watch each target's DIRECTORY, filtered by basename — robust to editor
+  // save patterns (rename/replace) that break a direct file watch.
+  const watchers = [];
+  for (const p of watchPaths) {
+    try {
+      const dir = path.dirname(p);
+      const base = path.basename(p);
+      const w = fs.watch(dir, { persistent: true }, (_evt, fn) => { if (!fn || fn === base) trigger(); });
+      watchers.push(w);
+    } catch (_) { /* G4: missing path / unsupported watch — degrade silently */ }
+  }
+
+  const close = () => {
+    trigger.cancel();
+    for (const w of watchers) { try { w.close(); } catch (_) {} }
+    for (const res of clients) { try { res.end(); } catch (_) {} }
+    clients.clear();
+    return new Promise((resolve) => server.close(resolve));
+  };
+
+  return { port, server, close, notifyReload, notifyError };
+}
+
+module.exports = { RELOAD_CLIENT, injectReloadClient, sseFrame, debounce, startWatch };
