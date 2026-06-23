@@ -6,6 +6,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.1.1] — 2026-06-23
+
+### Added
+- `####` (h4) headings in the **article** and **slides** formats.
+- Graceful "Image unavailable" placeholder when an article image fails to load.
+
+### Changed
+- `PD_ACCENT` now derives lighter `light`/`muted` accent shades (blend toward white) instead of echoing the primary, so hover/muted states keep their lift.
+- `Timeline` year markers and company badge use theme-aware colors instead of hardcoded white.
+
+### Fixed
+- A 3-digit `PD_ACCENT` (e.g. `#E33`) no longer produces invalid `wash`/`glow` values.
+- `SKILL.md` clarifications: `--title` default, `PD_THEME` vs `--theme` precedence, `--slides`-wins note, and `@footer` added to the proposal `@header` field list.
+- Removed a stale generated `content.js` from `engine/src/`.
+
+---
+
 ## [0.1.0] — 2026-06-22
 
 ### Added
