@@ -1,0 +1,7 @@
+{
+  "name": "portable-docs",
+  "owner": { "name": "Christian Wagner", "url": "https://github.com/BourbonDog" },
+  "plugins": [
+    { "name": "portable-docs", "source": "./plugins/portable-docs", "description": "Turn content into polished portable HTML documents (proposals, reports, one-pagers, recaps, slides)." }
+  ]
+}

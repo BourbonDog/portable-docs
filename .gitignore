@@ -1,0 +1,9 @@
+.superpowers/
+node_modules/
+*.local
+.DS_Store
+Thumbs.db
+# Transient generated file — written by build-doc.js before bundling
+plugins/portable-docs/engine/src/content.js
+# Build output dir — stray node build.js run should not get committed
+plugins/portable-docs/engine/dist/
