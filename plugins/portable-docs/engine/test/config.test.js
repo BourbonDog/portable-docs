@@ -55,3 +55,49 @@ test('loadConfig: malformed JSON throws with the path', () => {
   assert.throws(() => cfg.loadConfig({ explicitPath: file }), /invalid JSON/);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('selectBrand merges a named preset over top-level defaults', () => {
+  const config = {
+    theme: 'editorial', accent: '#111', identity: { from: 'Chris', brand: 'Base' },
+    brands: { work: { theme: 'brand', identity: { brand: 'Acme' } } },
+  };
+  assert.deepStrictEqual(cfg.selectBrand(config, null), {
+    theme: 'editorial', accent: '#111', identity: { from: 'Chris', brand: 'Base' },
+  });
+  assert.deepStrictEqual(cfg.selectBrand(config, 'work'), {
+    theme: 'brand', accent: '#111', identity: { from: 'Chris', brand: 'Acme' },
+  });
+  assert.throws(() => cfg.selectBrand(config, 'nope'), /unknown brand "nope"/);
+  assert.strictEqual(cfg.selectBrand(null, 'work'), null);
+});
+
+test('pick applies flag > env > config > builtin', () => {
+  assert.strictEqual(cfg.pick('F', 'E', 'C', 'B'), 'F');
+  assert.strictEqual(cfg.pick(null, 'E', 'C', 'B'), 'E');
+  assert.strictEqual(cfg.pick(null, '', 'C', 'B'), 'C');
+  assert.strictEqual(cfg.pick(null, null, null, 'B'), 'B');
+});
+
+test('applyIdentity fills blank header fields; header wins per-field', () => {
+  const header = { title: 'Doc', from: '', fromEmail: 'doc@x.com', brand: '' };
+  const identity = { from: 'Chris', email: 'cfg@x.com', brand: 'Acme', brandsub: 'Team' };
+  const out = cfg.applyIdentity(header, identity, {});
+  assert.strictEqual(out.from, 'Chris');         // was blank → filled
+  assert.strictEqual(out.fromEmail, 'doc@x.com'); // header wins
+  assert.strictEqual(out.brand, 'Acme');          // was blank → filled
+  assert.strictEqual(out.brandSub, 'Team');       // brandsub → brandSub
+});
+
+test('applyIdentity synthesizes a header when none exists', () => {
+  const out = cfg.applyIdentity(null, { from: 'Chris', brand: 'Acme' }, { fallbackTitle: 'T' });
+  assert.strictEqual(out.title, 'T');
+  assert.strictEqual(out.from, 'Chris');
+  assert.strictEqual(out.brand, 'Acme');
+});
+
+test('applyIdentity absolutizes relative asset paths against assetBaseDir', () => {
+  const out = cfg.applyIdentity({ title: 'T', logo: '' }, { logo: './a/logo.png' }, { assetBaseDir: '/base' });
+  assert.strictEqual(out.logo.replace(/\\/g, '/'), '/base/a/logo.png');
+  const remote = cfg.applyIdentity({ title: 'T', logo: '' }, { logo: 'https://x/y.png' }, { assetBaseDir: '/base' });
+  assert.strictEqual(remote.logo, 'https://x/y.png'); // remote left as-is
+});

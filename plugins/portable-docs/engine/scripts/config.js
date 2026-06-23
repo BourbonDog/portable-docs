@@ -75,4 +75,70 @@ function loadConfig({ startDir = process.cwd(), explicitPath = null, noConfig = 
   return { config: raw, path: file };
 }
 
-module.exports = { CONFIG_NAME, deepMerge, expandHome, findConfigUp, loadConfig };
+/**
+ * Select the effective brand block: deep-merge the named preset over the
+ * top-level defaults (excluding the `brands` map). Throws if a requested brand
+ * name is absent.
+ */
+function selectBrand(config, brandName) {
+  if (!config) return null;
+  const { brands, ...topDefaults } = config;
+  if (!brandName) return topDefaults;
+  if (!brands || !brands[brandName]) {
+    const available = brands ? Object.keys(brands).join(', ') : '(none)';
+    throw new Error(`config: unknown brand "${brandName}". Available: ${available}`);
+  }
+  return deepMerge(topDefaults, brands[brandName]);
+}
+
+// Resolve one setting with precedence flag > env > config > builtin.
+// '' (empty string) is treated as "unset" for env/config so blanks fall through.
+function pick(flag, env, cfgVal, builtin) {
+  if (flag !== undefined && flag !== null && flag !== '') return flag;
+  if (env !== undefined && env !== null && env !== '') return env;
+  if (cfgVal !== undefined && cfgVal !== null && cfgVal !== '') return cfgVal;
+  return builtin;
+}
+
+// config.identity keys → header object keys (extractHeader shape).
+const IDENTITY_TO_HEADER = {
+  from: 'from', email: 'fromEmail', linkedin: 'linkedin', github: 'github',
+  headshot: 'headshot', logo: 'logo', brand: 'brand', brandsub: 'brandSub',
+  footer: 'footer',
+};
+
+const BLANK_HEADER = {
+  from: '', fromEmail: '', linkedin: '', github: '', headshot: '',
+  date: '', title: '', subtitle: '', eyebrow: '', brand: '', brandSub: '',
+  logo: '', footer: '',
+};
+
+function isRemoteOrAbsolute(v) {
+  return /^(https?:|data:)/i.test(v) || path.isAbsolute(v);
+}
+
+/**
+ * Fill blank header fields from config identity (header always wins per-field).
+ * Synthesizes a header from identity + fallbackTitle when header is null.
+ * Relative headshot/logo paths are resolved against assetBaseDir.
+ */
+function applyIdentity(header, identity, { fallbackTitle = '', assetBaseDir = null } = {}) {
+  if (!identity) return header;
+  const h = header ? { ...header } : { ...BLANK_HEADER, title: fallbackTitle };
+  for (const [ik, hk] of Object.entries(IDENTITY_TO_HEADER)) {
+    let val = identity[ik];
+    if (val == null || val === '') continue;
+    if (h[hk] != null && h[hk] !== '') continue; // header wins
+    if ((hk === 'headshot' || hk === 'logo') && assetBaseDir && !isRemoteOrAbsolute(val)) {
+      val = expandHome(val);
+      val = path.posix.join(assetBaseDir, val);
+    } else if (hk === 'headshot' || hk === 'logo') {
+      val = expandHome(val);
+    }
+    h[hk] = val;
+  }
+  return h;
+}
+
+module.exports = { CONFIG_NAME, deepMerge, expandHome, findConfigUp, loadConfig,
+                   selectBrand, pick, applyIdentity, IDENTITY_TO_HEADER };
