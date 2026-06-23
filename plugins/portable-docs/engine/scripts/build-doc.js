@@ -541,9 +541,14 @@ async function main() {
     if (result.errors.length === 0) console.log('lint: clean');
     return; // --lint never builds
   }
-  const lintResult = runLint(args, md, mdPath);
-  if (args.strict && lintResult.errors.length) {
-    throw new Error(`build aborted: ${lintResult.errors.length} lint error(s) (--strict). Fix them or drop --strict.`);
+  // One-shot builds auto-lint here; under --watch, runWatch's buildOnce lints
+  // every rebuild (incl. the first), so skip the pre-build lint to avoid a
+  // duplicate diagnostics print + redundant config pass at startup.
+  if (!args.watch) {
+    const lintResult = runLint(args, md, mdPath);
+    if (args.strict && lintResult.errors.length) {
+      throw new Error(`build aborted: ${lintResult.errors.length} lint error(s) (--strict). Fix them or drop --strict.`);
+    }
   }
 
   if (args.watch) return runWatch(args, mdPath);
