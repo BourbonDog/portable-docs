@@ -24,3 +24,12 @@ test('article figure ships an onError fallback placeholder', async () => {
   assert.ok(html.includes('setImgError'), 'ArticleFigure must track image error state');
   assert.ok(html.includes('Image unavailable'), 'ArticleFigure must include a fallback label');
 });
+
+test('article figure placeholder exposes image semantics to assistive tech', async () => {
+  const html = await buildArticle();
+  assert.ok(html.includes('role="img"'), 'ArticleFigure placeholder must have role="img"');
+  assert.ok(
+    html.includes('aria-label="Image unavailable"'),
+    'ArticleFigure placeholder must carry aria-label="Image unavailable"',
+  );
+});

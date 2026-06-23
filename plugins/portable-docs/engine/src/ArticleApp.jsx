@@ -802,6 +802,8 @@ const ArticleFigure = ({ src, caption }) => {
       >
         {imgError ? (
           <div
+            role="img"
+            aria-label="Image unavailable"
             style={{
               width: '100%',
               minHeight: '160px',

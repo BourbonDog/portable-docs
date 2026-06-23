@@ -176,7 +176,7 @@ const ProfileCard = ({ card, index, isExpanded, onToggle, hasExpandedContent }) 
             transition: EFFECTS.transition.base,
           }}
         >
-          {getIcon(card.icon, isExpanded ? '#FFFFFF' : COLORS.ink[500])}
+          {getIcon(card.icon, isExpanded ? COLORS.ink[50] : COLORS.ink[500])}
         </div>
 
         {/* Title and summary */}
@@ -226,7 +226,7 @@ const ProfileCard = ({ card, index, isExpanded, onToggle, hasExpandedContent }) 
               height="14"
               viewBox="0 0 24 24"
               fill="none"
-              stroke={isExpanded ? '#FFFFFF' : COLORS.ink[400]}
+              stroke={isExpanded ? COLORS.ink[50] : COLORS.ink[400]}
               strokeWidth="2"
               style={{
                 transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -390,7 +390,7 @@ const TopicCard = ({ card, index, isExpanded, onToggle }) => {
             transition: EFFECTS.transition.base,
           }}
         >
-          {getIcon(card.icon, isExpanded ? '#FFFFFF' : COLORS.ink[500])}
+          {getIcon(card.icon, isExpanded ? COLORS.ink[50] : COLORS.ink[500])}
         </div>
 
         {/* Title and audience */}
@@ -440,7 +440,7 @@ const TopicCard = ({ card, index, isExpanded, onToggle }) => {
             height="14"
             viewBox="0 0 24 24"
             fill="none"
-            stroke={isExpanded ? '#FFFFFF' : COLORS.ink[400]}
+            stroke={isExpanded ? COLORS.ink[50] : COLORS.ink[400]}
             strokeWidth="2"
             style={{
               transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
