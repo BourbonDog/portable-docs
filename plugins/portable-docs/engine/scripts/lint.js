@@ -137,6 +137,18 @@ function lintMarkdown(md, opts = {}) {
     warnings.push({ line: 0, severity: 'warning', code: 'duplicate-header', message: `Found ${headerCount} @header blocks; only the first is used` });
   }
 
+  if (format === 'proposal') {
+    for (let li = 0; li < lines.length; li++) {
+      const h2 = lines[li].match(/^##\s+(.+?)\s*$/);
+      if (!h2) continue;
+      const title = h2[1].trim();
+      if (title === 'Citations') continue;
+      if (!/^\d+\.\s/.test(title)) {
+        warnings.push({ line: li + 1, severity: 'warning', code: 'unnumbered-section', message: `Section "## ${title}" lacks an "N." number prefix; the proposal parser will not render it as a section` });
+      }
+    }
+  }
+
   return { errors, warnings };
 }
 
@@ -154,4 +166,22 @@ function extractIconNames(designTokensSrc) {
   return names;
 }
 
-module.exports = { MARKER_SPEC, lintMarkdown, extractIconNames };
+/** Read valid icon names from the engine's design tokens (I/O; safe on failure). */
+function loadIconNames() {
+  try {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'design-tokens.js'), 'utf-8');
+    return extractIconNames(src);
+  } catch (_) { return []; }
+}
+
+/** Render diagnostics as human-readable lines, sorted by line number. */
+function formatDiagnostics({ errors = [], warnings = [] }, filename) {
+  const all = [...errors, ...warnings].sort((a, b) => (a.line || 0) - (b.line || 0));
+  return all.map((d) => {
+    const loc = d.line ? `${filename}:${d.line}` : filename;
+    const tag = d.severity === 'error' ? 'ERROR' : 'warn ';
+    return `  ${tag} ${loc}  [${d.code}] ${d.message}`;
+  }).join('\n');
+}
+
+module.exports = { MARKER_SPEC, lintMarkdown, extractIconNames, loadIconNames, formatDiagnostics };

@@ -71,3 +71,41 @@ test('extractIconNames reads the Icons object keys from design-tokens.js', () =>
     assert.ok(names.includes(n), `missing icon "${n}"`);
   }
 });
+
+test('unknown icon is a warning, not an error', () => {
+  const md = ['<!-- @cards type="feature" -->', '<!-- @card icon="notreal" title="X" -->', 'b', '<!-- /@card -->', '<!-- /@cards -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', iconNames: ['rocket', 'brain'] });
+  assert.deepStrictEqual(r.errors, []);
+  assert.ok(r.warnings.some((w) => w.code === 'unknown-icon'));
+});
+
+test('unnumbered proposal section is a warning (Citations exempt)', () => {
+  const md = ['## Intro', '', 'text', '', '## Citations', '', '[1] x'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(r.warnings.some((w) => w.code === 'unnumbered-section' && /Intro/.test(w.message)));
+  assert.ok(!r.warnings.some((w) => /Citations/.test(w.message)), 'Citations is exempt');
+});
+
+test('article format does not flag plain prose or numbered headings', () => {
+  const md = ['# Title', '', '## Some Heading', '', 'A paragraph with an @ symbol in it.', '', '## Another'].join('\n');
+  const r = lintMarkdown(md, { format: 'article' });
+  assert.deepStrictEqual(r.errors, []);
+  assert.deepStrictEqual(r.warnings, []);
+});
+
+const { loadIconNames, formatDiagnostics } = require('../scripts/lint.js');
+
+test('loadIconNames reads the real icon set', () => {
+  const names = loadIconNames();
+  assert.ok(names.includes('rocket'));
+});
+
+test('formatDiagnostics renders sorted, labeled lines', () => {
+  const out = formatDiagnostics({
+    errors: [{ line: 5, severity: 'error', code: 'missing-attr', message: 'x' }],
+    warnings: [{ line: 2, severity: 'warning', code: 'unknown-icon', message: 'y' }],
+  }, 'doc.md');
+  const lines = out.split('\n');
+  assert.ok(lines[0].includes('doc.md:2') && lines[0].includes('[unknown-icon]'));
+  assert.ok(lines[1].includes('doc.md:5') && lines[1].includes('ERROR'));
+});
