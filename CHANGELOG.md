@@ -6,6 +6,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.0] — 2026-06-23
+
+### Changed
+- **Output is now fully self-contained and offline.** React/ReactDOM are vendored and inlined, and JSX is precompiled at build time — the generated HTML renders with no network connection, no CDN, and no in-browser Babel (which also removes a ~3MB per-view download). Documents open instantly and work in email, airgapped machines, and anywhere offline.
+
+### Added
+- Local images, logos, and headshots are embedded as base64 `data:` URIs, so the single `.html` file carries its own images. Remote image URLs are left as references; a missing local file is left as-is with a warning.
+
+### Fixed
+- `validate.js` now enforces the self-contained invariants (inlined React, no CDN, no in-browser Babel) instead of the old CDN requirements.
+
+---
+
 ## [0.1.2] — 2026-06-23
 
 ### Changed

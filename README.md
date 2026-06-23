@@ -24,9 +24,11 @@ Requires Node.js 18 or later (`node --version` to check).
 
 portable-docs takes your markdown — notes, outlines, prose, bullet points — and builds a
 beautifully formatted, single self-contained HTML file. No build server. No local asset files.
-React and Babel load from the unpkg CDN at view time, so a network connection is required to
-open the output. The file itself is self-contained — attach it to an email, drop it in Notion,
-or share it as a link; no sibling files needed.
+React is vendored and inlined, and JSX is precompiled at build time — the single `.html` file
+renders fully offline, with no CDN and no network connection required. Local images, logos, and
+headshots are embedded as base64 data URIs so the file is truly portable; remote image URLs are
+kept as references. Attach it to an email, drop it in Notion, or share it as a link; no sibling
+files needed.
 
 ### Three formats
 
@@ -108,11 +110,11 @@ node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
 ## How it works
 
 The engine is a vendored React renderer with zero local dependencies. It compiles your
-markdown + `@`-markers into a JSX component tree, bundles it with the classic JSX runtime
+markdown + `@`-markers into a JSX component tree, precompiles the JSX to plain JavaScript at
+build time using Babel (Node-side, not in the browser), bundles it with the classic JSX runtime
 (the "never blank" guarantee — no module-format mismatch), and writes a single self-contained
-HTML file. React, ReactDOM, and Babel are loaded from the unpkg CDN at view time, so opening
-the output requires a network connection. No local sibling assets, no build server, no
-framework footprint beyond what unpkg provides.
+HTML file with React and all scripts inlined. No CDN. No in-browser Babel. No network
+connection required to open the output. No local sibling assets, no build server.
 
 ---
 

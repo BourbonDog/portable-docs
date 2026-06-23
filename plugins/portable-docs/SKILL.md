@@ -191,9 +191,10 @@ node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
 | `PD_ACCENT` | Hex accent color override (e.g. `PD_ACCENT=#E63946`) |
 
 On success the engine prints the resolved output path and exits 0. The HTML
-file is self-contained — no local sibling assets. React, ReactDOM, and Babel
-load from the unpkg CDN at view time, so a network connection is required to
-open the output in a browser.
+file is fully self-contained — React and all scripts are inlined, and JSX is
+precompiled at build time, so the output renders completely offline with no CDN
+and no network connection required. Local image paths (logos, headshots, etc.)
+are embedded as base64 data URIs; remote image URLs are kept as references.
 
 ---
 
@@ -223,9 +224,10 @@ Common refinement loops:
   component selector table above. Consult `references/components.md` for full
   detail on when each component shines.
 - **Self-contained and shareable.** The output is a single `.html` file — no
-  local sibling assets, no build server. React loads from the unpkg CDN at view
-  time, so a network connection is required to open it. Attach to email, drop in
-  Notion, or share as a link — no companion files needed.
+  local sibling assets, no build server, no CDN, no network connection required.
+  React is vendored and inlined; JSX is precompiled at build time. Local images
+  are embedded as base64 data URIs. Attach to email, drop in Notion, or share as
+  a link — no companion files needed.
 - **Less is more.** 3–5 rich components per proposal reads better than 12.
   Long prose in article format reads better than marker-heavy markup.
 
