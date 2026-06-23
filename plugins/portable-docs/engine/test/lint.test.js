@@ -129,6 +129,20 @@ test('--lint exits non-zero on a malformed file and does not build', async () =>
   }
 });
 
+test('inline single-line paired markers do not produce false errors', () => {
+  const md = [
+    '<!-- @header -->',
+    '<!-- @title value="T" -->',
+    '<!-- /@header -->',
+    '',
+    '## 1. Intro',
+    '',
+    '<!-- @pullquote author="A" -->A one-line pull quote.<!-- /@pullquote -->',
+  ].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.deepStrictEqual(r.errors, [], 'inline paired marker is valid (parser is line-agnostic)');
+});
+
 test('--strict aborts a build with lint errors', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-strict-'));
   const mdPath = path.join(dir, 'bad.md');

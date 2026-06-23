@@ -81,50 +81,59 @@ function lintMarkdown(md, opts = {}) {
     const line = lines[li];
     const lineNo = li + 1;
 
-    // Closing markers
-    CLOSE_RE.lastIndex = 0;
-    let m;
-    while ((m = CLOSE_RE.exec(line)) !== null) {
-      const name = m[1];
-      if (!MARKER_SPEC[name]) {
-        errors.push({ line: lineNo, severity: 'error', code: 'unknown-marker', marker: '/' + name, message: `Unknown closing marker "/@${name}"` });
-        continue;
-      }
-      if (stack.length && stack[stack.length - 1].name === name) stack.pop();
-      else errors.push({ line: lineNo, severity: 'error', code: 'unclosed-block', marker: '/' + name, message: `Closing "/@${name}" with no matching open` });
-    }
-
-    // Opening / self-closing markers
+    // Collect open + close markers with their character offsets, then process
+    // them in SOURCE ORDER. The parser is line-agnostic, so an inline
+    // `<!-- @x -->...<!-- /@x -->` on a single line is valid; processing in
+    // offset order makes the open push before the close pops (no false errors).
+    const events = [];
     OPEN_RE.lastIndex = 0;
+    let m;
     while ((m = OPEN_RE.exec(line)) !== null) {
-      const name = m[1];
-      const attrStr = m[2] || '';
-      const spec = MARKER_SPEC[name];
-      if (!spec) {
-        errors.push({ line: lineNo, severity: 'error', code: 'unknown-marker', marker: name, message: `Unknown marker "@${name}"` });
-        continue;
-      }
-      if (name === 'header') headerCount++;
+      events.push({ kind: 'open', index: m.index, name: m[1], attrStr: m[2] || '' });
+    }
+    CLOSE_RE.lastIndex = 0;
+    while ((m = CLOSE_RE.exec(line)) !== null) {
+      events.push({ kind: 'close', index: m.index, name: m[1] });
+    }
+    events.sort((a, b) => a.index - b.index);
 
-      const inScope = format === 'proposal' || HEADER_SCOPE.has(name);
-      if (inScope) {
-        const attrs = parseAttrs(attrStr);
-        for (const req of spec.required) {
-          if (attrs[req] == null) {
-            errors.push({ line: lineNo, severity: 'error', code: 'missing-attr', marker: name, message: `@${name} is missing required attribute "${req}"` });
+    for (const ev of events) {
+      if (ev.kind === 'close') {
+        const name = ev.name;
+        if (!MARKER_SPEC[name]) {
+          errors.push({ line: lineNo, severity: 'error', code: 'unknown-marker', marker: '/' + name, message: `Unknown closing marker "/@${name}"` });
+          continue;
+        }
+        if (stack.length && stack[stack.length - 1].name === name) stack.pop();
+        else errors.push({ line: lineNo, severity: 'error', code: 'unclosed-block', marker: '/' + name, message: `Closing "/@${name}" with no matching open` });
+      } else {
+        const name = ev.name;
+        const attrStr = ev.attrStr;
+        const spec = MARKER_SPEC[name];
+        if (!spec) {
+          errors.push({ line: lineNo, severity: 'error', code: 'unknown-marker', marker: name, message: `Unknown marker "@${name}"` });
+          continue;
+        }
+        if (name === 'header') headerCount++;
+        const inScope = format === 'proposal' || HEADER_SCOPE.has(name);
+        if (inScope) {
+          const attrs = parseAttrs(attrStr);
+          for (const req of spec.required) {
+            if (attrs[req] == null) {
+              errors.push({ line: lineNo, severity: 'error', code: 'missing-attr', marker: name, message: `@${name} is missing required attribute "${req}"` });
+            }
+          }
+          for (const [ak, allowed] of Object.entries(spec.enums)) {
+            if (attrs[ak] != null && !allowed.includes(attrs[ak])) {
+              errors.push({ line: lineNo, severity: 'error', code: 'bad-enum', marker: name, message: `@${name} ${ak}="${attrs[ak]}" is not one of: ${allowed.join(', ')}` });
+            }
+          }
+          if ((name === 'card' || name === 'workitem') && iconNames && attrs.icon != null && !iconNames.has(attrs.icon)) {
+            warnings.push({ line: lineNo, severity: 'warning', code: 'unknown-icon', marker: name, message: `@${name} icon="${attrs.icon}" is not a known icon (falls back to the placeholder glyph)` });
           }
         }
-        for (const [ak, allowed] of Object.entries(spec.enums)) {
-          if (attrs[ak] != null && !allowed.includes(attrs[ak])) {
-            errors.push({ line: lineNo, severity: 'error', code: 'bad-enum', marker: name, message: `@${name} ${ak}="${attrs[ak]}" is not one of: ${allowed.join(', ')}` });
-          }
-        }
-        if ((name === 'card' || name === 'workitem') && iconNames && attrs.icon != null && !iconNames.has(attrs.icon)) {
-          warnings.push({ line: lineNo, severity: 'warning', code: 'unknown-icon', marker: name, message: `@${name} icon="${attrs.icon}" is not a known icon (falls back to the placeholder glyph)` });
-        }
+        if (spec.paired) stack.push({ name, line: lineNo });
       }
-
-      if (spec.paired) stack.push({ name, line: lineNo });
     }
   }
 
