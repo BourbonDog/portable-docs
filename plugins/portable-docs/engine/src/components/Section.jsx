@@ -11,6 +11,10 @@ import { useState, useEffect, useRef } from 'react';
 import RichText from './RichText';
 import { COLORS, FONTS, TYPE_SCALE, LAYOUT, SPACE, EFFECTS } from '../design-tokens';
 
+// Slug helper — converts a title to a URL-safe id (e.g. "Alpha Strategy" → "alpha-strategy")
+const slugify = (s) =>
+  String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
 // Keyframes for cursor blink - injected once
 const injectKeyframes = (() => {
   let injected = false;
@@ -389,6 +393,7 @@ const Section = ({ number, title, children, className = '' }) => {
 
           {/* Title with bottom rule - typewriter effect */}
           <h2
+            id={slugify(title)}
             style={{
               fontFamily: FONTS.headline,
               fontSize: TYPE_SCALE.headline.lg.size,
@@ -400,6 +405,7 @@ const Section = ({ number, title, children, className = '' }) => {
               paddingBottom: SPACE[4],
               borderBottom: `1px solid ${COLORS.ink[100]}`,
               minHeight: '2.5rem', // Prevent layout shift
+              position: 'relative',
             }}
           >
             {titleText}
@@ -408,6 +414,22 @@ const Section = ({ number, title, children, className = '' }) => {
               blink={true}
               color={COLORS.ink[500]}
             />
+            <a
+              href={`#${slugify(title)}`}
+              className="pd-anchor pd-no-print"
+              aria-label="Link to this section"
+              style={{
+                marginLeft: '0.4em',
+                opacity: 0,
+                textDecoration: 'none',
+                color: COLORS.accent.primary,
+                transition: 'opacity 150ms ease',
+                fontSize: TYPE_SCALE.headline.lg.size,
+                fontWeight: 400,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = 1; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = 0; }}
+            >#</a>
           </h2>
         </header>
 
