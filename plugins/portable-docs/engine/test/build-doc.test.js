@@ -43,6 +43,11 @@ test('parseArgs recognizes --brand, --config, --no-config', () => {
   assert.strictEqual(b.noConfig, false);
 });
 
+test('parseArgs recognizes --watch', () => {
+  assert.strictEqual(parseArgs(['--input', 'x.md', '--watch']).watch, true);
+  assert.strictEqual(parseArgs(['--input', 'x.md']).watch, false);
+});
+
 test('build-doc: PD_THEME is restored in finally even when build() throws', async () => {
   const ENGINE = path.join(__dirname, '..');
   const FIXTURE = path.join(__dirname, 'fixtures', 'sample.md');

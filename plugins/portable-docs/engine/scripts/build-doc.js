@@ -116,6 +116,7 @@ function parseArgs(argv) {
     noConfig: false,
     lint:     false,
     strict:   false,
+    watch:    false,
     open:   true,        // default open=true; --no-open sets false
   };
   for (let i = 0; i < argv.length; i++) {
@@ -135,6 +136,7 @@ function parseArgs(argv) {
       case '--no-config': opts.noConfig = true;      break;
       case '--lint':   opts.lint   = true; break;
       case '--strict': opts.strict = true; break;
+      case '--watch':  opts.watch  = true; break;
       case '--no-open':opts.open   = false;      break;
     }
   }
@@ -457,6 +459,60 @@ async function runProposal(args, md) {
   }
 }
 
+// ── Watch (live-reload) runner ───────────────────────────────────────────────
+async function runWatch(args, mdPath) {
+  args.open = false; args.pdf = false; args.png = false; // preview-only
+
+  // Stable output path across rebuilds (default into a temp dir so the served
+  // file location never changes as the title changes).
+  if (!args.out) {
+    const slug = require('./slug.js').slugify(path.basename(mdPath).replace(/\.md$/i, ''));
+    const dir = path.join(os.tmpdir(), 'pd-watch');
+    fs.mkdirSync(dir, { recursive: true });
+    args.out = path.join(dir, slug + '.html');
+  }
+
+  const buildOnce = async () => {
+    const md = fs.readFileSync(mdPath, 'utf-8');   // re-read each rebuild
+    loadAndResolveConfig(args, mdPath);            // re-resolve (config may have changed)
+    runLint(args, md, mdPath);                     // print diagnostics each rebuild
+    if (args.slides) return runSlides(args, md);
+    if (args.style === 'article') return runArticle(args, md);
+    return runProposal(args, md);
+  };
+
+  await buildOnce(); // first build (also resolves config + warms args.style)
+
+  // Watch the input and the discovered config file (if any).
+  const { config: _c, path: cfgPath } = loadConfig({
+    startDir: path.dirname(path.resolve(mdPath)),
+    explicitPath: args.config, noConfig: args.noConfig,
+  });
+  const watchPaths = [path.resolve(mdPath)];
+  if (cfgPath) watchPaths.push(cfgPath);
+
+  const { startWatch } = require('./watch.js');
+  const { openUrl } = require('./open.js');
+  const { port, close } = await startWatch({
+    htmlPath: args.out,
+    watchPaths,
+    rebuild: buildOnce,
+    onError: (e) => console.error('watch: rebuild failed —', e.message),
+  });
+
+  const url = `http://127.0.0.1:${port}/`;
+  console.log(`watch: serving ${url}`);
+  console.log(`watch: watching ${path.basename(mdPath)}${cfgPath ? ' + ' + path.basename(cfgPath) : ''} — edit & save to reload, Ctrl-C to stop`);
+  openUrl(url);
+
+  process.on('SIGINT', async () => {
+    console.log('\nwatch: shutting down');
+    try { await close(); } catch (_) {}
+    process.exit(0);
+  });
+  // The open server keeps the event loop alive; nothing else to do here.
+}
+
 // ── Orchestration ────────────────────────────────────────────────────────────
 
 async function main() {
@@ -490,6 +546,8 @@ async function main() {
     throw new Error(`build aborted: ${lintResult.errors.length} lint error(s) (--strict). Fix them or drop --strict.`);
   }
 
+  if (args.watch) return runWatch(args, mdPath);
+
   // ── Format routing ─────────────────────────────────────────────────────────
   // --slides routes to the slide deck pipeline (Task 2.4b). Precedence: --slides
   // wins over --style article when both are passed simultaneously.
@@ -504,5 +562,5 @@ async function main() {
   return runProposal(args, md);
 }
 
-module.exports = { parseArgs, resolveOutPath, runProposal, main };
+module.exports = { parseArgs, resolveOutPath, runProposal, runWatch, main };
 if (require.main === module) main().catch((err) => { console.error(err.message); process.exit(1); });
