@@ -96,8 +96,9 @@ test('applyIdentity synthesizes a header when none exists', () => {
 });
 
 test('applyIdentity absolutizes relative asset paths against assetBaseDir', () => {
-  const out = cfg.applyIdentity({ title: 'T', logo: '' }, { logo: './a/logo.png' }, { assetBaseDir: '/base' });
-  assert.strictEqual(out.logo.replace(/\\/g, '/'), '/base/a/logo.png');
-  const remote = cfg.applyIdentity({ title: 'T', logo: '' }, { logo: 'https://x/y.png' }, { assetBaseDir: '/base' });
+  const base = os.tmpdir();
+  const out = cfg.applyIdentity({ title: 'T', logo: '' }, { logo: './a/logo.png' }, { assetBaseDir: base });
+  assert.strictEqual(out.logo, path.resolve(base, './a/logo.png'));
+  const remote = cfg.applyIdentity({ title: 'T', logo: '' }, { logo: 'https://x/y.png' }, { assetBaseDir: base });
   assert.strictEqual(remote.logo, 'https://x/y.png'); // remote left as-is
 });

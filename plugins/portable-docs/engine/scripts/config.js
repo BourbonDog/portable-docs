@@ -130,8 +130,7 @@ function applyIdentity(header, identity, { fallbackTitle = '', assetBaseDir = nu
     if (val == null || val === '') continue;
     if (h[hk] != null && h[hk] !== '') continue; // header wins
     if ((hk === 'headshot' || hk === 'logo') && assetBaseDir && !isRemoteOrAbsolute(val)) {
-      val = expandHome(val);
-      val = path.posix.join(assetBaseDir, val);
+      val = path.resolve(assetBaseDir, expandHome(val));
     } else if (hk === 'headshot' || hk === 'logo') {
       val = expandHome(val);
     }
