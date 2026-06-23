@@ -242,7 +242,7 @@ These features are added automatically at build time — no markers needed.
 
 ### Heading anchors
 
-- Proposal `##` section headings show a `#` anchor icon on hover the heading.
+- Proposal `##` section headings reveal a `#` anchor icon when you hover the heading.
 - Clicking the anchor navigates to that section via the URL hash — a shareable deep-link you can copy from the address bar.
 - Subsection (`###`) and article headings do not get anchors.
 - Hidden in PDF/print output (`pd-no-print` class).
