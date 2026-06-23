@@ -85,6 +85,60 @@ function httpGetJson(port, pathname) {
   });
 }
 
+const MAX_CAPTURE_PX = 16384; // Chrome/Skia max texture dimension on most platforms
+/** True when a page is taller than the browser can capture in a single shot (F5). */
+function exceedsCaptureLimit(height) {
+  return Number(height) > MAX_CAPTURE_PX;
+}
+
+/** Return a CDP navigation's errorText, or null when it succeeded (F4). */
+function cdpNavError(navResult) {
+  return navResult && navResult.errorText ? navResult.errorText : null;
+}
+
+/** Resolve `p`, or reject after `ms` with a labeled timeout. Bounds individual CDP commands. */
+function withTimeout(p, ms, label) {
+  return new Promise((resolve, reject) => {
+    const to = setTimeout(() => reject(new Error(`timeout after ${ms}ms: ${label}`)), ms);
+    to.unref();
+    Promise.resolve(p).then(
+      (v) => { clearTimeout(to); resolve(v); },
+      (e) => { clearTimeout(to); reject(e); },
+    );
+  });
+}
+
+/** Remove a directory tree, retrying briefly on transient Windows lock errors. Never throws. */
+function removeDirSafe(dir) {
+  try { fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); return true; }
+  catch (_) { return false; }
+}
+
+/** Resolve once `child` has exited, or after `ms` (whichever comes first). */
+function waitForExit(child, ms) {
+  return new Promise((resolve) => {
+    if (child.exitCode !== null || child.signalCode !== null) return resolve();
+    const to = setTimeout(resolve, ms);
+    to.unref();
+    child.once('exit', () => { clearTimeout(to); resolve(); });
+  });
+}
+
+/**
+ * Tear down a CDP capture: close the socket, kill the browser, WAIT for it to
+ * release its profile lock, then remove the temp profile dir. Returns whether the
+ * dir was removed. Never throws. Waiting for exit is the Windows fix (F2) — killing
+ * and deleting in the same tick loses a race and leaves multi-MB profiles behind.
+ */
+async function killAndClean(child, ws, dir) {
+  try { if (ws) ws.close(); } catch (_) {}
+  if (child && child.pid !== undefined) {
+    try { child.kill(); } catch (_) {}
+    try { await waitForExit(child, 2000); } catch (_) {}
+  }
+  return dir ? removeDirSafe(dir) : true;
+}
+
 /**
  * Capture the ENTIRE page (beyond the viewport) as a PNG via the Chrome
  * DevTools Protocol. Returns true on success. Never throws — on any failure it
@@ -107,17 +161,28 @@ async function captureFullPagePng(browser, htmlAbs, outAbs) {
       `--user-data-dir=${userDataDir}`, '--remote-debugging-port=0', 'about:blank',
     ], { stdio: ['ignore', 'ignore', 'pipe'] });
 
+    // F1: a spawn failure (ENOENT/EACCES, AV lock, corrupt binary) emits an async
+    // 'error' event. With no listener, EventEmitter THROWS it as an uncaughtException
+    // that escapes this try/catch and crashes the process — breaking the no-throw
+    // contract. Keep a listener for the child's whole life so it is always handled,
+    // and surface it through a promise we can race the in-flight step against.
+    let onChildError;
+    const childError = new Promise((_, reject) => { onChildError = reject; });
+    childError.catch(() => {}); // a late error must not surface as an unhandled rejection
+    child.on('error', (e) => onChildError(new Error(`browser failed to launch: ${e.code || e.message}`)));
+
     // 1. Read the chosen DevTools port from stderr ("DevTools listening on ws://127.0.0.1:<port>/...").
-    const port = await new Promise((resolve, reject) => {
+    const port = await Promise.race([childError, new Promise((resolve, reject) => {
       let buf = '';
       const to = setTimeout(() => reject(new Error('timeout waiting for DevTools port')), 10000);
+      to.unref(); // an orphaned timer must not hold the process open after a fast-fail
       child.stderr.on('data', (d) => {
         buf += d.toString();
         const m = buf.match(/ws:\/\/127\.0\.0\.1:(\d+)\//);
         if (m) { clearTimeout(to); resolve(Number(m[1])); }
       });
       child.on('exit', () => { clearTimeout(to); reject(new Error('browser exited before DevTools was ready')); });
-    });
+    })]);
 
     // 2. Find the page target's WebSocket URL (retry briefly while it appears).
     let target;
@@ -160,19 +225,30 @@ async function captureFullPagePng(browser, htmlAbs, outAbs) {
       ws.send(JSON.stringify({ id, method, params: params || {} }));
     });
 
-    await send('Page.enable');
+    // F3: bound every CDP command — rejectAll handles a *crashed* browser, but a
+    // browser that stays alive yet never answers would otherwise hang forever.
+    await withTimeout(send('Page.enable'), 10000, 'Page.enable');
     const loaded = new Promise((resolve) => { onLoad = resolve; });
-    await send('Page.navigate', { url: toFileUrl(htmlAbs) });
-    await Promise.race([loaded, new Promise((r) => setTimeout(r, 8000))]);
+    // F4: a failed navigation (missing/blocked file) returns errorText rather than a
+    // CDP error — without this check we would screenshot a blank page and report success.
+    const nav = await withTimeout(send('Page.navigate', { url: toFileUrl(htmlAbs) }), 15000, 'Page.navigate');
+    const navErr = cdpNavError(nav);
+    if (navErr) throw new Error(`navigation failed: ${navErr}`);
+    await Promise.race([loaded, new Promise((r) => { const t = setTimeout(r, 8000); t.unref(); })]);
     await new Promise((r) => setTimeout(r, 300)); // settle: let React client-render finish
 
-    const metrics = await send('Page.getLayoutMetrics');
+    const metrics = await withTimeout(send('Page.getLayoutMetrics'), 10000, 'Page.getLayoutMetrics');
     const size = metrics.cssContentSize || metrics.contentSize;
-    const shot = await send('Page.captureScreenshot', {
+    // F5: extreme heights exceed the browser's max capture surface and get clipped.
+    // Warn so a short/clipped PNG is explainable; still attempt (the catch handles a hard fail).
+    if (exceedsCaptureLimit(size.height)) {
+      console.warn(`export: page is ${Math.ceil(size.height)}px tall; the browser may clip the PNG beyond ~${MAX_CAPTURE_PX}px.`);
+    }
+    const shot = await withTimeout(send('Page.captureScreenshot', {
       format: 'png',
       captureBeyondViewport: true,
       clip: { x: 0, y: 0, width: Math.ceil(size.width), height: Math.ceil(size.height), scale: 1 },
-    });
+    }), 30000, 'Page.captureScreenshot');
     if (!shot || !shot.data) throw new Error('empty screenshot');
     fs.writeFileSync(outAbs, Buffer.from(shot.data, 'base64'));
     return fs.existsSync(outAbs) && fs.statSync(outAbs).size > 0;
@@ -180,10 +256,9 @@ async function captureFullPagePng(browser, htmlAbs, outAbs) {
     console.warn(`export: full-page PNG failed: ${e.message}`);
     return false;
   } finally {
-    // Fix 1: guard every cleanup against undefined (mkdtempSync/spawn may not have run).
-    try { if (ws) ws.close(); } catch (_) {}
-    try { if (child) child.kill(); } catch (_) {}
-    if (userDataDir) { try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch (_) {} }
+    // F2: close ws, kill the browser, wait for it to release the profile lock, then
+    // remove the temp dir with retries. killAndClean guards every undefined resource.
+    await killAndClean(child, ws, userDataDir);
   }
 }
 
@@ -226,7 +301,7 @@ async function exportFile(htmlPath, opts = {}) {
   return runExport({ ...opts, htmlPath, browser: detectBrowser() });
 }
 
-module.exports = { detectBrowser, toFileUrl, buildPdfArgs, buildPngArgs, detectFormat, runExport, exportFile };
+module.exports = { detectBrowser, toFileUrl, buildPdfArgs, buildPngArgs, detectFormat, runExport, exportFile, killAndClean, withTimeout, cdpNavError };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);

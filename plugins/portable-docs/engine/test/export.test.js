@@ -59,6 +59,58 @@ test('runExport reports export-failed only when nothing was produced', async () 
   assert.ok(!r.pdf && !r.png, 'no format path set when all failed');
 });
 
+test('killAndClean kills the browser, waits for exit, then removes its profile dir', async () => {
+  const { EventEmitter } = require('node:events');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-kc-'));
+  fs.mkdirSync(path.join(dir, 'sub'));
+  fs.writeFileSync(path.join(dir, 'sub', 'f'), 'x'); // non-empty → recursive removal required
+  const child = new EventEmitter();
+  child.pid = 4321; child.exitCode = null; child.signalCode = null;
+  let killed = false;
+  // exit fires slightly after kill, mimicking the OS releasing the profile lock late.
+  child.kill = () => { killed = true; setTimeout(() => { child.exitCode = 0; child.emit('exit', 0, null); }, 20); };
+  let wsClosed = false;
+  const ws = { close() { wsClosed = true; } };
+  const ok = await exp.killAndClean(child, ws, dir);
+  assert.ok(wsClosed, 'ws closed');
+  assert.ok(killed, 'child killed');
+  assert.strictEqual(ok, true);
+  assert.ok(!fs.existsSync(dir), 'profile dir removed after exit');
+});
+
+test('withTimeout passes a fast result through and rejects a slow one', async () => {
+  assert.strictEqual(await exp.withTimeout(Promise.resolve('ok'), 1000, 'fast'), 'ok');
+  await assert.rejects(
+    () => exp.withTimeout(new Promise((r) => { const t = setTimeout(() => r('late'), 200); t.unref(); }), 10, 'slow'),
+    /timeout after 10ms: slow/,
+  );
+});
+
+test('exceedsCaptureLimit flags pages past the browser capture limit', () => {
+  assert.strictEqual(exp.exceedsCaptureLimit(4800), false);
+  assert.strictEqual(exp.exceedsCaptureLimit(16384), false);
+  assert.strictEqual(exp.exceedsCaptureLimit(16385), true);
+});
+
+test('cdpNavError surfaces a failed navigation and passes a clean one', () => {
+  assert.strictEqual(exp.cdpNavError({ frameId: 'x' }), null);
+  assert.strictEqual(exp.cdpNavError({ errorText: 'net::ERR_FILE_NOT_FOUND' }), 'net::ERR_FILE_NOT_FOUND');
+  assert.strictEqual(exp.cdpNavError(undefined), null);
+});
+
+test('runExport: PNG via CDP with an unspawnable browser degrades gracefully (no crash)', async () => {
+  // proposal format routes through captureFullPagePng (async spawn). A browser path
+  // that cannot be spawned emits an async 'error' event; the module must catch it and
+  // degrade, not crash the process with an unhandled 'error'.
+  const html = path.join(os.tmpdir(), `pd-f1-${process.hrtime.bigint()}.html`);
+  fs.writeFileSync(html, '<!DOCTYPE html><html data-pd-format="proposal"><body><p>x</p></body></html>');
+  try {
+    const r = await exp.runExport({ htmlPath: html, browser: '/no/such/pd-browser-xyz', png: true });
+    assert.strictEqual(r.skipped, 'export-failed');
+    assert.ok(!r.png, 'no png produced');
+  } finally { fs.rmSync(html, { force: true }); }
+});
+
 test('end-to-end export: full PDF + full-page PNG (taller than viewport)', { skip: exp.detectBrowser() ? false : 'no system browser available' }, async () => {
   // A deliberately tall document (~200 stacked paragraphs) so a viewport-only
   // screenshot (≤ ~900px) would be far shorter than the real page height.
