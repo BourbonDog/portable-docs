@@ -64,15 +64,35 @@ async function buildProposalFixtureToString(sectionTitles) {
 test('section headings get slug ids and a deep-link anchor', async () => {
   const html = await buildProposalFixtureToString(['Alpha Strategy', 'Bravo Plan']);
 
-  // The output is a compiled JS bundle — check for expressions that survive compilation.
-  // The heading id is set as id: slugify(title) and the href as `#${slugify(title)}`.
+  // The output is a compiled JS bundle (JSX → React.createElement; template literals are
+  // preserved verbatim).  Each assertion targets an exact substring that would NOT appear
+  // if the feature were absent or reduced to a no-op stub.
+
+  // 1. slugify helper is a real implementation — its body must contain toLowerCase AND trim
+  //    AND replace, so a no-op `const slugify = s => s` would make this fail.
   assert.ok(
-    html.includes('id: slugify(title)') || html.includes('id="alpha-strategy"') || html.includes('"alpha-strategy"'),
-    'slug id present (either as expression or evaluated value)'
+    html.includes('toLowerCase().trim().replace'),
+    'slugify helper body must contain toLowerCase().trim().replace (not a no-op stub)'
   );
-  assert.ok(html.includes('pd-anchor'), 'anchor link present');
+
+  // 2. The <h2> id prop is wired to slugify(title) — compiled form is:
+  //    id: slugify(title),
   assert.ok(
-    html.includes('slugify(title)') || html.includes('#alpha-strategy'),
-    'deep link target expression present'
+    html.includes('id: slugify(title)'),
+    'h2 id prop must be wired to slugify(title)'
+  );
+
+  // 3. The deep-link anchor href is the template literal `#${slugify(title)}` — compiled
+  //    form is: href: `#${slugify(title)}`,
+  //    A hardcoded href (e.g. href: "#") or a missing href would fail this.
+  assert.ok(
+    html.includes('href: `#${slugify(title)}`'),
+    'anchor href must be the template literal `#${slugify(title)}`'
+  );
+
+  // 4. Both CSS classes must be present together on the anchor element.
+  assert.ok(
+    html.includes('pd-anchor pd-no-print'),
+    'anchor must carry both pd-anchor and pd-no-print classes'
   );
 });
