@@ -1,6 +1,6 @@
 {
   "name": "portable-docs",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Generate polished, self-contained, shareable HTML documents from your content.",
   "license": "MIT",
   "keywords": ["claude-code-plugin", "claude-marketplace", "agent-skill", "html", "documents", "proposals", "react"],

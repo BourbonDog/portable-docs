@@ -6,6 +6,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.1.2] — 2026-06-23
+
+### Changed
+- `CardGrid` expand icons and chevrons use theme-aware colors (`COLORS.ink[50]`) instead of hardcoded white, matching the earlier `Timeline` de-hardcode so they adapt under the dark theme and unusual `PD_ACCENT` values. Default output stays byte-equal to `--theme editorial`.
+
+### Fixed
+- The "Image unavailable" placeholder shown when an article image fails to load now carries `role="img"` and `aria-label="Image unavailable"`, so assistive technology treats it as a proper image replacement.
+
+---
+
 ## [0.1.1] — 2026-06-23
 
 ### Added
