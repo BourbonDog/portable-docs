@@ -62,11 +62,17 @@ function readDesignTokens() {
 // inlined ahead of the design tokens in the browser bundle. This makes
 // normalizeHex()/lighten() available to the design-tokens accent-override IIFE.
 function readColorHelper() {
-  const src = fs.readFileSync(path.join(SRC_DIR, 'color.js'), 'utf-8');
+  const filePath = path.join(SRC_DIR, 'color.js');
+  if (!fs.existsSync(filePath)) {
+    console.error('Error: color.js not found.');
+    process.exit(1);
+  }
+  const src = fs.readFileSync(filePath, 'utf-8');
   return src
     .replace(/^'use strict';?\s*$/m, '')
-    // Strip block comments (/** … */) so no comment text leaks into the bundle.
-    // This removes the JSDoc header that contains "process.env" in a note.
+    // Strip block comments BEFORE removing module.exports: color.js's JSDoc
+    // mentions "process.env" as a note, which must not leak into the browser
+    // bundle (a themes test asserts the output contains no "process.env").
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/^module\.exports\s*=.*$/m, '')
     .trim();
