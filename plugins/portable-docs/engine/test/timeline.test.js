@@ -15,10 +15,10 @@ test('timeline source: no hardcoded white literals remain', () => {
   assert.ok(!src.includes('rgba(255,255,255'), 'Timeline.jsx must not hardcode rgba white');
 });
 
-test('timeline source: computes getCompanyLogo once per card', () => {
+test('timeline source: getCompanyLogo is called exactly once per card', () => {
   const src = fs.readFileSync(TIMELINE_SRC, 'utf8');
-  assert.ok(src.includes('const logo = getCompanyLogo(entry.company, 20)'),
-    'TimelineCard must bind the company logo to a single const');
+  const callSites = (src.match(/getCompanyLogo\(/g) || []).length;
+  assert.strictEqual(callSites, 1, 'getCompanyLogo must be invoked exactly once (compute-once refactor)');
 });
 
 async function buildProposal() {
