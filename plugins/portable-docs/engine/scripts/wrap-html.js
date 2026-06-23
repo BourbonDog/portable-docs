@@ -84,6 +84,7 @@ ${bundle}
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);`;
   const compiled = compileToJs(scriptBodyJsx);
+  const safeCompiled = compiled.replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
 
   return `<!DOCTYPE html>
 <html lang="en"${themeAttr}>
@@ -105,7 +106,7 @@ ${printCss}
 <body>
   <div id="root"></div>
   <script>
-${compiled}
+${safeCompiled}
   </script>
 </body>
 </html>`;

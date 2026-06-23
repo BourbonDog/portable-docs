@@ -4,7 +4,15 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { wrapHtml } = require('../scripts/wrap-html.js');
+const { wrapHtml, generateHTML } = require('../scripts/wrap-html.js');
+
+test('generateHTML escapes </script> in the inlined app body', () => {
+  // A bundle whose compiled output embeds the literal closing tag in content.
+  const bundle = 'const App = () => React.createElement("pre", null, "a</script>b");';
+  const out = generateHTML(bundle, 'T', 'editorial');
+  assert.ok(out.includes('a<\\/script>b'), 'closing tag inside content is escaped');
+  assert.ok(!out.includes('a</script>b'), 'no raw </script> survives from content');
+});
 
 test('wrapHtml inlines React, precompiles JSX, ships no CDN/Babel', () => {
   const out = path.join(os.tmpdir(), `pd-wrap-${process.hrtime.bigint()}.html`);
