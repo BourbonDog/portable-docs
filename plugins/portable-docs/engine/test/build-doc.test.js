@@ -22,6 +22,16 @@ test('resolveOutPath defaults under ~/Documents/portable-docs', () => {
 // Strategy: inject a throwing stub into the require cache for build.js so that
 // main() throws inside its try block (AFTER PD_THEME is mutated, BEFORE the
 // old mid-try restore point). Assert PD_THEME returns to its pre-call value.
+test('parseArgs recognizes --pdf and --png', () => {
+  const { parseArgs } = require('../scripts/build-doc.js');
+  const a = parseArgs(['--input', 'x.md', '--pdf', '--png']);
+  assert.strictEqual(a.pdf, true);
+  assert.strictEqual(a.png, true);
+  const b = parseArgs(['--input', 'x.md']);
+  assert.strictEqual(b.pdf, false);
+  assert.strictEqual(b.png, false);
+});
+
 test('build-doc: PD_THEME is restored in finally even when build() throws', async () => {
   const ENGINE = path.join(__dirname, '..');
   const FIXTURE = path.join(__dirname, 'fixtures', 'sample.md');

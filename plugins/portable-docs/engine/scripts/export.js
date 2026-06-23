@@ -227,3 +227,19 @@ async function exportFile(htmlPath, opts = {}) {
 }
 
 module.exports = { detectBrowser, toFileUrl, buildPdfArgs, buildPngArgs, detectFormat, runExport, exportFile };
+
+if (require.main === module) {
+  const argv = process.argv.slice(2);
+  const file = argv.find((a) => !a.startsWith('--'));
+  let pdf = argv.includes('--pdf');
+  let png = argv.includes('--png');
+  if (!pdf && !png) { pdf = true; png = true; }
+  const outIdx = argv.indexOf('--out');
+  const outDir = outIdx >= 0 ? argv[outIdx + 1] : undefined;
+  if (!file) { console.error('export: <file.html> is required'); process.exit(1); }
+  // exportFile is async (full-page PNG uses CDP); await it.
+  exportFile(file, { pdf, png, outDir }).then((r) => {
+    if (r.pdf) console.log(r.pdf);
+    if (r.png) console.log(r.png);
+  });
+}

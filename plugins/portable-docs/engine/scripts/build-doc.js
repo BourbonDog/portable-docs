@@ -17,6 +17,16 @@ const fs   = require('fs');
 const path = require('path');
 const os   = require('os');
 const { inlineLocalImages } = require('./inline-assets.js');
+const { exportFile } = require('./export.js');
+
+/** Build-time export hook: PDF/PNG via system browser when --pdf/--png set.
+ *  exportFile is async (full-page PNG uses CDP), so this is awaited below. */
+async function maybeExport(args, outPath) {
+  if (!args.pdf && !args.png) return;
+  const r = await exportFile(outPath, { pdf: args.pdf, png: args.png });
+  if (r.pdf) console.log(`build-doc: PDF → ${r.pdf}`);
+  if (r.png) console.log(`build-doc: PNG → ${r.png}`);
+}
 
 // ── Pure helpers (no I/O — unit-testable) ───────────────────────────────────
 
@@ -42,6 +52,8 @@ function parseArgs(argv) {
     style:  'proposal',  // default format; --style article switches pipelines
     slides: false,
     jsx:    false,
+    pdf:    false,
+    png:    false,
     open:   true,        // default open=true; --no-open sets false
   };
   for (let i = 0; i < argv.length; i++) {
@@ -54,6 +66,8 @@ function parseArgs(argv) {
       case '--style':  opts.style  = argv[++i] || 'proposal'; break;
       case '--slides': opts.slides = true;       break;
       case '--jsx':    opts.jsx    = true;       break;
+      case '--pdf':    opts.pdf    = true;       break;
+      case '--png':    opts.png    = true;       break;
       case '--no-open':opts.open   = false;      break;
     }
   }
@@ -162,7 +176,10 @@ async function runSlides(args, md) {
       console.log(`build-doc: JSX bundle copied to ${jsxOut}`);
     }
 
-    // 10. Optionally open.
+    // 10. Optionally export to PDF/PNG.
+    await maybeExport(args, outPath);
+
+    // 11. Optionally open.
     if (args.open) {
       const { openFile } = require('./open.js');
       openFile(outPath);
@@ -274,7 +291,10 @@ async function runArticle(args, md) {
       console.log(`build-doc: JSX bundle copied to ${jsxOut}`);
     }
 
-    // 10. Optionally open.
+    // 10. Optionally export to PDF/PNG.
+    await maybeExport(args, outPath);
+
+    // 11. Optionally open.
     if (args.open) {
       const { openFile } = require('./open.js');
       openFile(outPath);
@@ -414,13 +434,16 @@ async function main() {
       console.log(`build-doc: JSX bundle copied to ${jsxOut}`);
     }
 
-    // 9. Optionally open.
+    // 9. Optionally export to PDF/PNG.
+    await maybeExport(args, outPath);
+
+    // 10. Optionally open.
     if (args.open) {
       const { openFile } = require('./open.js');
       openFile(outPath);
     }
 
-    // 10. Report.
+    // 11. Report.
     console.log(path.resolve(outPath));
   } finally {
     // Restore ALL four PD_* env vars to their pre-call values so repeated
