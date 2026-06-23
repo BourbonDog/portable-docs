@@ -27,3 +27,6 @@ test('lighten produces a value distinct from and lighter than input', () => {
   assert.notStrictEqual(out, '#5B21B6');
   assert.match(out, /^#[0-9A-F]{6}$/);
 });
+test('normalizeHex pads a malformed 5-digit hex to a valid 6-digit value', () => {
+  assert.match(normalizeHex('#E33AA'), /^#[0-9A-F]{6}$/);
+});

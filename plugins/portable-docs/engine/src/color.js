@@ -12,8 +12,11 @@ function normalizeHex(hex) {
   let h = String(hex).trim().replace(/^#/, '');
   if (h.length === 3 || h.length === 4) {
     h = h.slice(0, 3).split('').map((c) => c + c).join('');
-  } else {
+  } else if (h.length >= 6) {
     h = h.slice(0, 6);
+  } else {
+    // Malformed short input (e.g. a 5-digit hex): pad to a valid 6-digit value.
+    h = (h + '000000').slice(0, 6);
   }
   return '#' + h.toUpperCase();
 }
