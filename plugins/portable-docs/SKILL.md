@@ -79,7 +79,7 @@ for the complete syntax. The key rules per format:
 ### Proposal format (default)
 
 - Add a `<!-- @header -->` block at the top with `@title`, `@subtitle`,
-  `@brand`, `@date`, `@from`, etc.
+  `@brand`, `@date`, `@from`, `@footer`, etc.
 - Structure body as numbered `## N. Title` sections, `### Subsection` headings.
 - Insert `@`-marker blocks to produce rich components. Match content type to
   component using `references/components.md`:
@@ -175,10 +175,10 @@ node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
 |------|---------|---------|
 | `--input <md>` | (required) | Path to input markdown file |
 | `--out <html>` | `~/Documents/portable-docs/<slug>.html` | Output HTML path |
-| `--title <text>` | Derived from `@title` or filename | Document title (also sets output slug) |
+| `--title <text>` | `@header` `@title`, else input filename | Document title; also drives the default output slug |
 | `--theme <name>` | `editorial` | Theme: `editorial` \| `dark` \| `brand` |
 | `--style <name>` | `proposal` | Format: `proposal` \| `article` |
-| `--slides` | off | Slide deck format (wins over `--style article`) |
+| `--slides` | off | Slide deck format. If combined with `--style article`, `--slides` silently wins (no error). |
 | `--jsx` | off | Copy the JSX bundle next to the HTML output |
 | `--no-open` | (opens by default) | Suppress auto-open in browser |
 
@@ -187,7 +187,7 @@ node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
 | Var | Purpose |
 |-----|---------|
 | `PORTABLE_DOCS_OUT` | Session-wide output path override (same as `--out`) |
-| `PD_THEME` | Session-wide theme override (overridden by `--theme`) |
+| `PD_THEME` | Session-wide theme default. An explicit `--theme` flag always wins over `PD_THEME`. |
 | `PD_ACCENT` | Hex accent color override (e.g. `PD_ACCENT=#E63946`) |
 
 On success the engine prints the resolved output path and exits 0. The HTML
