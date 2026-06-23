@@ -183,13 +183,22 @@ const TerminalWindow = ({
   variant = 'default'
 }) => {
   const [ref, inView] = useTerminalInView();
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     injectTerminalKeyframes();
   }, []);
 
-  // Convert single string to lines array if needed
   const contentLines = Array.isArray(lines) ? lines : [lines];
+  const copyText = contentLines.join('\n');
+  const onCopy = () => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(copyText).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      });
+    }
+  };
 
   const { displayLines, isDone, currentLineIndex } = useMultiLineTypewriter(
     contentLines,
@@ -242,8 +251,25 @@ const TerminalWindow = ({
         >
           {title}
         </div>
-        {/* Spacer for symmetry */}
-        <div style={{ width: '52px' }} />
+        {/* Copy button — hidden in print */}
+        <button
+          className="pd-copy-btn pd-no-print"
+          aria-label="Copy code"
+          onClick={onCopy}
+          style={{
+            fontFamily: FONTS.mono,
+            fontSize: '0.75rem',
+            background: 'transparent',
+            color: 'rgba(255,255,255,0.5)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '4px',
+            padding: '2px 8px',
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+        >
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
       </div>
 
       {/* Terminal content area */}
