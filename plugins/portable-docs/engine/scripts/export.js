@@ -96,15 +96,17 @@ async function captureFullPagePng(browser, htmlAbs, outAbs) {
     console.warn('export: full-page PNG needs Node >= 22 (global WebSocket); skipping PNG.');
     return false;
   }
-  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-cdp-'));
-  const child = spawn(browser, [
-    '--headless=new', '--disable-gpu', '--hide-scrollbars',
-    '--no-first-run', '--no-default-browser-check',
-    `--user-data-dir=${userDataDir}`, '--remote-debugging-port=0', 'about:blank',
-  ], { stdio: ['ignore', 'ignore', 'pipe'] });
-
-  let ws;
+  // Fix 1: declare resource vars before try so finally can always guard them.
+  let userDataDir, child, ws;
   try {
+    // Fix 1: mkdtempSync + spawn moved inside try so any throw is caught.
+    userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-cdp-'));
+    child = spawn(browser, [
+      '--headless=new', '--disable-gpu', '--hide-scrollbars',
+      '--no-first-run', '--no-default-browser-check',
+      `--user-data-dir=${userDataDir}`, '--remote-debugging-port=0', 'about:blank',
+    ], { stdio: ['ignore', 'ignore', 'pipe'] });
+
     // 1. Read the chosen DevTools port from stderr ("DevTools listening on ws://127.0.0.1:<port>/...").
     const port = await new Promise((resolve, reject) => {
       let buf = '';
@@ -135,17 +137,26 @@ async function captureFullPagePng(browser, htmlAbs, outAbs) {
       ws.addEventListener('error', () => reject(new Error('CDP websocket error')), { once: true });
     });
 
+    // Fix 2: track both resolve AND reject per pending command; reject all on close/error.
     let nextId = 1;
     const pending = new Map();
     let onLoad = null;
+    const rejectAll = (err) => { for (const { reject } of pending.values()) reject(err); pending.clear(); };
     ws.addEventListener('message', (ev) => {
       const msg = JSON.parse(ev.data);
-      if (msg.id && pending.has(msg.id)) { pending.get(msg.id)(msg.result); pending.delete(msg.id); }
-      else if (msg.method === 'Page.loadEventFired' && onLoad) { onLoad(); }
+      if (msg.id && pending.has(msg.id)) {
+        const { resolve, reject } = pending.get(msg.id);
+        pending.delete(msg.id);
+        // Fix 3: surface CDP-level errors instead of silently resolving with undefined.
+        if (msg.error) reject(new Error(`CDP ${msg.method || ''} error: ${msg.error.message || JSON.stringify(msg.error)}`));
+        else resolve(msg.result);
+      } else if (msg.method === 'Page.loadEventFired' && onLoad) { onLoad(); }
     });
-    const send = (method, params) => new Promise((resolve) => {
+    ws.addEventListener('close', () => rejectAll(new Error('CDP websocket closed')));
+    ws.addEventListener('error', () => rejectAll(new Error('CDP websocket error')));
+    const send = (method, params) => new Promise((resolve, reject) => {
       const id = nextId++;
-      pending.set(id, resolve);
+      pending.set(id, { resolve, reject });
       ws.send(JSON.stringify({ id, method, params: params || {} }));
     });
 
@@ -169,9 +180,10 @@ async function captureFullPagePng(browser, htmlAbs, outAbs) {
     console.warn(`export: full-page PNG failed: ${e.message}`);
     return false;
   } finally {
+    // Fix 1: guard every cleanup against undefined (mkdtempSync/spawn may not have run).
     try { if (ws) ws.close(); } catch (_) {}
-    try { child.kill(); } catch (_) {}
-    try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch (_) {}
+    try { if (child) child.kill(); } catch (_) {}
+    if (userDataDir) { try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch (_) {} }
   }
 }
 
