@@ -7,7 +7,9 @@
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
-const { spawnSync } = require('child_process');
+const os = require('os');
+const http = require('http');
+const { spawn, spawnSync } = require('child_process');
 
 function candidateBrowsers() {
   if (process.env.PD_BROWSER) return [process.env.PD_BROWSER];
@@ -71,7 +73,109 @@ function buildPngArgs(htmlAbs, outAbs, opts = {}) {
   return args;
 }
 
-function runExport({ htmlPath, browser, pdf = false, png = false, outDir } = {}) {
+/** GET http://127.0.0.1:<port><pathname> and parse the JSON body. */
+function httpGetJson(port, pathname) {
+  return new Promise((resolve, reject) => {
+    const req = http.get({ host: '127.0.0.1', port, path: pathname }, (res) => {
+      let data = '';
+      res.on('data', (c) => { data += c; });
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch (e) { reject(e); } });
+    });
+    req.on('error', reject);
+  });
+}
+
+/**
+ * Capture the ENTIRE page (beyond the viewport) as a PNG via the Chrome
+ * DevTools Protocol. Returns true on success. Never throws — on any failure it
+ * warns and returns false so the caller degrades gracefully.
+ * Requires Node's global WebSocket (Node >= 22).
+ */
+async function captureFullPagePng(browser, htmlAbs, outAbs) {
+  if (typeof WebSocket === 'undefined') {
+    console.warn('export: full-page PNG needs Node >= 22 (global WebSocket); skipping PNG.');
+    return false;
+  }
+  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-cdp-'));
+  const child = spawn(browser, [
+    '--headless=new', '--disable-gpu', '--hide-scrollbars',
+    '--no-first-run', '--no-default-browser-check',
+    `--user-data-dir=${userDataDir}`, '--remote-debugging-port=0', 'about:blank',
+  ], { stdio: ['ignore', 'ignore', 'pipe'] });
+
+  let ws;
+  try {
+    // 1. Read the chosen DevTools port from stderr ("DevTools listening on ws://127.0.0.1:<port>/...").
+    const port = await new Promise((resolve, reject) => {
+      let buf = '';
+      const to = setTimeout(() => reject(new Error('timeout waiting for DevTools port')), 10000);
+      child.stderr.on('data', (d) => {
+        buf += d.toString();
+        const m = buf.match(/ws:\/\/127\.0\.0\.1:(\d+)\//);
+        if (m) { clearTimeout(to); resolve(Number(m[1])); }
+      });
+      child.on('exit', () => { clearTimeout(to); reject(new Error('browser exited before DevTools was ready')); });
+    });
+
+    // 2. Find the page target's WebSocket URL (retry briefly while it appears).
+    let target;
+    for (let i = 0; i < 30 && !target; i++) {
+      try {
+        const list = await httpGetJson(port, '/json');
+        target = list.find((t) => t.type === 'page' && t.webSocketDebuggerUrl);
+      } catch (_) { /* not ready yet */ }
+      if (!target) await new Promise((r) => setTimeout(r, 100));
+    }
+    if (!target) throw new Error('no CDP page target found');
+
+    // 3. Connect, navigate, wait for load, measure, screenshot.
+    ws = new WebSocket(target.webSocketDebuggerUrl);
+    await new Promise((resolve, reject) => {
+      ws.addEventListener('open', resolve, { once: true });
+      ws.addEventListener('error', () => reject(new Error('CDP websocket error')), { once: true });
+    });
+
+    let nextId = 1;
+    const pending = new Map();
+    let onLoad = null;
+    ws.addEventListener('message', (ev) => {
+      const msg = JSON.parse(ev.data);
+      if (msg.id && pending.has(msg.id)) { pending.get(msg.id)(msg.result); pending.delete(msg.id); }
+      else if (msg.method === 'Page.loadEventFired' && onLoad) { onLoad(); }
+    });
+    const send = (method, params) => new Promise((resolve) => {
+      const id = nextId++;
+      pending.set(id, resolve);
+      ws.send(JSON.stringify({ id, method, params: params || {} }));
+    });
+
+    await send('Page.enable');
+    const loaded = new Promise((resolve) => { onLoad = resolve; });
+    await send('Page.navigate', { url: toFileUrl(htmlAbs) });
+    await Promise.race([loaded, new Promise((r) => setTimeout(r, 8000))]);
+    await new Promise((r) => setTimeout(r, 300)); // settle: let React client-render finish
+
+    const metrics = await send('Page.getLayoutMetrics');
+    const size = metrics.cssContentSize || metrics.contentSize;
+    const shot = await send('Page.captureScreenshot', {
+      format: 'png',
+      captureBeyondViewport: true,
+      clip: { x: 0, y: 0, width: Math.ceil(size.width), height: Math.ceil(size.height), scale: 1 },
+    });
+    if (!shot || !shot.data) throw new Error('empty screenshot');
+    fs.writeFileSync(outAbs, Buffer.from(shot.data, 'base64'));
+    return fs.existsSync(outAbs) && fs.statSync(outAbs).size > 0;
+  } catch (e) {
+    console.warn(`export: full-page PNG failed: ${e.message}`);
+    return false;
+  } finally {
+    try { if (ws) ws.close(); } catch (_) {}
+    try { child.kill(); } catch (_) {}
+    try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch (_) {}
+  }
+}
+
+async function runExport({ htmlPath, browser, pdf = false, png = false, outDir } = {}) {
   if (!browser) {
     console.warn('export: No headless Chrome/Edge/Chromium found. Install one, set PD_BROWSER, or open the HTML and use Print → Save as PDF.');
     return { skipped: 'no-browser' };
@@ -91,17 +195,22 @@ function runExport({ htmlPath, browser, pdf = false, png = false, outDir } = {})
   if (png) {
     const out = `${base}.png`;
     const fmt = detectFormat(htmlAbs);
-    const windowSize = fmt === 'slides' ? '1600,900' : undefined; // slides: hero of slide 0
-    const r = spawnSync(browser, buildPngArgs(htmlAbs, out, { windowSize }), { stdio: ['ignore', 'ignore', 'pipe'] });
-    if (r.status === 0 && fs.existsSync(out)) result.png = out;
-    else console.warn(`export: PNG failed${r.stderr && r.stderr.length ? ': ' + r.stderr.toString().slice(-300) : ''}`);
+    if (fmt === 'slides') {
+      // Slide decks: a single hero shot of slide 0 (single viewport by design).
+      const r = spawnSync(browser, buildPngArgs(htmlAbs, out, { windowSize: '1600,900' }), { stdio: ['ignore', 'ignore', 'pipe'] });
+      if (r.status === 0 && fs.existsSync(out)) result.png = out;
+      else console.warn(`export: PNG failed${r.stderr && r.stderr.length ? ': ' + r.stderr.toString().slice(-300) : ''}`);
+    } else {
+      // Proposals/articles: full scrollable page via CDP.
+      if (await captureFullPagePng(browser, htmlAbs, out)) result.png = out;
+    }
   }
 
   if ((pdf || png) && !result.pdf && !result.png) result.skipped = 'export-failed';
   return result;
 }
 
-function exportFile(htmlPath, opts = {}) {
+async function exportFile(htmlPath, opts = {}) {
   return runExport({ ...opts, htmlPath, browser: detectBrowser() });
 }
 
