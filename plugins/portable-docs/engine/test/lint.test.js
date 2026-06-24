@@ -432,3 +432,30 @@ test('resume rules are silent when type is null', () => {
     assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
   }
 });
+
+test('landing: no @cta warns (landing-no-cta)', () => {
+  const md = ['<!-- @header -->', '<!-- @title value="X" -->', '<!-- /@header -->', '## 1. Why X', 'prose'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'landing' });
+  assert.ok(r.warnings.some((w) => w.code === 'landing-no-cta'));
+});
+
+test('landing: no @header warns (landing-no-hero)', () => {
+  const md = ['## 1. Why X', '<!-- @cta label="Go" href="https://x" -->', '<!-- /@cta -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'landing' });
+  assert.ok(r.warnings.some((w) => w.code === 'landing-no-hero'));
+});
+
+test('landing: hero + cta present is clean of landing-* warnings', () => {
+  const md = ['<!-- @header -->', '<!-- @title value="X" -->', '<!-- /@header -->', '<!-- @cta label="Go" href="https://x" -->', '<!-- /@cta -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'landing' });
+  assert.ok(!r.warnings.some((w) => w.code === 'landing-no-cta' || w.code === 'landing-no-hero'));
+});
+
+test('landing rules are silent when type is null', () => {
+  const md = ['## 1. Why X', 'prose'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  const codes = [...r.errors, ...r.warnings].map((d) => d.code);
+  for (const c of ['landing-no-cta', 'landing-no-hero']) {
+    assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
+  }
+});

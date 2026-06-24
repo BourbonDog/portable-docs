@@ -352,6 +352,18 @@ function lintMarkdown(md, opts = {}) {
     }
   }
 
+  if (type === 'landing') {
+    const src = String(md);
+    if (!/<!--\s*@cta\b/.test(src)) {
+      warnings.push({ line: 0, severity: 'warning', code: 'landing-no-cta',
+        message: `Landing page has no @cta — add a call-to-action band (a landing page needs at least one)` });
+    }
+    if (!/<!--\s*@header\s*-->/.test(src)) {
+      warnings.push({ line: 0, severity: 'warning', code: 'landing-no-hero',
+        message: `Landing page has no @header — the hero is the defining first element of a landing page` });
+    }
+  }
+
   if (type === 'case-study') {
     const src = String(md);
     const hasStats = /<!--\s*@stats\b/.test(src);

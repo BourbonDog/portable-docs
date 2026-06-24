@@ -197,3 +197,21 @@ test('lint: resume.md is error-free under --type resume', () => {
   const r = lintMarkdown(md, { format: 'proposal', type: 'resume' });
   assert.deepStrictEqual(r.errors, [], 'resume template must have no lint errors');
 });
+
+// ── 10. landing.md — --type landing (Phase 5a) ───────────────────────────────
+
+test('templates: landing.md builds clean under --type landing', async () => {
+  const html = await runBuild({ input: path.join(TEMPLATES, 'landing.md'), type: 'landing' });
+  assert.ok(html.length > 1000);
+  assert.ok(html.includes('<!DOCTYPE html'));
+  assert.ok(html.includes('crestline.example/signup'), 'landing output must contain the CTA href');
+  assert.ok(html.includes('Stop drowning in alert noise'), 'the hero CTA (inside section 1) must render');
+  assertNoBannedLiterals(html, 'landing.md');
+});
+
+test('lint: landing.md is error-free and warning-free under --type landing', () => {
+  const md = fs.readFileSync(path.join(TEMPLATES, 'landing.md'), 'utf8');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'landing' });
+  assert.deepStrictEqual(r.errors, []);
+  assert.deepStrictEqual(r.warnings, []);
+});
