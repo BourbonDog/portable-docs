@@ -524,8 +524,11 @@ tables, images.
 ## 4. Diagram Markers
 
 Three native diagram types are available in **all three formats** (proposal, article, slides).
-Data is supplied as an inline fenced JSON block (`src=` is not supported for diagrams).
-A `src=` attribute is ignored; the JSON must be inline.
+Data for `@flow` and `@quadrant` is supplied either as an inline fenced ` ```json ` block
+in the marker body **or** from an external file via `src="./path.json"` (resolved relative
+to the `.md`). `src=` wins if both are given — the same precedence as the data-driven chart
+types. `@mermaid` likewise takes its diagram source inline in the body **or** from
+`src="./diagram.mmd"` (`src=` wins).
 
 ---
 
