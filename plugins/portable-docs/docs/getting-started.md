@@ -60,8 +60,7 @@ It opens in your browser. The file is saved to `~/Documents/portable-docs/first.
 
 By default every build writes to `~/Documents/portable-docs/<slug>.html`.
 
-- Override for one run: `--out ~/Desktop/my-doc.html`
-- Override globally: set `PORTABLE_DOCS_OUT` in your environment or add `"outputDir"` to your config file.
+- Override for one run with `--out <path>`, or set a project-wide default in `portable-docs.config.json` (the `outDir` key).
 
 See [commands-and-cli.md](commands-and-cli.md) for the full flag reference and [theming-and-branding.md](theming-and-branding.md#output-location) for config-file options.
 
