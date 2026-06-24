@@ -88,17 +88,17 @@ const BlockRenderer = ({ block, context }) => {
  * Render component markers (stats, charts, quotes, cards, etc.)
  */
 const renderComponent = (block, context) => {
-  const { chartsByType, getCardsBySection, getQuotesBySection, terminalIndex } = context;
+  const { getCardsBySection, getQuotesBySection, terminalIndex } = context;
 
   switch (block.component) {
     case 'stats':
       return CONTENT.stats.length > 0 ? <StatsGrid stats={CONTENT.stats} /> : null;
 
     case 'chart': {
-      const chartType = block.param;
-      const chartData = chartsByType[chartType]?.[0];
-      if (chartData) return <Chart type={chartType} data={chartData} />;
-      return null;
+      const chart = CONTENT.charts[context.chartIndex.current];
+      if (!chart) return null;
+      context.chartIndex.current++;
+      return <Chart type={chart.type} data={chart} />;
     }
 
     case 'convergence':
@@ -233,10 +233,11 @@ const App = () => {
     injectGlobalStyles();
   }, []);
 
-  // Index refs for sequential components (tables, terminals, pullquotes)
+  // Index refs for sequential components (tables, terminals, pullquotes, charts)
   const tableIndex = { current: 0 };
   const terminalIndex = { current: 0 };
   const pullquoteIndex = { current: 0 };
+  const chartIndex = { current: 0 };
 
   // Component lookup by type
   const chartsByType = {};
@@ -258,6 +259,7 @@ const App = () => {
   // Context object passed to renderers
   const context = {
     chartsByType,
+    chartIndex,
     getCardsBySection,
     getQuotesBySection,
     pullquoteIndex,

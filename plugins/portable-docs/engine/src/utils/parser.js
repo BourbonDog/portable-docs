@@ -379,10 +379,7 @@ function parseContentBlocks(text) {
   // Remove component markers (they'll be handled separately)
   let cleaned = text
     .replace(/<!-- @stats -->[\s\S]*?<!-- \/@stats -->/g, '<!--COMPONENT:stats-->')
-    .replace(/<!-- @chart[^>]*-->[\s\S]*?<!-- \/@chart -->/g, (match) => {
-      const typeMatch = match.match(/type="([^"]*)"/);
-      return `<!--COMPONENT:chart:${typeMatch ? typeMatch[1] : 'unknown'}-->`;
-    })
+    .replace(/<!-- @chart[^>]*-->[\s\S]*?<!-- \/@chart -->/g, '<!--COMPONENT:chart-->')
     .replace(/<!-- @convergence[^>]*-->[\s\S]*?<!-- \/@convergence -->/g, '<!--COMPONENT:convergence-->')
     .replace(/<!-- @quotes[^>]*-->[\s\S]*?<!-- \/@quotes -->/g, (match) => {
       const sectionMatch = match.match(/section="([^"]*)"/);
