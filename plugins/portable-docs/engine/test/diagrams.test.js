@@ -92,3 +92,47 @@ test('parseFlowBlock: CRLF body still resolves', () => {
   assert.strictEqual(f.error, null);
   assert.strictEqual(f.systemName, 'Hindsight');
 });
+
+const { parseQuadrantBlock, extractQuadrantPlaceholders } = require('../src/utils/diagrams.js');
+
+const QUAD_OK = [
+  '<!-- @quadrant title="Map" subtitle="2026" -->',
+  '```json',
+  '{ "xAxisLow":"Niche","xAxisHigh":"Broad","yAxisLow":"Low","yAxisHigh":"High",',
+  '  "quadrantLabels":["A","B","C","D"],',
+  '  "dots":[{"label":"Us","x":70,"y":80,"color":"#5b21b6"},',
+  '          {"label":"Them","x":30,"y":40,"color":"#6366f1","note":"2025"}] }',
+  '```',
+  '<!-- /@quadrant -->',
+].join('\n');
+
+test('parseQuadrantBlock: resolves a valid quadrant', () => {
+  const q = parseQuadrantBlock(QUAD_OK, process.cwd());
+  assert.strictEqual(q.kind, 'quadrant');
+  assert.strictEqual(q.error, null);
+  assert.strictEqual(q.title, 'Map');
+  assert.strictEqual(q.subtitle, '2026');
+  assert.deepStrictEqual(q.quadrantLabels, ['A', 'B', 'C', 'D']);
+  assert.strictEqual(q.dots.length, 2);
+  assert.strictEqual(q.dots[0].x, 70);
+});
+
+test('parseQuadrantBlock: missing dots → error', () => {
+  const block = '<!-- @quadrant -->\n```json\n{ "quadrantLabels":["A","B","C","D"] }\n```\n<!-- /@quadrant -->';
+  const q = parseQuadrantBlock(block, process.cwd());
+  assert.ok(q.error && /dots/i.test(q.error));
+});
+
+test('parseQuadrantBlock: quadrantLabels must have 4 → error', () => {
+  const block = '<!-- @quadrant -->\n```json\n{ "quadrantLabels":["A","B"], "dots":[{"label":"x","x":1,"y":1}] }\n```\n<!-- /@quadrant -->';
+  const q = parseQuadrantBlock(block, process.cwd());
+  assert.ok(q.error && /four|4/i.test(q.error));
+});
+
+test('extractQuadrantPlaceholders: emits ordered [[QUADRANT:N]] sentinels', () => {
+  const md = `x\n${QUAD_OK}\ny`;
+  const { text, quadrants } = extractQuadrantPlaceholders(md, process.cwd());
+  assert.strictEqual(quadrants.length, 1);
+  assert.ok(text.includes('[[QUADRANT:0]]'));
+  assert.ok(!/@quadrant/.test(text));
+});
