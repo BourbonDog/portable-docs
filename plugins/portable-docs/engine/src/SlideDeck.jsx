@@ -21,6 +21,8 @@ import { Paragraph, BulletList } from './components/Section';
 import Table from './components/Table';
 import RichText from './components/RichText';
 import Chart from './components/Chart';
+import FlowDiagram from './components/FlowDiagram';
+import QuadrantChart from './components/QuadrantChart';
 
 // =============================================================================
 // SLIDE BLOCK RENDERER — reuses ArticleApp's block components
@@ -183,6 +185,24 @@ const SlideBlockRenderer = ({ block }) => {
       return (
         <div style={{ maxWidth: '760px', maxHeight: '60vh', overflow: 'hidden', margin: `${SPACE[4]} auto` }}>
           <Chart type={c.type} data={c} />
+        </div>
+      );
+    }
+    case 'flow': {
+      const f = CONTENT.flows && CONTENT.flows[block.index];
+      if (!f) return null;
+      return (
+        <div style={{ width: '100%', height: '70vh', overflow: 'auto', margin: `${SPACE[4]} 0` }}>
+          <FlowDiagram data={f} />
+        </div>
+      );
+    }
+    case 'quadrant': {
+      const q = CONTENT.quadrants && CONTENT.quadrants[block.index];
+      if (!q) return null;
+      return (
+        <div style={{ width: '100%', height: '70vh', overflow: 'auto', margin: `${SPACE[4]} 0` }}>
+          <QuadrantChart data={q} />
         </div>
       );
     }

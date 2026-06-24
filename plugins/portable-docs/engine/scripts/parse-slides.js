@@ -34,6 +34,7 @@ const path = require('path');
 const { extractHeader } = require('../src/utils/parser.js');
 const { parseBlocks, groupSubsections } = require('./parse-article.js');
 const { extractChartPlaceholders } = require('../src/utils/charts.js');
+const { extractFlowPlaceholders, extractQuadrantPlaceholders } = require('../src/utils/diagrams.js');
 
 // ── Slide-level header extraction ────────────────────────────────────────────
 
@@ -78,6 +79,16 @@ function parseSlides(markdown, baseDir) {
   body = extracted.text;
   const charts = extracted.charts;
 
+  // 3b. Pre-extract @flow blocks BEFORE the `---` split (same reason as charts).
+  const extractedFlows = extractFlowPlaceholders(body, baseDir);
+  body = extractedFlows.text;
+  const flows = extractedFlows.flows;
+
+  // 3c. Pre-extract @quadrant blocks BEFORE the `---` split.
+  const extractedQuadrants = extractQuadrantPlaceholders(body, baseDir);
+  body = extractedQuadrants.text;
+  const quadrants = extractedQuadrants.quadrants;
+
   // 4. Split on `---` horizontal-rule delimiters.
   //    We split on lines that are ONLY dashes (at least 3), ignoring surrounding whitespace.
   const rawSlides = body.split(/\n---+\n/);
@@ -93,7 +104,7 @@ function parseSlides(markdown, baseDir) {
     })
     .filter(Boolean);
 
-  return { header, slides, charts };
+  return { header, slides, charts, flows, quadrants };
 }
 
 // Emit the content as an ESM module that the bundler will inline.
