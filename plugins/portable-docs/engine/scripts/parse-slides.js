@@ -33,6 +33,7 @@ const path = require('path');
 
 const { extractHeader } = require('../src/utils/parser.js');
 const { parseBlocks, groupSubsections } = require('./parse-article.js');
+const { extractChartPlaceholders } = require('../src/utils/charts.js');
 
 // ── Slide-level header extraction ────────────────────────────────────────────
 
@@ -59,7 +60,7 @@ function extractSlideTitle(text) {
 
 // ── Main parse ────────────────────────────────────────────────────────────────
 
-function parseSlides(markdown) {
+function parseSlides(markdown, baseDir) {
   // 1. Extract @header (shared schema: title/subtitle/brand/brandSub/logo/footer …)
   const header = extractHeader(markdown) || {
     from: '', fromEmail: '', linkedin: '', github: '', headshot: '',
@@ -68,13 +69,19 @@ function parseSlides(markdown) {
   };
 
   // 2. Strip the @header block so its markers never leak into slide bodies.
-  const body = markdown.replace(/<!--\s*@header\s*-->[\s\S]*?<!--\s*\/@header\s*-->/, '');
+  let body = markdown.replace(/<!--\s*@header\s*-->[\s\S]*?<!--\s*\/@header\s*-->/, '');
 
-  // 3. Split on `---` horizontal-rule delimiters.
+  // 3. Pre-extract @chart blocks BEFORE the `---` split so fenced data can never be
+  //    mistaken for a slide delimiter, and so charts render in document order.
+  const extracted = extractChartPlaceholders(body, baseDir);
+  body = extracted.text;
+  const charts = extracted.charts;
+
+  // 4. Split on `---` horizontal-rule delimiters.
   //    We split on lines that are ONLY dashes (at least 3), ignoring surrounding whitespace.
   const rawSlides = body.split(/\n---+\n/);
 
-  // 4. Convert each raw chunk into a { title, blocks } slide.
+  // 5. Convert each raw chunk into a { title, blocks } slide.
   const slides = rawSlides
     .map((chunk) => {
       const trimmed = chunk.trim();
@@ -85,7 +92,7 @@ function parseSlides(markdown) {
     })
     .filter(Boolean);
 
-  return { header, slides };
+  return { header, slides, charts };
 }
 
 // Emit the content as an ESM module that the bundler will inline.

@@ -20,6 +20,7 @@ import { COLORS, FONTS, TYPE_SCALE, SPACE, EFFECTS } from './design-tokens';
 import { Paragraph, BulletList } from './components/Section';
 import Table from './components/Table';
 import RichText from './components/RichText';
+import Chart from './components/Chart';
 
 // =============================================================================
 // SLIDE BLOCK RENDERER — reuses ArticleApp's block components
@@ -176,6 +177,15 @@ const SlideBlockRenderer = ({ block }) => {
           ))}
         </div>
       );
+    case 'chart': {
+      const c = CONTENT.charts && CONTENT.charts[block.index];
+      if (!c) return null;
+      return (
+        <div style={{ maxWidth: '760px', maxHeight: '60vh', overflow: 'hidden', margin: `${SPACE[4]} auto` }}>
+          <Chart type={c.type} data={c} />
+        </div>
+      );
+    }
     default:
       return null;
   }

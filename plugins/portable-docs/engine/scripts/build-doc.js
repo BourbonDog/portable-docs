@@ -178,7 +178,7 @@ function resolveOutPath({ out, title, input, outDir }) {
 async function runSlides(args, md) {
   // 1. Parse the slides into a content object.
   const { parseSlides, generateSlidesOutput } = require('./parse-slides.js');
-  const content = parseSlides(md);
+  const content = parseSlides(md, path.dirname(path.resolve(args.input)));
   applyConfigToContent(args, content);
   inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 

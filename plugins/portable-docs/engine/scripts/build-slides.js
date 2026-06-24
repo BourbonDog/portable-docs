@@ -41,7 +41,7 @@ function readFileOrDie(filePath) {
 
 // Components SlideDeck renders. Section MUST be first (defines Paragraph,
 // BulletList, and the useInView hook that Table may rely on).
-const SLIDE_COMPONENTS = ['Section', 'RichText', 'Table'];
+const SLIDE_COMPONENTS = ['Section', 'RichText', 'Table', 'ChartsSVG', 'Chart'];
 
 function buildSlides() {
   const outputFile  = process.env.PD_JSX_OUT || path.join(DIST_DIR, 'SlideDeck.jsx');
