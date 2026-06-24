@@ -64,6 +64,15 @@ function applyConfigToContent(args, content) {
   });
 }
 
+/** Under --strict, abort the build if any resolved chart carries a data error. */
+function assertChartsStrict(args, content) {
+  if (!args.strict || !content || !Array.isArray(content.charts)) return;
+  const bad = content.charts.filter((c) => c && c.error);
+  if (bad.length) {
+    throw new Error(`build aborted: ${bad.length} chart data error(s) (--strict): ${bad.map((c) => c.error).join('; ')}`);
+  }
+}
+
 /** Build-time export hook: PDF/PNG via system browser when --pdf/--png set.
  *  exportFile is async (full-page PNG uses CDP), so this is awaited below. */
 async function maybeExport(args, outPath) {
@@ -179,6 +188,7 @@ async function runSlides(args, md) {
   // 1. Parse the slides into a content object.
   const { parseSlides, generateSlidesOutput } = require('./parse-slides.js');
   const content = parseSlides(md, path.dirname(path.resolve(args.input)));
+  assertChartsStrict(args, content);
   applyConfigToContent(args, content);
   inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 
@@ -295,6 +305,7 @@ async function runArticle(args, md) {
   // 1. Parse the article into a content object (no slug registry).
   const { parseArticle, generateArticleOutput } = require('./parse-article.js');
   const content = parseArticle(md, path.dirname(path.resolve(args.input)));
+  assertChartsStrict(args, content);
   applyConfigToContent(args, content);
   inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 
@@ -397,6 +408,7 @@ async function runProposal(args, md) {
   const { extractContent, generateOutput } = require('../src/utils/parser.js');
   const inputBaseDir = path.dirname(path.resolve(args.input));
   const content = extractContent(md, inputBaseDir);
+  assertChartsStrict(args, content);
   applyConfigToContent(args, content);
   inlineLocalImages(content, inputBaseDir);
 
