@@ -28,7 +28,7 @@
 
 ### Quadrant Section
 
-<!-- @quadrant title="Positioning Map" subtitle="Q1 2026" -->
+<!-- @quadrant title="First Map" subtitle="Q1 2026" -->
 ```json
 {
   "xAxisLow": "Niche",
@@ -37,8 +37,22 @@
   "yAxisHigh": "High",
   "quadrantLabels": ["Leaders", "Challengers", "Niche Players", "Visionaries"],
   "dots": [
-    { "label": "Us", "x": 75, "y": 80, "color": "#5b21b6" },
-    { "label": "Them", "x": 30, "y": 45, "color": "#6366f1" }
+    { "label": "Alpha", "x": 75, "y": 80, "color": "#5b21b6" }
+  ]
+}
+```
+<!-- /@quadrant -->
+
+<!-- @quadrant title="Second Map" subtitle="Q2 2026" -->
+```json
+{
+  "xAxisLow": "Simple",
+  "xAxisHigh": "Complex",
+  "yAxisLow": "Cheap",
+  "yAxisHigh": "Premium",
+  "quadrantLabels": ["Budget", "Enterprise", "DIY", "Luxury"],
+  "dots": [
+    { "label": "Beta", "x": 60, "y": 70, "color": "#6366f1" }
   ]
 }
 ```

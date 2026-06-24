@@ -15,8 +15,14 @@ test('flow data is baked into the proposal HTML output', async () => {
 
 test('quadrant data is baked into the proposal HTML output', async () => {
   const html = await build('diagrams-proposal.md');
-  assert.ok(html.includes('Positioning Map'), 'quadrant title baked into output');
+  assert.ok(html.includes('First Map'), 'quadrant title baked into output');
   assert.ok(html.includes('Leaders'), 'quadrant label baked into output');
+});
+
+test('proposal: two @quadrant blocks both resolve (document-order placement)', async () => {
+  const html = await build('diagrams-proposal.md');
+  assert.ok(html.includes('First Map') && html.includes('Second Map'),
+    'both quadrant titles present — document-order placement, not just the first');
 });
 
 test('a malformed @flow block bakes the error message into the output', async () => {
