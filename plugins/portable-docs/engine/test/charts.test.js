@@ -119,6 +119,21 @@ test('parseChartBlock: new-type chart with no data → error object', () => {
   assert.ok(/no data/.test(c.error));
 });
 
+test('extractFence handles CRLF line endings', () => {
+  const { extractFence } = require('../src/utils/charts.js');
+  const crlf = '```csv\r\nlabel,value\r\nA,1\r\n```';
+  const f = extractFence(crlf);
+  assert.ok(f, 'CRLF fence must be found');
+  assert.strictEqual(f.lang, 'csv');
+});
+
+test('parseChartBlock resolves a CRLF inline-fenced chart (no error)', () => {
+  const block = '<!-- @chart type="pie" title="X" -->\r\n```csv\r\nlabel,value\r\nA,1\r\nB,2\r\n```\r\n<!-- /@chart -->';
+  const c = parseChartBlock(block, process.cwd());
+  assert.strictEqual(c.error, null, 'CRLF inline-fenced chart must resolve without error');
+  assert.strictEqual(c.slices.length, 2);
+});
+
 test('extractChartPlaceholders: replaces blocks with sentinels in order', () => {
   const text = [
     'intro',
