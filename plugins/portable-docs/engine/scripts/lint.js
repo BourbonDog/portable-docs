@@ -73,6 +73,7 @@ function parseAttrs(attrStr) {
 
 function lintMarkdown(md, opts = {}) {
   const format = opts.format || 'proposal';
+  const type = opts.type || null; // Phase 5a: document-type-aware rules gate on this; null = inert
   const iconNames = opts.iconNames ? new Set(opts.iconNames) : null;
   const errors = [];
   const warnings = [];

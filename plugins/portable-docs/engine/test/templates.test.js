@@ -31,7 +31,7 @@ const TEMPLATES = path.join(__dirname, '..', '..', 'templates');
  * Run main() and return the output HTML text.
  * @param {{ input:string, slides?:boolean, style?:string }} opts
  */
-async function runBuild({ input, slides, style } = {}) {
+async function runBuild({ input, slides, style, type } = {}) {
   const tmpHtml = path.join(os.tmpdir(),
     `pd-tmpl-test-${process.hrtime.bigint()}.html`);
   const { main } = require(path.join(ENGINE, 'scripts/build-doc.js'));
@@ -46,6 +46,7 @@ async function runBuild({ input, slides, style } = {}) {
       '--input', input, '--out', tmpHtml, '--no-open'];
     if (slides) args.push('--slides');
     if (style)  args.push('--style', style);
+    if (type) args.push('--type', type);
     process.argv = args;
     await main();
   } finally {

@@ -104,7 +104,7 @@ async function maybeExport(args, outPath) {
 /** Lint the input; print diagnostics to stderr; return the result. */
 function runLint(args, md, mdPath) {
   const format = args.slides ? 'slides' : (args.style === 'article' ? 'article' : 'proposal');
-  const result = lintMarkdown(md, { format, iconNames: loadIconNames() });
+  const result = lintMarkdown(md, { format, type: args.type, iconNames: loadIconNames() });
   const total = result.errors.length + result.warnings.length;
   if (total > 0) {
     console.error(`lint: ${result.errors.length} error(s), ${result.warnings.length} warning(s)`);
@@ -142,6 +142,7 @@ function parseArgs(argv) {
     brand:    null,
     config:   null,
     noConfig: false,
+    type:     null,      // --type <name>: selects a document type (Phase 5a); null = no type
     lint:     false,
     strict:   false,
     watch:    false,
@@ -155,6 +156,7 @@ function parseArgs(argv) {
       case '--title':  opts.title  = argv[++i]; break;
       case '--theme':  opts.theme  = argv[++i]; break;
       case '--style':  opts.style  = argv[++i] || 'proposal'; break;
+      case '--type':   opts.type   = argv[++i]; break;
       case '--slides': opts.slides = true;       break;
       case '--jsx':    opts.jsx    = true;       break;
       case '--pdf':    opts.pdf    = true;       break;
@@ -580,6 +582,40 @@ async function runWatch(args, mdPath) {
   // The open server keeps the event loop alive; nothing else to do here.
 }
 
+/**
+ * Document-type registry (Phase 5a). Maps a --type name to its base format and
+ * a default theme. Lowest-priority defaults: an explicit flag / env / config
+ * always wins. `template` is the per-type starter file under templates/.
+ */
+const TYPE_MAP = {
+  resume:       { baseFormat: 'proposal', theme: 'editorial', template: 'resume.md' },
+  'case-study': { baseFormat: 'proposal', theme: 'editorial', template: 'case-study.md' },
+  changelog:    { baseFormat: 'article',  theme: 'editorial', template: 'changelog.md' },
+  newsletter:   { baseFormat: 'article',  theme: 'editorial', template: 'newsletter.md' },
+  landing:      { baseFormat: 'proposal', theme: 'brand',     template: 'landing.md' },
+  rfp:          { baseFormat: 'proposal', theme: 'brand',     template: 'rfp.md' },
+};
+
+/**
+ * Resolve --type defaults onto args. Runs AFTER loadAndResolveConfig so the type
+ * is the LOWEST-priority default (flag > env > config > type > built-in). Sets the
+ * base format only when the user left style at the 'proposal' default and passed no
+ * --slides; sets the theme only when no theme was resolved. No-op when args.type is null.
+ */
+function applyTypeDefaults(args) {
+  if (!args.type) return;
+  const spec = TYPE_MAP[args.type];
+  if (!spec) {
+    throw new Error(`build-doc: unknown --type "${args.type}". Valid types: ${Object.keys(TYPE_MAP).join(', ')}`);
+  }
+  if (!args.slides && args.style === 'proposal') {
+    args.style = spec.baseFormat; // 'proposal' is a no-op; 'article' diverts the pipeline
+  }
+  if (!args.theme && spec.theme) {
+    args.theme = spec.theme;
+  }
+}
+
 // ── Orchestration ────────────────────────────────────────────────────────────
 
 async function main() {
@@ -600,6 +636,7 @@ async function main() {
 
   // Resolve brand-kit config (mutates args defaults; no-op without a config file).
   loadAndResolveConfig(args, mdPath);
+  applyTypeDefaults(args); // Phase 5a: derive base format + theme default from --type (no-op when unset)
 
   // Lint (after config so the effective format/style is known).
   if (args.lint) {
@@ -634,5 +671,5 @@ async function main() {
   return runProposal(args, md);
 }
 
-module.exports = { parseArgs, resolveOutPath, runProposal, runWatch, main };
+module.exports = { parseArgs, applyTypeDefaults, TYPE_MAP, resolveOutPath, runProposal, runWatch, main };
 if (require.main === module) main().catch((err) => { console.error(err.message); process.exit(1); });
