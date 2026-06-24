@@ -120,6 +120,8 @@ function extractDesignTokensCode(source) {
 // Extract component code (remove imports/exports for inline bundling)
 function extractComponentCode(source, componentName) {
   // Remove multi-line imports first: import { a, b } from 'y'; (before single-line pass)
+  // Multi-line imports (e.g. Chart.jsx importing from ./ChartsSVG); trailing \s* normalizes
+  // post-import whitespace bundle-wide, matching stripModuleSyntax (article/slides bundlers).
   let code = source.replace(/^import\s*\{[\s\S]*?\}\s*from\s*['"][^'"]+['"];?\s*/gm, '');
 
   // Remove single-line imports (default imports, side-effect imports)
