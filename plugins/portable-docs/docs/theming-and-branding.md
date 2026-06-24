@@ -104,7 +104,7 @@ The 25-icon core set is used in `@card` markers via `icon="<name>"`. Names are
 renders a `placeholder` glyph (a dashed-border rounded square) rather than
 silently showing a real icon.
 
-For usage syntax see [markers.md#icons](markers.md#icons). For the full glyph
+For usage syntax see [markers.md#icon-names](markers.md#icon-names). For the full glyph
 list see [references/icons.md](../references/icons.md).
 
 ---
