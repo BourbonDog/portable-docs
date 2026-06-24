@@ -31,7 +31,7 @@ const TEMPLATES = path.join(__dirname, '..', '..', 'templates');
 
 /**
  * Run main() and return the output HTML text.
- * @param {{ input:string, slides?:boolean, style?:string }} opts
+ * @param {{ input:string, slides?:boolean, style?:string, type?:string }} opts
  */
 async function runBuild({ input, slides, style, type } = {}) {
   const tmpHtml = path.join(os.tmpdir(),

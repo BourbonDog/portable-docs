@@ -76,14 +76,14 @@ Ask (or infer from context) what the user has:
 theme (lowest priority — your `--theme`/`--brand`/config always win), and turns on
 type-aware linting. Start from the matching `templates/<type>.md`.
 
-| `--type` | Base format | Start from | Notes |
-|----------|-------------|-----------|-------|
-| `resume` | proposal | `templates/resume.md` | Numbered sections. `@timeline` is the Experience spine (required — `resume-no-experience` errors without it). `@from name/email` in the header. Keep it scannable (density lint warns on overload). |
-| `case-study` | proposal | `templates/case-study.md` | Numbered sections. Lead Results with a 3–4 stat `@stats` row and an attributed `@pullquote`. |
-| `changelog` | article | `templates/changelog.md` | Unnumbered `## <version> — <date>` releases, `### Added/Changed/Fixed/Removed/Deprecated/Security` groups. |
-| `newsletter` | article | `templates/newsletter.md` | Masthead via `@header` (`@brand` + `@brandsub` issue label + `@date`). An "In This Issue" intro plus 2+ sections. |
-| `landing` | proposal | `templates/landing.md` | Numbered sections. Hero via `@header`, feature grid via `@cards type="feature"`, proof via `@stats`/`@testimonials`, and at least one `@cta`. |
-| `rfp` | proposal | `templates/rfp.md` | Numbered sections (scope/requirements/timeline/pricing/terms). Compliance matrix = a GFM table with ✓/✗ cells (`Table` auto-badges them). |
+| `--type` | Base format | Default theme | Start from | Notes |
+|----------|-------------|--------------|-----------|-------|
+| `resume` | proposal | `editorial` | `templates/resume.md` | Numbered sections. `@timeline` is the Experience spine (required — `resume-no-experience` errors without it). `@from name/email` in the header. Keep it scannable (density lint warns on overload). |
+| `case-study` | proposal | `editorial` | `templates/case-study.md` | Numbered sections. Lead Results with a 3–4 stat `@stats` row and an attributed `@pullquote`. |
+| `changelog` | article | `editorial` | `templates/changelog.md` | Unnumbered `## <version> — <date>` releases, `### Added/Changed/Fixed/Removed/Deprecated/Security` groups. |
+| `newsletter` | article | `editorial` | `templates/newsletter.md` | Masthead via `@header` (`@brand` + `@brandsub` issue label + `@date`). An "In This Issue" intro plus 2+ sections. |
+| `landing` | proposal | `brand` | `templates/landing.md` | Numbered sections. Hero via `@header`, feature grid via `@cards type="feature"`, proof via `@stats`/`@testimonials`, and at least one `@cta`. Note: `@cta` renders only in the proposal base format — authoring it inside an article-base type (e.g., `changelog`, `newsletter`) will leave the marker as literal text. |
+| `rfp` | proposal | `brand` | `templates/rfp.md` | Numbered sections (scope/requirements/timeline/pricing/terms). Compliance matrix = a GFM table with ✓/✗ cells (`Table` auto-badges them). |
 
 **Field-repurposing note:** `@entry` requires `year`, `company`, `title`, `highlight`.
 For case-study phases use `year="Phase 1"`, `company=<workstream>`; for résumé education
