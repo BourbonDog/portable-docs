@@ -212,7 +212,7 @@ const SlideBlockRenderer = ({ block }) => {
       if (!m) return null;
       return (
         <div style={{ maxWidth: '900px', maxHeight: '64vh', overflow: 'auto', margin: `${SPACE[4]} auto` }}>
-          <MermaidFigure data={m} />
+          <MermaidFigure data={m} title={m.title} />
         </div>
       );
     }

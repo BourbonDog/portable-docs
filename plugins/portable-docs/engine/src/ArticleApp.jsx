@@ -1023,7 +1023,7 @@ const BlockRenderer = ({ block }) => {
     }
     case 'mermaid': {
       const m = CONTENT.mermaids && CONTENT.mermaids[block.index];
-      return m ? <MermaidFigure data={m} /> : null;
+      return m ? <MermaidFigure data={m} title={m.title} /> : null;
     }
     case 'subsection':
       return (

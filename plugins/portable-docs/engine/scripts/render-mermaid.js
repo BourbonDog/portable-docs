@@ -115,12 +115,12 @@ async function renderViaBrowser(sources, themeCfg) {
     const ok = await withCdpSession(browser, htmlPath, async (send) => {
       const expr = `(async () => {
         try {
-          mermaid.initialize({ startOnLoad:false, securityLevel:'strict',
-            theme: window.__CFG__.base, themeVariables: window.__CFG__.themeVariables,
-            deterministicIds:true, deterministicIDSeed:'pd' });
           const out = [];
           for (let i = 0; i < window.__SOURCES__.length; i++) {
             try {
+              mermaid.initialize({ startOnLoad:false, securityLevel:'strict',
+                theme: window.__CFG__.base, themeVariables: window.__CFG__.themeVariables,
+                deterministicIds:true, deterministicIDSeed: 'pd-' + i });
               const { svg } = await mermaid.render('pd-m-' + i, window.__SOURCES__[i]);
               out.push({ svg });
             } catch (e) { out.push({ error: String(e && e.message || e) }); }
@@ -175,16 +175,16 @@ async function renderMermaid(md, { theme, accent, baseDir, strict = false, rende
       diagnostics.errors.push(`@mermaid #${i}: ${res.error}`);
       // a resolve error (bad src) IS a hard error under --strict
       if (strict) diagnostics.strictAbort = true;
-      return { source: b.source, error: res.error };
+      return { title: b.title, source: b.source, error: res.error };
     }
     const out = rendered[i] || { error: 'no render result' };
     if (out.error) {
       diagnostics.errors.push(`@mermaid #${i}: ${out.error}`);
       // A missing browser degrades; a real render error aborts under --strict.
       if (strict && !/no headless browser/i.test(out.error)) diagnostics.strictAbort = true;
-      return { source: sources[i], error: out.error };
+      return { title: b.title, source: sources[i], error: out.error };
     }
-    return { svg: out.svg };
+    return { title: b.title, svg: out.svg };
   });
 
   // Rewrite blocks → neutral sentinels, in order.

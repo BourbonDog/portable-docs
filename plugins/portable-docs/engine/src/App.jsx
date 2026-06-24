@@ -209,7 +209,7 @@ const renderComponent = (block, context) => {
 
     case 'mermaid': {
       const mermaidData = CONTENT.mermaids?.[Number(block.param)];
-      return mermaidData ? <MermaidFigure data={mermaidData} /> : null;
+      return mermaidData ? <MermaidFigure data={mermaidData} title={mermaidData.title} /> : null;
     }
 
     default:

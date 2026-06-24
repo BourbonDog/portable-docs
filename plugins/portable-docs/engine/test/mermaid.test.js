@@ -91,6 +91,16 @@ test('@mermaid slides: sentinel [[MERMAIDSVG:N]] is consumed (not leaked as para
     'MERMAIDSVG sentinel must not leak as a paragraph text value in CONTENT');
 });
 
+// ── @mermaid title caption threaded into output ───────────────────────────────
+
+test('@mermaid proposal: title= caption is present in built HTML (Fix 1)', async () => {
+  const html = await build('mermaid-proposal.md');
+  // mermaid-proposal.md has <!-- @mermaid title="System Flow" -->
+  // The title must be threaded through content.mermaids[0].title and passed
+  // to MermaidFigure so it renders as a caption — RED before Fix 1, GREEN after.
+  assert.ok(html.includes('System Flow'), '@mermaid title= must appear in built HTML as a caption');
+});
+
 // ── assertDiagramsStrict ──────────────────────────────────────────────────────
 
 test('--strict aborts on a @flow/@quadrant data error', async () => {

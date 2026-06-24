@@ -71,8 +71,6 @@ test('renderMermaid: no-browser default → fallbacks, NOT a strict abort', asyn
   assert.strictEqual(r.diagnostics.strictAbort, false, 'a missing browser must NOT abort under --strict');
 });
 
-const { buildHarness: _bh, safeJson: _sj } = require('../scripts/render-mermaid.js');
-
 test('buildHarness escapes </script> in the injected library', () => {
   const evilLib = 'var x = "</script><script>alert(1)</script>";';
   const html = buildHarness(evilLib, ['graph TD; A-->B'], { base: 'base', themeVariables: {} });
