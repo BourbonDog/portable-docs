@@ -10,6 +10,7 @@ Run the portable-docs self-test (`doctor.sh`) and report the result.
 2. **`build-doc.js` exists** at the expected engine path.
 3. **Proposal build** — builds `sample.md` through the default (proposal) pipeline and validates the HTML output.
 3b. **Lint** — runs the marker linter over `sample.md` and confirms it is clean (no errors).
+6. **Data-driven chart build** — builds `charts-doctor.md` (a pie chart from inline CSV) and confirms the output contains inline SVG.
 4. **Article build** — builds `sample-article.md` through the `--style article` pipeline (if the fixture exists).
 5. **Slides build** — builds `sample-slides.md` through the `--slides` pipeline (if the fixture exists).
 

@@ -103,6 +103,22 @@ if [ -f "$SAMPLE_MD" ]; then
   fi
 fi
 
+# ── Check 6: data-driven chart fixture builds ─────────────────────────────────
+CHARTS_MD="$FIXTURES/charts-doctor.md"
+if [ -f "$CHARTS_MD" ]; then
+  TMP_CHARTS="$(mktemp -d)"
+  OUT_CHARTS="$TMP_CHARTS/out.html"
+  if node "$BUILD" --input "$CHARTS_MD" --out "$OUT_CHARTS" --no-open >/dev/null 2>&1 \
+     && grep -q "<svg" "$OUT_CHARTS"; then
+    pass "build charts    (charts-doctor.md)"
+  else
+    fail "build charts    (charts-doctor.md)"
+  fi
+  rm -rf "$TMP_CHARTS"
+else
+  echo "  SKIP  build charts    (charts-doctor.md not found — optional)"
+fi
+
 # ── Check 4: article fixture ──────────────────────────────────────────────────
 SAMPLE_ARTICLE="$FIXTURES/sample-article.md"
 if [ -f "$SAMPLE_ARTICLE" ]; then
