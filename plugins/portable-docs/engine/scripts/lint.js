@@ -27,7 +27,7 @@ const MARKER_SPEC = {
   footer:       { paired: false, required: ['value'],                       optional: [],                       enums: {} },
   stats:        { paired: true,  required: [],                              optional: [],                       enums: {} },
   stat:         { paired: false, required: ['value', 'label', 'source'],    optional: [],                       enums: {} },
-  chart:        { paired: true,  required: ['type'],                        optional: ['title', 'subtitle'],    enums: { type: ['growth', 'bar', 'hierarchy', 'range'] } },
+  chart:        { paired: true,  required: ['type'],                        optional: ['title', 'subtitle', 'src', 'xlabel', 'ylabel'], enums: { type: ['growth', 'bar', 'hierarchy', 'range', 'pie', 'donut', 'grouped-bar', 'stacked-bar', 'area', 'line', 'scatter'] } },
   series:       { paired: true,  required: ['label'],                       optional: [],                       enums: {} },
   point:        { paired: false, required: ['year', 'value'],               optional: [],                       enums: {} },
   bar:          { paired: false, required: ['label', 'value', 'unit'],      optional: ['source', 'cite'],       enums: {} },
@@ -155,6 +155,22 @@ function lintMarkdown(md, opts = {}) {
       if (!/^\d+\.\s/.test(title)) {
         warnings.push({ line: li + 1, severity: 'warning', code: 'unnumbered-section', message: `Section "## ${title}" lacks an "N." number prefix; the proposal parser will not render it as a section` });
       }
+    }
+  }
+
+  // New-type charts must carry data: a `src=` attribute or an inline fenced block.
+  const NEW_TYPES = new Set(['pie', 'donut', 'grouped-bar', 'stacked-bar', 'area', 'line', 'scatter']);
+  const chartBlockRe = /<!--\s*@chart\b([^>]*)-->([\s\S]*?)<!--\s*\/@chart\s*-->/g;
+  let cm;
+  while ((cm = chartBlockRe.exec(String(md))) !== null) {
+    const attrs = parseAttrs(cm[1]);
+    if (!NEW_TYPES.has(attrs.type)) continue;
+    const hasSrc = !!attrs.src;
+    const hasFence = /```/.test(cm[2]);
+    if (!hasSrc && !hasFence) {
+      const lineNo = String(md).slice(0, cm.index).split('\n').length;
+      errors.push({ line: lineNo, severity: 'error', code: 'chart-no-data', marker: 'chart',
+        message: `@chart type="${attrs.type}" has no data — add src="…" or an inline \`\`\`csv\`\`\` / \`\`\`json\`\`\` block` });
     }
   }
 

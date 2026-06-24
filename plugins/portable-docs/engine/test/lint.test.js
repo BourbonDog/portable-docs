@@ -143,6 +143,30 @@ test('inline single-line paired markers do not produce false errors', () => {
   assert.deepStrictEqual(r.errors, [], 'inline paired marker is valid (parser is line-agnostic)');
 });
 
+test('new chart types are valid enum values', () => {
+  const md = ['<!-- @chart type="pie" title="x" -->', '```csv', 'label,value', 'A,1', '```', '<!-- /@chart -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(!r.errors.some((e) => e.code === 'bad-enum'), 'pie is a valid chart type');
+});
+
+test('a typo chart type is a bad-enum error', () => {
+  const md = ['<!-- @chart type="pdf" -->', '<!-- /@chart -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(r.errors.some((e) => e.code === 'bad-enum'));
+});
+
+test('a new-type chart with no data is a chart-no-data error', () => {
+  const md = ['<!-- @chart type="pie" title="x" -->', '<!-- /@chart -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(r.errors.some((e) => e.code === 'chart-no-data'));
+});
+
+test('a new-type chart with src= is clean', () => {
+  const md = ['<!-- @chart type="pie" src="d.csv" -->', '<!-- /@chart -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(!r.errors.some((e) => e.code === 'chart-no-data'));
+});
+
 test('--strict aborts a build with lint errors', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-strict-'));
   const mdPath = path.join(dir, 'bad.md');
