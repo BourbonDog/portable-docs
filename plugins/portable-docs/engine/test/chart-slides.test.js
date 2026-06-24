@@ -31,5 +31,5 @@ test('slide build renders a new chart and the error card for a legacy type', asy
   const html = await buildSlides('chart-slides.md');
   assert.ok(html.includes('Deck Chart'), 'new grouped-bar chart title present');
   assert.ok(html.includes('<rect') || html.includes('"rect"'), 'grouped-bar rects present');
-  assert.ok(html.includes('chart:'), 'legacy-in-slides resolves to the error card');
+  assert.ok(html.includes('unknown chart type'), 'legacy bar type resolves to the inline error card');
 });

@@ -22,7 +22,7 @@
  *   PD_SLIDES_CONTENT_OUT  → output content.js path (CLI mode)
  *
  * API:
- *   parseSlides(markdown)           → content object (no I/O)
+ *   parseSlides(markdown, baseDir)  → content object (no I/O)
  *   generateSlidesOutput(content)   → ESM module text exporting CONTENT
  * CLI:
  *   PD_INPUT=<md> PD_SLIDES_CONTENT_OUT=<js> node scripts/parse-slides.js
@@ -115,7 +115,7 @@ if (require.main === module) {
   if (!input) { console.error('parse-slides: PD_INPUT env var is required'); process.exit(1); }
   if (!out)   { console.error('parse-slides: PD_SLIDES_CONTENT_OUT env var is required'); process.exit(1); }
   const markdown = fs.readFileSync(path.resolve(input), 'utf-8');
-  const content  = parseSlides(markdown);
+  const content  = parseSlides(markdown, path.dirname(path.resolve(input)));
   fs.writeFileSync(out, generateSlidesOutput(content), 'utf-8');
   console.log(`parse-slides: wrote ${out} (${content.slides.length} slides)`);
 }

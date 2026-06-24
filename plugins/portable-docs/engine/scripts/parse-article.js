@@ -17,7 +17,7 @@
  *   - Otherwise FALL BACK to `# H1` → title and the first `*italic*` line → subtitle.
  *
  * API:
- *   parseArticle(markdown)            → content object (no I/O)
+ *   parseArticle(markdown, baseDir)   → content object (no I/O)
  *   generateArticleOutput(content)    → ESM module text exporting CONTENT
  * CLI:
  *   PD_INPUT=<md> PD_ARTICLE_CONTENT_OUT=<js> node scripts/parse-article.js
@@ -278,7 +278,7 @@ if (require.main === module) {
   if (!input) { console.error('parse-article: PD_INPUT env var is required'); process.exit(1); }
   if (!out)   { console.error('parse-article: PD_ARTICLE_CONTENT_OUT env var is required'); process.exit(1); }
   const markdown = fs.readFileSync(path.resolve(input), 'utf-8');
-  const content  = parseArticle(markdown);
+  const content  = parseArticle(markdown, path.dirname(path.resolve(input)));
   fs.writeFileSync(out, generateArticleOutput(content), 'utf-8');
   console.log(`parse-article: wrote ${out} (${content.sections.length} sections)`);
 }
