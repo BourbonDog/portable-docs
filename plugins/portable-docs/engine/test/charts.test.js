@@ -1,7 +1,10 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { parseCsv } = require('../src/utils/charts.js');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const { parseCsv, loadChartData } = require('../src/utils/charts.js');
 
 test('parseCsv: header + simple rows', () => {
   const r = parseCsv('label,value\nChrome,65\nSafari,18');
@@ -24,11 +27,6 @@ test('parseCsv: CRLF and trailing blank line tolerated', () => {
   assert.deepStrictEqual(r.columns, ['x', 'y']);
   assert.deepStrictEqual(r.rows, [['1', '2']]);
 });
-
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const { loadChartData } = require('../src/utils/charts.js');
 
 test('loadChartData: inline csv fence', () => {
   const body = '\n```csv\nlabel,value\nA,1\nB,2\n```\n';

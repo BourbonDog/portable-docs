@@ -42,7 +42,7 @@ function parseCsv(text) {
 
 /** Extract the first fenced code block from a chart body → { lang, text } | null. */
 function extractFence(body) {
-  const m = String(body).match(/```([A-Za-z0-9]+)?[ \t]*\n([\s\S]*?)```/);
+  const m = String(body).match(/```([A-Za-z0-9]+)?[ \t]*\n([\s\S]*?)\n```/);
   if (!m) return null;
   return { lang: (m[1] || '').toLowerCase(), text: m[2] };
 }
