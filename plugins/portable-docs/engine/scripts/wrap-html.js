@@ -16,7 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 const { compileToJs } = require('./compile-jsx.js');
-const { PRINT_CSS, SLIDES_PRINT_CSS } = require('./print-css.js');
+const { PRINT_CSS, SLIDES_PRINT_CSS, RESUME_CSS } = require('./print-css.js');
 
 // React/ReactDOM production UMD, read once and inlined into every output so the
 // document is fully self-contained and renders offline (no CDN, no in-browser Babel).
@@ -67,9 +67,13 @@ const THEME_BODY_BG = {
 function generateHTML(bundle, title, theme, opts) {
   const resolvedTheme = theme || 'editorial';
   const format = (opts && opts.format) || 'proposal';
-  const themeAttr = ` data-pd-theme="${resolvedTheme}" data-pd-format="${format}"`;
+  const docType = (opts && opts.type) || null;
+  const typeAttr = docType ? ` data-pd-type="${docType}"` : '';
+  const themeAttr = ` data-pd-theme="${resolvedTheme}" data-pd-format="${format}"${typeAttr}`;
   const bodyBg = THEME_BODY_BG[resolvedTheme] || THEME_BODY_BG.editorial;
-  const printCss = PRINT_CSS + (format === 'slides' ? SLIDES_PRINT_CSS : '');
+  // PRINT_CSS + (slides only) SLIDES_PRINT_CSS + the inert RESUME_CSS (scoped to
+  // html[data-pd-type="resume"], so it only affects `--type resume` documents).
+  const printCss = PRINT_CSS + (format === 'slides' ? SLIDES_PRINT_CSS : '') + RESUME_CSS;
   const noScrollRule = (opts && opts.noScroll)
     ? '    html, body { height: 100%; overflow: hidden; }\n'
     : '';
@@ -121,7 +125,7 @@ ${safeCompiled}
  * @param {string} opts.out   - Absolute path to write the HTML file.
  * @param {string} [opts.theme] - Theme name (optional; not yet implemented).
  */
-function wrapHtml({ jsx, title, out, theme }) {
+function wrapHtml({ jsx, title, out, theme, type }) {
   if (!jsx) throw new Error('wrapHtml: jsx is required');
   if (!out)  throw new Error('wrapHtml: out (output path) is required');
 
@@ -134,7 +138,7 @@ function wrapHtml({ jsx, title, out, theme }) {
     fs.mkdirSync(outDir, { recursive: true });
   }
 
-  const html = generateHTML(stripped, resolvedTitle, theme);
+  const html = generateHTML(stripped, resolvedTitle, theme, { type });
   fs.writeFileSync(out, html, 'utf-8');
 
   const sizeKB = (fs.statSync(out).size / 1024).toFixed(1);

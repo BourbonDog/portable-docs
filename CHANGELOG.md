@@ -6,6 +6,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.6.1] — 2026-06-24
+
+### Added
+- `--type resume` now renders a **compact CV layout** — the full-viewport hero collapses and the Experience timeline becomes a single-column scannable spine (on screen and in print), via a `data-pd-type` attribute on `<html>` plus scoped CSS. Inert for every other document type; non-résumé output is unchanged.
+
+---
+
 ## [0.6.0] — 2026-06-24
 
 ### Added

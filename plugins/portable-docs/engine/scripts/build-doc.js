@@ -502,7 +502,7 @@ async function runProposal(args, md) {
 
     const jsx = fs.readFileSync(jsxTmpPath, 'utf-8');
     const { wrapHtml } = require('./wrap-html.js');
-    wrapHtml({ jsx, title: args.title || content.header?.title || slug, out: outPath, theme: args.theme });
+    wrapHtml({ jsx, title: args.title || content.header?.title || slug, out: outPath, theme: args.theme, type: args.type });
 
     const { validate } = require('./validate.js');
     const result = validate({ htmlPath: outPath });

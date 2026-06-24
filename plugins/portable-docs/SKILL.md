@@ -78,7 +78,7 @@ type-aware linting. Start from the matching `templates/<type>.md`.
 
 | `--type` | Base format | Default theme | Start from | Notes |
 |----------|-------------|--------------|-----------|-------|
-| `resume` | proposal | `editorial` | `templates/resume.md` | Numbered sections. `@timeline` is the Experience spine (required — `resume-no-experience` errors without it). `@from name/email` in the header. Keep it scannable (density lint warns on overload). |
+| `resume` | proposal | `editorial` | `templates/resume.md` | Numbered sections. `@timeline` is the Experience spine (required — `resume-no-experience` errors without it). `@from name/email` in the header. Keep it scannable (density lint warns on overload). Renders a **compact CV layout** — collapsed hero + single-column experience timeline — on screen and in print. |
 | `case-study` | proposal | `editorial` | `templates/case-study.md` | Numbered sections. Lead Results with a 3–4 stat `@stats` row and an attributed `@pullquote`. |
 | `changelog` | article | `editorial` | `templates/changelog.md` | Unnumbered `## <version> — <date>` releases, `### Added/Changed/Fixed/Removed/Deprecated/Security` groups. |
 | `newsletter` | article | `editorial` | `templates/newsletter.md` | Masthead via `@header` (`@brand` + `@brandsub` issue label + `@date`). An "In This Issue" intro plus 2+ sections. |

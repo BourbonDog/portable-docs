@@ -6,6 +6,36 @@ const os = require('os');
 const path = require('path');
 const { wrapHtml, generateHTML } = require('../scripts/wrap-html.js');
 
+test('generateHTML emits data-pd-type on the html tag only when a type is given', () => {
+  const bundle = 'const App = () => React.createElement("div", null, "x");';
+  const withType = generateHTML(bundle, 'T', 'editorial', { type: 'resume' });
+  assert.ok(withType.includes('data-pd-format="proposal" data-pd-type="resume">'),
+    'a typed build carries data-pd-type on the <html> tag');
+  const noType = generateHTML(bundle, 'T', 'editorial');
+  assert.ok(noType.includes('data-pd-format="proposal">'), 'untyped build html tag ends after format');
+  assert.ok(!noType.includes('data-pd-type="resume">'), 'untyped build has no data-pd-type attribute');
+});
+
+test('generateHTML always includes the (inert) résumé compact CSS block', () => {
+  const bundle = 'const App = () => React.createElement("div", null, "x");';
+  const out = generateHTML(bundle, 'T', 'editorial');
+  // Present but scoped to html[data-pd-type="resume"], so inert for every non-résumé doc.
+  assert.ok(out.includes('html[data-pd-type="resume"]'), 'résumé compact CSS present');
+  assert.ok(out.includes('.timeline-entry'), 'compact timeline rule present');
+});
+
+test('wrapHtml threads type onto the output html tag', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-wraptype-'));
+  const out = path.join(dir, 'r.html');
+  try {
+    wrapHtml({ jsx: 'const App = () => React.createElement("div", null, "x");', title: 'R', out, type: 'resume' });
+    const html = fs.readFileSync(out, 'utf8');
+    assert.ok(html.includes('data-pd-type="resume">'), 'wrapHtml emits data-pd-type on the html tag');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('generateHTML escapes </script> in the inlined app body', () => {
   // A bundle whose compiled output embeds the literal closing tag in content.
   const bundle = 'const App = () => React.createElement("pre", null, "a</script>b");';
