@@ -1,6 +1,6 @@
 {
   "name": "portable-docs-engine",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "license": "MIT",
   "scripts": { "test": "node --test \"test/*.test.js\"" }

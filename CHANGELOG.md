@@ -6,6 +6,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.5.0] — 2026-06-24
+
+### Added
+
+- **Data-driven charts (Phase 4a).** Seven new hand-rolled inline-SVG chart types available in
+  all three document formats (proposal, article, slides): **pie**, **donut**, **grouped-bar**,
+  **stacked-bar**, **area**, **line**, and **scatter**. Chart data is supplied via an inline
+  fenced code block or an external file (`src=` attribute); external paths are resolved at build
+  time and baked into the output — zero runtime I/O. Supported data formats: CSV and JSON.
+
+- **Document-order chart placement.** Charts are inserted in document order, eliminating the
+  prior limitation where all charts of the same type resolved to index `[0]`.
+
+- **`--strict` chart-data errors.** Pass `--strict` to abort the build when chart data is
+  missing or malformed (default: render an error card and continue).
+
+- **Marker linter extended.** New chart type enums (`pie`, `donut`, `grouped-bar`, etc.) and a
+  new `chart-no-data` diagnostic code cover data-driven chart markers. `/doctor` includes a
+  data-driven-chart self-test check (7/7 PASS).
+
+### Not changed (intentionally)
+- The 4 legacy chart types (`growth`, `bar`, `hierarchy`, `range`) remain proposal-only and
+  byte-identical to v0.4.0.
+
+---
+
 ## [0.4.0] — 2026-06-23
 
 ### Added
