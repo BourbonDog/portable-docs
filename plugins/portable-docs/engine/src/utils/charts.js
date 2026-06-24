@@ -77,6 +77,26 @@ function loadChartData({ src, body, baseDir }) {
   }
 }
 
+/** Resolve a single JSON value from a `src=` file or an inline ```json``` fence.
+ *  Used by structured diagram markers (@flow/@quadrant). Never throws. */
+function loadJsonData({ src, body, baseDir }) {
+  let text;
+  if (src) {
+    const p = path.isAbsolute(src) ? src : path.join(baseDir || process.cwd(), src);
+    if (!fs.existsSync(p)) return { error: `data file not found: ${src}` };
+    text = fs.readFileSync(p, 'utf-8');
+  } else {
+    const fence = extractFence(body);
+    if (!fence) return { error: 'no data: add src="…" or an inline ```json``` block' };
+    text = fence.text;
+  }
+  try {
+    return { data: JSON.parse(text) };
+  } catch (e) {
+    return { error: `could not parse JSON data: ${e.message}` };
+  }
+}
+
 const NEW_CHART_TYPES = ['pie', 'donut', 'grouped-bar', 'stacked-bar', 'area', 'line', 'scatter'];
 
 /** Coerce a cell to a finite number (strips currency/unit punctuation). */
@@ -147,7 +167,7 @@ function extractChartPlaceholders(text, baseDir) {
 }
 
 module.exports = {
-  parseCsv, extractFence, loadChartData,
+  parseCsv, extractFence, loadChartData, loadJsonData,
   NEW_CHART_TYPES, normalizeChartData, chartAttr, parseChartBlock, extractChartPlaceholders,
   CHART_BLOCK_RE,
 };
