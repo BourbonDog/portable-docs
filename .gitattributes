@@ -1,0 +1,22 @@
+# Normalize all text files to LF in the repository and on checkout.
+#
+# Why: the engine's parsers and the doc pipeline assume LF line endings. On
+# Windows with core.autocrlf=true a checkout/clone rewrites the working tree to
+# CRLF, which (before the parser CRLF-normalization fixes) silently broke
+# proposal section/chart parsing and produced spurious "modified" churn. Pinning
+# eol=lf keeps the working tree LF everywhere, regardless of a contributor's
+# core.autocrlf setting — a permanent guard on top of the code-level fix.
+# Shell scripts (doctor.sh, share.sh) also REQUIRE LF to run.
+* text=auto eol=lf
+
+# Binary files — never normalize.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.woff  binary
+*.woff2 binary
+*.ttf  binary
+*.otf  binary
