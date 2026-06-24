@@ -6,6 +6,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.6.2] — 2026-06-24
+
+### Added
+- **End-user guide** under `plugins/portable-docs/docs/` — an index plus ten pages covering getting started, how the engine works, the three output formats, the six `--type` document types, the full `@`-marker DSL, charts & diagrams, theming & branding, every slash command and CLI flag, exporting & sharing, and the recommended authoring workflow. The root `README.md` now links to it.
+
+---
+
 ## [0.6.1] — 2026-06-24
 
 ### Added

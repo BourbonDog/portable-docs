@@ -1,6 +1,6 @@
 {
   "name": "portable-docs",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Generate polished, self-contained, shareable HTML documents from your content.",
   "author": { "name": "Christian Wagner" },
   "license": "MIT"
