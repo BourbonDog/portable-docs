@@ -5,7 +5,7 @@ portable-docs proposals are authored in plain Markdown with embedded
 the complete reference for every marker — syntax, required and optional
 attributes, format availability, and paste-ready examples.
 
-Back to [README.md](../README.md) | See also [formats.md](formats.md) |
+Back to [README.md](README.md) | See also [formats.md](formats.md) |
 [charts-and-diagrams.md](charts-and-diagrams.md) |
 [theming-and-branding.md](theming-and-branding.md)
 

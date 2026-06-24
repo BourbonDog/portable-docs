@@ -2,7 +2,7 @@
 
 portable-docs has two families of visual: **data-driven charts** (`@chart`) and **structural diagrams** (`@flow`, `@quadrant`, `@mermaid`). Both are HTML-comment markers that wrap a data block; the engine resolves everything at build time and bakes the result into the output.
 
-Back to [README.md](../README.md) | See also [markers.md](markers.md) | [formats.md](formats.md) | [authoring-workflow.md](authoring-workflow.md)
+Back to [README.md](README.md) | See also [markers.md](markers.md) | [formats.md](formats.md) | [authoring-workflow.md](authoring-workflow.md)
 
 ---
 

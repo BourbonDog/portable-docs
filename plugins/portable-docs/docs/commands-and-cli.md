@@ -1,7 +1,7 @@
 # Commands and CLI Reference
 
 Complete reference for every portable-docs slash command and the raw Node engine
-invocation. Back to [README](../../../README.md).
+invocation. Back to [README](README.md).
 
 ---
 
