@@ -249,7 +249,48 @@ const LineAreaBase = ({ data, filled }) => {
 
 const AreaChart = ({ data }) => <LineAreaBase data={data} filled={true} />;
 const LineChart = ({ data }) => <LineAreaBase data={data} filled={false} />;
-const ScatterChart = ({ data }) => <ChartEmpty title={data.title} />;
+const ScatterChart = ({ data }) => {
+  const { title, subtitle, points = [], xlabel, ylabel } = data;
+  if (!points.length) return <ChartEmpty title={title} />;
+  const box = plotBox();
+  const xs = niceScale(Math.min(...points.map((p) => p.x), 0), Math.max(...points.map((p) => p.x)));
+  const ys = niceScale(Math.min(...points.map((p) => p.y), 0), Math.max(...points.map((p) => p.y)));
+  const px = (x) => box.x0 + ((x - xs.min) / (xs.max - xs.min)) * box.iw;
+  const py = (y) => box.y0 - ((y - ys.min) / (ys.max - ys.min)) * box.ih;
+  const seriesNames = [...new Set(points.map((p) => p.series).filter(Boolean))];
+  const colorOf = (p) => {
+    const i = seriesNames.indexOf(p.series);
+    return CHART_COLORS[(i >= 0 ? i : 0) % CHART_COLORS.length];
+  };
+  return (
+    <ChartFrame title={title} subtitle={subtitle}>
+      <svg viewBox={`0 0 ${PLOT.w} ${PLOT.h}`} width="100%" role="img" aria-label={title || 'Scatter chart'}>
+        <YAxis scale={ys} box={box} ylabel={ylabel} />
+        {xs.ticks.map((t, i) => (
+          <text key={i} x={px(t)} y={box.y0 + 18} textAnchor="middle"
+                fontFamily={FONTS.mono} fontSize="11" fill={COLORS.ink[400]}>{t}</text>
+        ))}
+        {points.map((p, i) => (
+          <g key={i}>
+            <circle cx={px(p.x)} cy={py(p.y)} r="6" fill={colorOf(p)} fillOpacity="0.85"
+                    stroke={COLORS.surface.elevated} strokeWidth="1.5" />
+            {p.label && (
+              <text x={px(p.x)} y={py(p.y) - 10} textAnchor="middle"
+                    fontFamily={FONTS.ui} fontSize="10" fill={COLORS.ink[600]}>{p.label}</text>
+            )}
+          </g>
+        ))}
+        {xlabel && (
+          <text x={box.x0 + box.iw / 2} y={PLOT.h - 6} textAnchor="middle"
+                fontFamily={FONTS.mono} fontSize="11" fill={COLORS.ink[400]}>{xlabel}</text>
+        )}
+      </svg>
+      {seriesNames.length > 0 && (
+        <Legend items={seriesNames.map((n, i) => ({ label: n, color: CHART_COLORS[i % CHART_COLORS.length] }))} />
+      )}
+    </ChartFrame>
+  );
+};
 
 export {
   niceScale, ChartFrame, Legend, ChartError, ChartEmpty,
