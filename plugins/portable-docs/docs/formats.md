@@ -64,7 +64,7 @@ and newsletters.
 | `<!-- @flow -->` node diagrams | Yes |
 | `<!-- @quadrant -->` quadrant charts | Yes |
 | `<!-- @mermaid -->` diagrams | Yes |
-| Proposal-only markers (`@stats`, `@cta`, `@icons`, `@features`, `@table`, `@timeline`, `@comparison`, `@quote`) | No — left as literal text in the output |
+| Proposal-only markers (`@stats`, `@cta`, `@icons`, `@features`, `@table`, `@timeline`, `@comparison`, `@quote`) | No — ignored; they don't render and produce no visible output |
 
 > For a full list of which markers belong to which category, see
 > [markers.md](markers.md).
@@ -110,8 +110,9 @@ A full-viewport slide deck. Best for presentations and pitches you share
 as a link.
 
 - Slides are separated by `---` on its own line.
-- The first non-blank line of each slide is its title (either a `#`/`##`
-  heading or a plain first line).
+- Each slide's title is its leading `#` or `##` heading. A slide whose
+  first non-blank line is **not** a `#`/`##` heading has **no title** —
+  its entire text is treated as body.
 - An optional `<!-- @header -->` block placed **before** the first `---`
   generates a formatted title slide (slide 0) with title, subtitle, and
   brand name.
@@ -167,8 +168,8 @@ See [commands-and-cli.md](commands-and-cli.md) for the full flag reference.
 
 Only `@header`, the seven data-driven chart types, and the three diagram
 types (`@flow`, `@quadrant`, `@mermaid`) are cross-format. All other
-proposal-only markers (`@stats`, `@cta`, `@icons`, etc.) are silently skipped
-in article and slides output.
+proposal-only markers (`@stats`, `@cta`, `@icons`, etc.) are ignored in
+article and slides output — they don't render and produce no visible output.
 
 Full per-marker format support is documented in [markers.md](markers.md).
 
