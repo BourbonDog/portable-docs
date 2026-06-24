@@ -229,7 +229,9 @@ function groupSubsections(blocks) {
 // Build the article header. Prefer the @header block (reused extractHeader);
 // fall back to `# H1` (title) and the first `*italic*` line (subtitle).
 function buildHeader(markdown) {
-  const fromBlock = extractHeader(markdown);
+  const { maskFences } = require('../src/utils/fences.js');
+  const mh = maskFences(markdown);
+  const fromBlock = extractHeader(mh.masked);
 
   // H1 / first-italic fallbacks
   const titleMatch    = markdown.match(/^#\s+(.+)$/m);
@@ -262,6 +264,11 @@ function parseArticle(markdown, baseDir) {
   // Strip the @header block so its inner markers never get parsed as body.
   let body = markdown.replace(/<!--\s*@header\s*-->[\s\S]*?<!--\s*\/@header\s*-->/, '');
 
+  // Mask fenced code blocks so markers inside them are not extracted.
+  const { maskFences } = require('../src/utils/fences.js');
+  const fence = maskFences(body);
+  body = fence.masked;
+
   // Pre-extract @chart blocks → [[CHART:N]] sentinels + resolved chart objects.
   const extracted = extractChartPlaceholders(body, baseDir || process.cwd());
   body = extracted.text;
@@ -276,6 +283,9 @@ function parseArticle(markdown, baseDir) {
   const extractedQuadrants = extractQuadrantPlaceholders(body, baseDir || process.cwd());
   body = extractedQuadrants.text;
   const quadrants = extractedQuadrants.quadrants;
+
+  // Restore fenced code blocks before section split / block parse.
+  body = fence.restore(body);
 
   // Split on `## ` headings → sections.
   const sectionSplits = body.split(/^##\s+/m);
