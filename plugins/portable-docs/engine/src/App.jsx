@@ -239,13 +239,6 @@ const App = () => {
   const pullquoteIndex = { current: 0 };
   const chartIndex = { current: 0 };
 
-  // Component lookup by type
-  const chartsByType = {};
-  CONTENT.charts.forEach(chart => {
-    if (!chartsByType[chart.type]) chartsByType[chart.type] = [];
-    chartsByType[chart.type].push(chart);
-  });
-
   // Helper to get cards by section
   const getCardsBySection = (sectionNum) => {
     return CONTENT.cards.find(group => group.section === String(sectionNum));
@@ -258,7 +251,6 @@ const App = () => {
 
   // Context object passed to renderers
   const context = {
-    chartsByType,
     chartIndex,
     getCardsBySection,
     getQuotesBySection,
