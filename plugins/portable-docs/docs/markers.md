@@ -63,7 +63,7 @@ Markers are positional or keyed:
 
 ### Cross-format availability
 
-> **Proposal-only markers render as literal text in article and slides formats.**
+> **Proposal-only markers do not render in article and slides formats.**
 >
 > The following markers work in **all three formats** (proposal, article, slides):
 > `@header` (and its sub-markers), the seven data-driven chart types
@@ -575,9 +575,9 @@ style notes.
 > - **Paired vs inline is fixed.** `@stat` is always inline; `@card` is always
 >   paired. Using the wrong form causes `unclosed-block` errors.
 >
-> - **Proposal-only markers are literal text elsewhere.** A `@stats` block in
->   an article or slides file is rendered as a raw HTML comment. The layout
->   component is never invoked.
+> - **Proposal-only markers do not render elsewhere.** A `@stats` block in
+>   an article or slides file is left as an inert HTML comment (invisible in
+>   the browser); the layout component is never invoked.
 >
 > - **Placement is positional or keyed.** Charts and tables render where they
 >   appear in the file. Cards and worklists use `section=` to locate themselves.

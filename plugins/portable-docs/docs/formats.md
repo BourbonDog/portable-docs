@@ -16,9 +16,10 @@ resumes, landing pages, and RFPs.
 - Body is numbered `## N. Title` sections (e.g. `## 1. Problem`) with optional
   `### Subsection` headings inside each.
 - A trailing `## Citations` section is rendered as a reference list.
-- The full marker set is active — `@header`, `@stats`, `@cta`, `@icons`,
-  `@features`, `@table`, `@timeline`, `@comparison`, `@quote`, all chart types,
-  all diagram types. See [markers.md](markers.md) for the complete reference.
+- The full marker set is active — `@header`, `@stats`, `@cards`, `@timeline`,
+  `@quotes`, `@pullquote`, `@cta`, `@credentials`, `@testimonials`, `@worklist`,
+  `@terminal`, `@table`, all chart types, and all diagram types. See
+  [markers.md](markers.md) for the complete reference.
 
 **Minimal example:**
 
@@ -64,7 +65,7 @@ and newsletters.
 | `<!-- @flow -->` node diagrams | Yes |
 | `<!-- @quadrant -->` quadrant charts | Yes |
 | `<!-- @mermaid -->` diagrams | Yes |
-| Proposal-only markers (`@stats`, `@cta`, `@icons`, `@features`, `@table`, `@timeline`, `@comparison`, `@quote`) | No — ignored; they don't render and produce no visible output |
+| Proposal-only markers (`@stats`, `@cards`, `@timeline`, `@quotes`, `@pullquote`, `@cta`, `@terminal`, `@table`, …) | No — ignored; they don't render and produce no visible output |
 
 > For a full list of which markers belong to which category, see
 > [markers.md](markers.md).
