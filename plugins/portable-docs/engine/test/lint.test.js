@@ -300,3 +300,36 @@ test('changelog: a ### under a non-versioned section does NOT warn unknown-group
   assert.ok(r.warnings.some((w) => w.code === 'changelog-section-not-versioned'));
   assert.ok(!r.warnings.some((w) => w.code === 'changelog-unknown-group'), 'group check must not run outside a release');
 });
+
+test('newsletter: header without issue label warns (newsletter-no-issue)', () => {
+  const md = ['<!-- @header -->', '<!-- @brand value="The Signal" -->', '<!-- @date value="June 2026" -->', '<!-- /@header -->', '## A', '## B'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'newsletter' });
+  assert.ok(r.warnings.some((w) => w.code === 'newsletter-no-issue'));
+});
+
+test('newsletter: header with @brandsub does not warn no-issue', () => {
+  const md = ['<!-- @header -->', '<!-- @brand value="The Signal" -->', '<!-- @brandsub value="Issue 14" -->', '<!-- @date value="June 2026" -->', '<!-- /@header -->', '## A', '## B'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'newsletter' });
+  assert.ok(!r.warnings.some((w) => w.code === 'newsletter-no-issue'));
+});
+
+test('newsletter: missing date warns (newsletter-no-date)', () => {
+  const md = ['<!-- @header -->', '<!-- @brand value="The Signal" -->', '<!-- @eyebrow value="DIGEST" -->', '<!-- /@header -->', '## A', '## B'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'newsletter' });
+  assert.ok(r.warnings.some((w) => w.code === 'newsletter-no-date'));
+});
+
+test('newsletter: fewer than 2 sections warns (newsletter-thin)', () => {
+  const md = ['<!-- @header -->', '<!-- @brand value="X" -->', '<!-- @brandsub value="Issue 1" -->', '<!-- @date value="June 2026" -->', '<!-- /@header -->', '## Only One'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'newsletter' });
+  assert.ok(r.warnings.some((w) => w.code === 'newsletter-thin'));
+});
+
+test('newsletter rules are silent when type is null', () => {
+  const md = ['<!-- @header -->', '<!-- @brand value="X" -->', '<!-- /@header -->', '## Only One'].join('\n');
+  const r = lintMarkdown(md, { format: 'article' });
+  const codes = [...r.errors, ...r.warnings].map((d) => d.code);
+  for (const c of ['newsletter-no-issue', 'newsletter-no-date', 'newsletter-thin']) {
+    assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
+  }
+});

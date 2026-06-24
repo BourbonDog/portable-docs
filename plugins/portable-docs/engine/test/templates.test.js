@@ -134,3 +134,19 @@ test('lint: changelog.md is error-free under --type changelog', () => {
   const r = lintMarkdown(md, { format: 'article', type: 'changelog' });
   assert.deepStrictEqual(r.errors, [], 'changelog template must have no lint errors');
 });
+
+// ── 6. newsletter.md — --type newsletter (Phase 5a) ─────────────────────────
+
+test('templates: newsletter.md builds clean under --type newsletter', async () => {
+  const html = await runBuild({ input: path.join(TEMPLATES, 'newsletter.md'), type: 'newsletter' });
+  assert.ok(html.length > 1000);
+  assert.ok(html.includes('<!DOCTYPE html'));
+  assertNoBannedLiterals(html, 'newsletter.md');
+});
+
+test('lint: newsletter.md is error-free and warning-free under --type newsletter', () => {
+  const md = fs.readFileSync(path.join(TEMPLATES, 'newsletter.md'), 'utf8');
+  const r = lintMarkdown(md, { format: 'article', type: 'newsletter' });
+  assert.deepStrictEqual(r.errors, []);
+  assert.deepStrictEqual(r.warnings, []);
+});

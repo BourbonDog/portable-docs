@@ -259,6 +259,26 @@ function lintMarkdown(md, opts = {}) {
     }
   }
 
+  if (type === 'newsletter') {
+    const src = String(md);
+    const hasHeader = /<!--\s*@header\s*-->/.test(src);
+    const hasIssue = /<!--\s*@brandsub\b/.test(src) || /<!--\s*@eyebrow\b/.test(src);
+    const hasDate = /<!--\s*@date\b/.test(src);
+    if (hasHeader && !hasIssue) {
+      warnings.push({ line: 0, severity: 'warning', code: 'newsletter-no-issue',
+        message: `Newsletter @header has no issue label — add @brandsub value="Issue N" or @eyebrow value="…"` });
+    }
+    if (hasHeader && !hasDate) {
+      warnings.push({ line: 0, severity: 'warning', code: 'newsletter-no-date',
+        message: `Newsletter has no @date — add <!-- @date value="Month YYYY" --> to the masthead` });
+    }
+    const sectionCount = lines.filter((l) => /^##\s+/.test(l)).length;
+    if (sectionCount < 2) {
+      warnings.push({ line: 0, severity: 'warning', code: 'newsletter-thin',
+        message: `Newsletter has ${sectionCount} section(s); a typical issue has an "In This Issue" intro plus 2+ short sections` });
+    }
+  }
+
   return { errors, warnings };
 }
 
