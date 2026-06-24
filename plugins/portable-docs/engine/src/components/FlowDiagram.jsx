@@ -200,9 +200,6 @@ const FlowTabPanel = ({ stages, accentColor }) => (
 // MAIN FLOW DIAGRAM
 // =============================================================================
 const FlowDiagram = ({ data }) => {
-  if (data && data.error) return <DiagramError kind="flow" title={data.title} message={data.error} />;
-  const { systemName, accentColor, tabs, callouts } = data || {};
-
   const [activeTab, setActiveTab] = useState(0);
   const containerRef = useRef(null);
   const [inView, setInView] = useState(false);
@@ -220,6 +217,8 @@ const FlowDiagram = ({ data }) => {
     return () => observer.disconnect();
   }, []);
 
+  if (data && data.error) return <DiagramError kind="flow" title={data.title} message={data.error} />;
+  const { systemName, accentColor, tabs, callouts } = data || {};
   if (!tabs || tabs.length === 0) return null;
 
   return (

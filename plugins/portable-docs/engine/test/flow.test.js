@@ -21,3 +21,10 @@ test('FlowDiagram takes a single `data` prop and guards data.error', () => {
 test('FlowDiagram imports React state/effect/ref hooks (not useInView)', () => {
   assert.ok(/useState, useEffect, useRef/.test(SRC), 'imports useState/useEffect/useRef');
 });
+
+test('FlowDiagram calls hooks before any conditional return (Rules of Hooks)', () => {
+  const firstHook = SRC.search(/use(State|Ref|Effect)\s*\(/);
+  const errorReturn = SRC.search(/if \(data && data\.error\) return/);
+  assert.ok(firstHook !== -1 && errorReturn !== -1 && firstHook < errorReturn,
+    'all hooks must be declared before the data.error early return');
+});
