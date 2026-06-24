@@ -519,6 +519,133 @@ tables, images.
 
 ---
 
+---
+
+## 4. Diagram Markers
+
+Three native diagram types are available in **all three formats** (proposal, article, slides).
+Data is supplied as an inline fenced JSON block (`src=` is not supported for diagrams).
+A `src=` attribute is ignored; the JSON must be inline.
+
+---
+
+### `@flow` / `/@flow` — tabbed architecture flow diagram
+
+Renders a `FlowDiagram` component: a tabbed, interactive pipeline flow with parallel lanes,
+SVG arrows, and optional callout boxes.
+
+```markdown
+<!-- @flow title="System Architecture" -->
+```json
+{
+  "systemName": "Hindsight",
+  "accentColor": "#5b21b6",
+  "tabs": [
+    {
+      "label": "Ingest",
+      "stages": [
+        { "label": "Input",   "type": "input"   },
+        { "label": "Embed",   "type": "process" },
+        { "label": "Store",   "type": "store"   }
+      ]
+    },
+    {
+      "label": "Query",
+      "stages": [
+        { "label": "Search",  "type": "search"  },
+        { "label": "LLM",     "type": "llm"     },
+        { "label": "Output",  "type": "output"  }
+      ]
+    }
+  ],
+  "callouts": [{ "title": "Key Point", "text": "Fast ingestion." }]
+}
+```
+<!-- /@flow -->
+```
+
+**JSON fields:**
+- `systemName` (required string) — displayed as the diagram title
+- `accentColor` (optional string, hex) — accent color for the header bar
+- `tabs` (required array) — each tab has `label` (string) and `stages` (array)
+- `stages` — each stage has `label` (string) and `type` (see below), or `lanes` (array of stage objects for parallel paths)
+- `callouts` (optional array) — each callout has `title` and `text`
+
+**`type` values for stages:** `input` | `process` | `llm` | `store` | `search` | `output` | `unique`
+
+If `tabs` is missing or the JSON is malformed, the build emits a visible error card
+in place of the diagram. `--strict` aborts on resolver/syntax errors.
+
+---
+
+### `@quadrant` / `/@quadrant` — 2×2 positioning map
+
+Renders a `QuadrantChart` component: a scatter-plot quadrant with labeled axes,
+four quadrant labels, and dots positioned on a 0–100 coordinate grid.
+
+```markdown
+<!-- @quadrant title="Market Map" subtitle="Q1 2026" -->
+```json
+{
+  "xAxisLow":  "Niche",
+  "xAxisHigh": "Broad",
+  "yAxisLow":  "Low",
+  "yAxisHigh": "High",
+  "quadrantLabels": ["Leaders", "Challengers", "Niche Players", "Visionaries"],
+  "dots": [
+    { "label": "Alpha", "x": 75, "y": 80, "color": "#5b21b6" },
+    { "label": "Beta",  "x": 30, "y": 60, "color": "#6366f1", "note": "2025" }
+  ]
+}
+```
+<!-- /@quadrant -->
+```
+
+**JSON fields:**
+- `xAxisLow` / `xAxisHigh` — labels for the left / right ends of the x-axis
+- `yAxisLow` / `yAxisHigh` — labels for the bottom / top ends of the y-axis
+- `quadrantLabels` (required array of exactly 4 strings) — top-right, top-left, bottom-right, bottom-left
+- `dots` (required array, minimum 1) — each dot: `label` (string), `x` / `y` (0–100 integer coordinates), `color` (hex), optional `note` string
+
+Dot coordinates use a 0–100 scale where (0,0) is bottom-left and (100,100) is top-right.
+Missing or malformed JSON renders an error card. `--strict` aborts.
+
+---
+
+### `@mermaid` / `/@mermaid` — escape hatch for any diagram type
+
+Renders any [Mermaid](https://mermaid.js.org/) diagram as an inline SVG baked into
+the output at build time. The diagram source is passed as raw Mermaid text inside
+the block body (no fenced block required — just the raw source).
+
+```markdown
+<!-- @mermaid title="Request Flow" -->
+sequenceDiagram
+  Client->>API: POST /generate
+  API->>LLM: prompt
+  LLM-->>API: completion
+  API-->>Client: 200 OK
+<!-- /@mermaid -->
+```
+
+**Build-time rendering:** the engine spins up a headless browser, loads the vendored
+`mermaid.min.js` (v11.4.1, `engine/vendor/`), renders the diagram to SVG, and inlines
+the result directly into the HTML output. The Mermaid library **never ships** in the
+output artifact — only the rendered `<svg>` is included.
+
+**Graceful fallback:** if no supported browser is found (`Chrome → Edge → Chromium`),
+the build continues and renders the diagram source inside a `<pre>` block instead of
+aborting. Override the browser path with `PD_BROWSER=/path/to/browser`.
+
+**`--strict` behavior:** resolver errors (bad Mermaid syntax) and missing-browser
+situations are treated as degraded (not errors) by default. With `--strict`, a
+Mermaid syntax error that the renderer reports aborts the build; a missing browser
+degrades gracefully even with `--strict`.
+
+**`title` attribute** is optional and displayed as a caption above the diagram.
+
+---
+
 ## Linting
 
 Every `/doc` and `/slides` build **auto-lints** the source and prints line-numbered

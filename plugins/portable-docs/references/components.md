@@ -297,6 +297,63 @@ When the document is exported to PDF (or printed via the browser):
 
 ---
 
+---
+
+### `FlowDiagram`
+
+**File:** `FlowDiagram.jsx`
+**Marker:** `@flow` / `/@flow`
+**What it is:** A tabbed, interactive architecture flow diagram showing
+ingestion/query paths (AI memory system style). Supports sequential stages and
+parallel lanes per tab, SVG connector arrows between stages, and optional
+callout boxes alongside the diagram.
+**Props:** `systemName` (required string — diagram heading), `accentColor`
+(optional hex), `tabs` (required array of `{ label, stages }`), `callouts`
+(optional array of `{ title, text }`).
+**Stage `type` values:** `input` | `process` | `llm` | `store` | `search` |
+`output` | `unique`. Each stage can also have `lanes` (array of parallel
+sub-stages) instead of a scalar `type`.
+**Use when:** Visualizing an end-to-end data pipeline, AI system architecture,
+or multi-path processing flow. Works in all three formats.
+
+---
+
+### `QuadrantChart`
+
+**File:** `QuadrantChart.jsx`
+**Marker:** `@quadrant` / `/@quadrant`
+**What it is:** A 2×2 scatter-plot quadrant chart for strategic positioning
+maps. Axes are labeled at both ends; each quadrant gets a text label; dots are
+plotted on a 0–100 coordinate grid.
+**Props:** `title` (string), `subtitle` (string), `xAxisLow`, `xAxisHigh`,
+`yAxisLow`, `yAxisHigh` (axis-end labels), `quadrantLabels` (array of exactly
+4 strings — top-right, top-left, bottom-right, bottom-left), `dots` (array of
+`{ label, x, y, color, note? }` — coordinates 0–100 where (0,0) is
+bottom-left).
+**Use when:** Competitive positioning, effort-vs-impact prioritization, or any
+2-axis strategic classification. Multiple `@quadrant` blocks per document
+render in document order. Works in all three formats.
+
+---
+
+### `MermaidFigure`
+
+**File:** `MermaidFigure.jsx`
+**Marker:** `@mermaid` / `/@mermaid`
+**What it is:** Renders any Mermaid diagram type (flowchart, sequence, ER, Gantt,
+etc.) as an **inline SVG** baked into the output at build time. The component
+receives either `svg` (a pre-rendered SVG string from the build step) or `src`
+(raw Mermaid source for the graceful `<pre>` fallback when no browser is
+available). An optional `title` prop is shown as a caption.
+**Build posture:** The Mermaid library is vendored at `engine/vendor/mermaid.min.js`
+but never ships in the output — only the rendered SVG is inlined. A missing
+browser degrades to a `<pre>` fallback rather than aborting.
+**Use when:** You need a diagram type not covered by the native `@flow` or
+`@quadrant` markers — sequence diagrams, ER diagrams, Gantt charts, state
+machines, mind maps, etc. Works in all three formats.
+
+---
+
 ## Components not connected to any marker
 
 These components exist in `engine/src/components/` and are exported from
@@ -304,25 +361,5 @@ These components exist in `engine/src/components/` and are exported from
 be triggered by any markdown marker in the current engine. They are available
 for direct JSX use or future marker additions.
 
----
-
-### `QuadrantChart`
-
-**File:** `QuadrantChart.jsx`
-**What it is:** A 2×2 scatter-plot quadrant chart for strategic positioning
-maps. Props: `title`, `subtitle`, `xAxisLow`, `xAxisHigh`, `yAxisLow`,
-`yAxisHigh`, `quadrantLabels`, `dots`.
-**Status:** Exported but **no `@quadrant` marker exists in the parser**. Cannot
-be invoked from markdown.
-
----
-
-### `FlowDiagram`
-
-**File:** `FlowDiagram.jsx`
-**What it is:** A tabbed, interactive architecture flow diagram showing
-ingestion/query paths (AI memory system style). Supports parallel lanes, SVG
-arrows between stages, and optional callout boxes.
-Props: `systemName`, `accentColor`, `tabs`, `callouts`.
-**Status:** Exported but **no `@flow` marker exists in the parser**. Cannot be
-invoked from markdown.
+_(None at this time — FlowDiagram, QuadrantChart, and MermaidFigure are now
+all wired to their respective `@flow`, `@quadrant`, and `@mermaid` markers.)_

@@ -375,6 +375,20 @@ Common refinement loops:
 
 ---
 
+## Native diagrams and Mermaid escape hatch
+
+Phase 4b adds three diagram markers that work in **all three formats** (proposal, article, slides).
+`@flow` produces a tabbed architecture flow (`FlowDiagram`) with typed stages (`input`, `process`, `llm`,
+`store`, `search`, `output`, `unique`) and optional callouts. `@quadrant` produces a 2×2 positioning map
+(`QuadrantChart`) with labeled axes and dots placed on a 0–100 coordinate grid. Both use inline fenced JSON
+as their data source and render missing/bad data as a visible error card rather than crashing. `@mermaid`
+is the escape hatch for any diagram type Mermaid supports (sequence, ER, Gantt, state machines, etc.):
+the engine spins up a headless browser at build time, renders the diagram to an inline SVG via the vendored
+`mermaid.min.js`, and bakes only the `<svg>` into the output — Mermaid never ships in the artifact. If no
+supported browser is found, the build degrades gracefully to a `<pre>` fallback instead of aborting.
+
+---
+
 ## References
 
 All reference docs live alongside this skill in `$CLAUDE_PLUGIN_ROOT/references/`:

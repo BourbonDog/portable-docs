@@ -139,3 +139,103 @@ test('CRLF: parseSlides resolves 1 chart from CRLF input', () => {
     `parseSlides should resolve 1 chart from CRLF input, got ${c.charts.length}`
   );
 });
+
+// ── Diagram helpers ───────────────────────────────────────────────────────────
+
+const { extractFlowPlaceholders, extractQuadrantPlaceholders } = require('../src/utils/diagrams.js');
+
+/** Build a minimal valid @flow block string (LF-terminated) */
+function flowBlock(systemName = 'CRLFSystem') {
+  return [
+    `<!-- @flow title="${systemName} Architecture" -->`,
+    '```json',
+    JSON.stringify({
+      systemName,
+      accentColor: '#5b21b6',
+      tabs: [{ label: 'Ingest', stages: [{ label: 'Input', type: 'input' }] }],
+      callouts: [],
+    }),
+    '```',
+    '<!-- /@flow -->',
+  ].join('\n');
+}
+
+/** Build a minimal valid @quadrant block string (LF-terminated) */
+function quadrantBlock(title = 'CRLFMap') {
+  return [
+    `<!-- @quadrant title="${title}" subtitle="Q1 2026" -->`,
+    '```json',
+    JSON.stringify({
+      xAxisLow: 'Niche',
+      xAxisHigh: 'Broad',
+      yAxisLow: 'Low',
+      yAxisHigh: 'High',
+      quadrantLabels: ['Leaders', 'Challengers', 'Niche Players', 'Visionaries'],
+      dots: [{ label: 'Alpha', x: 75, y: 80, color: '#5b21b6' }],
+    }),
+    '```',
+    '<!-- /@quadrant -->',
+  ].join('\n');
+}
+
+/**
+ * Build a CRLF copy of the diagrams-proposal fixture structure:
+ * one @flow block and two @quadrant blocks in a proposal-style section.
+ */
+function makeCrlfDiagramsProposal() {
+  const lines = [
+    '<!-- @header -->',
+    '<!-- @title value="CRLF Diagrams Test" -->',
+    '<!-- /@header -->',
+    '',
+    '## 1. Architecture',
+    '',
+    flowBlock('TestSystem'),
+    '',
+    quadrantBlock('First Map'),
+    '',
+    quadrantBlock('Second Map'),
+    '',
+  ];
+  return lines.join('\r\n');
+}
+
+// ── Test 5: CRLF diagrams-proposal — @flow resolves ──────────────────────────
+
+test('CRLF: extractFlowPlaceholders resolves @flow from a CRLF diagrams-proposal', () => {
+  const crlfMd = makeCrlfDiagramsProposal();
+  const { flows } = extractFlowPlaceholders(crlfMd, process.cwd());
+  assert.strictEqual(
+    flows.length,
+    1,
+    `expected 1 @flow resolved from CRLF input, got ${flows.length}`
+  );
+  assert.strictEqual(
+    flows[0].error,
+    null,
+    `@flow should resolve without error; got: ${flows[0].error}`
+  );
+  assert.strictEqual(
+    flows[0].systemName,
+    'TestSystem',
+    `flow systemName should be TestSystem, got: ${flows[0].systemName}`
+  );
+});
+
+// ── Test 6: CRLF diagrams-proposal — @quadrant resolves ──────────────────────
+
+test('CRLF: extractQuadrantPlaceholders resolves @quadrant from a CRLF diagrams-proposal', () => {
+  const crlfMd = makeCrlfDiagramsProposal();
+  const { quadrants } = extractQuadrantPlaceholders(crlfMd, process.cwd());
+  assert.strictEqual(
+    quadrants.length,
+    2,
+    `expected 2 @quadrant blocks resolved from CRLF input, got ${quadrants.length}`
+  );
+  assert.ok(
+    quadrants.every((q) => q.error === null),
+    `all @quadrant blocks should resolve without error`
+  );
+  assert.strictEqual(quadrants[0].title, 'First Map');
+  assert.strictEqual(quadrants[1].title, 'Second Map');
+});

@@ -73,3 +73,5 @@ x,y,label
 9,90,Gamma
 ```
 <!-- /@chart -->
+
+> See also: [[diagram-showcase]] for native `@flow`, `@quadrant`, and `@mermaid` diagrams.
