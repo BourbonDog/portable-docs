@@ -200,8 +200,55 @@ const BarChartBase = ({ data, stacked }) => {
 
 const GroupedBarChart = ({ data }) => <BarChartBase data={data} stacked={false} />;
 const StackedBarChart = ({ data }) => <BarChartBase data={data} stacked={true} />;
-const AreaChart = ({ data }) => <ChartEmpty title={data.title} />;
-const LineChart = ({ data }) => <ChartEmpty title={data.title} />;
+// X positions evenly spaced across the plot for N categories (centered).
+const xPositions = (box, n) => {
+  if (n === 1) return [box.x0 + box.iw / 2];
+  return Array.from({ length: n }, (_, i) => box.x0 + (i / (n - 1)) * box.iw);
+};
+
+const LineAreaBase = ({ data, filled }) => {
+  const { title, subtitle, categories = [], series = [], ylabel } = data;
+  if (!categories.length || !series.length) return <ChartEmpty title={title} />;
+  const box = plotBox();
+  const max = Math.max(...series.flatMap((se) => se.values), 0);
+  const scale = niceScale(0, max);
+  const xs = xPositions(box, categories.length);
+  const yOf = (v) => box.y0 - (v / scale.max) * box.ih;
+  const colorOf = (i) => CHART_COLORS[i % CHART_COLORS.length];
+  return (
+    <ChartFrame title={title} subtitle={subtitle}>
+      <svg viewBox={`0 0 ${PLOT.w} ${PLOT.h}`} width="100%" role="img" aria-label={title || 'Line chart'}>
+        <YAxis scale={scale} box={box} ylabel={ylabel} />
+        {series.map((se, si) => {
+          const pts = se.values.map((v, i) => `${xs[i].toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
+          const color = colorOf(si);
+          return (
+            <g key={si}>
+              {filled && (
+                <polygon
+                  points={`${xs[0].toFixed(1)},${box.y0} ${pts} ${xs[xs.length - 1].toFixed(1)},${box.y0}`}
+                  fill={color} fillOpacity="0.15" stroke="none" />
+              )}
+              <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5"
+                        strokeLinejoin="round" strokeLinecap="round" />
+              {se.values.map((v, i) => (
+                <circle key={i} cx={xs[i]} cy={yOf(v)} r="3" fill={color} />
+              ))}
+            </g>
+          );
+        })}
+        {categories.map((cat, i) => (
+          <text key={i} x={xs[i]} y={box.y0 + 18} textAnchor="middle"
+                fontFamily={FONTS.ui} fontSize="11" fill={COLORS.ink[600]}>{cat}</text>
+        ))}
+      </svg>
+      <Legend items={series.map((se, i) => ({ label: se.name, color: colorOf(i) }))} />
+    </ChartFrame>
+  );
+};
+
+const AreaChart = ({ data }) => <LineAreaBase data={data} filled={true} />;
+const LineChart = ({ data }) => <LineAreaBase data={data} filled={false} />;
 const ScatterChart = ({ data }) => <ChartEmpty title={data.title} />;
 
 export {
