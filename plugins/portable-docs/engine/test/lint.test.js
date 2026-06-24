@@ -333,3 +333,36 @@ test('newsletter rules are silent when type is null', () => {
     assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
   }
 });
+
+test('case-study: no @stats warns (case-study-missing-metrics)', () => {
+  const md = ['## 1. Context', 'prose'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'case-study' });
+  assert.ok(r.warnings.some((w) => w.code === 'case-study-missing-metrics'));
+});
+
+test('case-study: no quote warns (case-study-missing-quote)', () => {
+  const md = ['## 1. Context', '<!-- @stats -->', '<!-- @stat value="3x" label="x" source="y" -->', '<!-- /@stats -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'case-study' });
+  assert.ok(r.warnings.some((w) => w.code === 'case-study-missing-quote'));
+});
+
+test('case-study: @stats with 2 stats warns (case-study-stats-count)', () => {
+  const md = ['<!-- @stats -->', '<!-- @stat value="1" label="a" source="s" -->', '<!-- @stat value="2" label="b" source="s" -->', '<!-- /@stats -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'case-study' });
+  assert.ok(r.warnings.some((w) => w.code === 'case-study-stats-count'));
+});
+
+test('case-study: @pullquote without author warns (case-study-quote-attribution)', () => {
+  const md = ['<!-- @pullquote -->', 'A quote.', '<!-- /@pullquote -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'case-study' });
+  assert.ok(r.warnings.some((w) => w.code === 'case-study-quote-attribution'));
+});
+
+test('case-study rules are silent when type is null', () => {
+  const md = ['## 1. Context', 'prose'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  const codes = [...r.errors, ...r.warnings].map((d) => d.code);
+  for (const c of ['case-study-missing-metrics', 'case-study-missing-quote', 'case-study-stats-count', 'case-study-quote-attribution']) {
+    assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
+  }
+});

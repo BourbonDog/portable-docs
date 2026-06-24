@@ -279,6 +279,41 @@ function lintMarkdown(md, opts = {}) {
     }
   }
 
+  if (type === 'case-study') {
+    const src = String(md);
+    const hasStats = /<!--\s*@stats\b/.test(src);
+    const hasPull = /<!--\s*@pullquote\b/.test(src);
+    const hasQuotes = /<!--\s*@quotes\b/.test(src);
+    if (!hasStats) {
+      warnings.push({ line: 0, severity: 'warning', code: 'case-study-missing-metrics',
+        message: `Case study has no @stats block — lead the Results with 3–4 hard metrics` });
+    }
+    if (!hasPull && !hasQuotes) {
+      warnings.push({ line: 0, severity: 'warning', code: 'case-study-missing-quote',
+        message: `Case study has no customer quote — add a @pullquote or @quotes block` });
+    }
+    const statsBlockRe = /<!--\s*@stats\b[^>]*-->([\s\S]*?)<!--\s*\/@stats\s*-->/g;
+    let sm;
+    while ((sm = statsBlockRe.exec(src)) !== null) {
+      const n = (sm[1].match(/<!--\s*@stat\b/g) || []).length;
+      if (n < 3 || n > 4) {
+        const lineNo = src.slice(0, sm.index).split('\n').length;
+        warnings.push({ line: lineNo, severity: 'warning', code: 'case-study-stats-count',
+          message: `@stats has ${n} @stat(s); 3–4 reads best (StatsGrid uses a hero layout at exactly 4)` });
+      }
+    }
+    const pqRe = /<!--\s*@pullquote\b([^>]*)-->/g;
+    let pm;
+    while ((pm = pqRe.exec(src)) !== null) {
+      const attrs = parseAttrs(pm[1]);
+      if (!attrs.author) {
+        const lineNo = src.slice(0, pm.index).split('\n').length;
+        warnings.push({ line: lineNo, severity: 'warning', code: 'case-study-quote-attribution',
+          message: `@pullquote in a case study has no author — an unattributed customer quote undercuts the type` });
+      }
+    }
+  }
+
   return { errors, warnings };
 }
 

@@ -150,3 +150,19 @@ test('lint: newsletter.md is error-free and warning-free under --type newsletter
   assert.deepStrictEqual(r.errors, []);
   assert.deepStrictEqual(r.warnings, []);
 });
+
+// ── 7. case-study.md — --type case-study (Phase 5a) ─────────────────────────
+
+test('templates: case-study.md builds clean under --type case-study', async () => {
+  const html = await runBuild({ input: path.join(TEMPLATES, 'case-study.md'), type: 'case-study' });
+  assert.ok(html.length > 1000);
+  assert.ok(html.includes('<!DOCTYPE html'));
+  assertNoBannedLiterals(html, 'case-study.md');
+});
+
+test('lint: case-study.md is error-free and warning-free under --type case-study', () => {
+  const md = fs.readFileSync(path.join(TEMPLATES, 'case-study.md'), 'utf8');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'case-study' });
+  assert.deepStrictEqual(r.errors, []);
+  assert.deepStrictEqual(r.warnings, []);
+});
