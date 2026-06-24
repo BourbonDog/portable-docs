@@ -46,7 +46,7 @@ function readFileOrDie(filePath) {
 // useInView hook that Table relies on). RichText is referenced by Section,
 // Table, and ArticleApp. ChartsSVG MUST precede Chart (Chart imports its SVG
 // primitives). Charts are now first-class in the article format (Task 11).
-const ARTICLE_COMPONENTS = ['Section', 'RichText', 'Table', 'ReadingProgress', 'ChartsSVG', 'Chart'];
+const ARTICLE_COMPONENTS = ['Section', 'RichText', 'Table', 'ReadingProgress', 'ChartsSVG', 'Chart', 'DiagramError', 'QuadrantChart', 'FlowDiagram'];
 
 function buildArticle() {
   const outputFile = process.env.PD_JSX_OUT || path.join(DIST_DIR, 'Article.jsx');
