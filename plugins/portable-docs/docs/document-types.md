@@ -30,6 +30,10 @@ Source: `engine/scripts/build-doc.js` — `TYPE_MAP` and `applyTypeDefaults`.
 > `--type report` or `--type one-pager`; an unknown `--type` throws an error
 > listing the valid names.
 
+Every marker named below — `@timeline`, `@stats`, `@cta`, and the rest — is
+documented in [markers.md](markers.md); charts and diagrams live in
+[charts-and-diagrams.md](charts-and-diagrams.md).
+
 ---
 
 ## resume
