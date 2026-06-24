@@ -27,6 +27,7 @@ const fs   = require('fs');
 const path = require('path');
 
 const { extractHeader } = require('../src/utils/parser.js');
+const { extractChartPlaceholders } = require('../src/utils/charts.js');
 
 // ── Block helpers ────────────────────────────────────────────────────────────
 
@@ -62,6 +63,14 @@ function parseBlocks(text) {
 
     // Horizontal rule (intra-section divider) — skip
     if (/^---+\s*$/.test(line.trim())) { i++; continue; }
+
+    // Chart placeholder (charts are pre-extracted before block parsing).
+    const chartMatch = line.trim().match(/^\[\[CHART:(\d+)\]\]$/);
+    if (chartMatch) {
+      blocks.push({ type: 'chart', index: Number(chartMatch[1]) });
+      i++;
+      continue;
+    }
 
     // H3 subsection marker
     if (line.startsWith('### ')) {
@@ -221,11 +230,16 @@ function buildHeader(markdown) {
 
 // ── Main parse ────────────────────────────────────────────────────────────────
 
-function parseArticle(markdown) {
+function parseArticle(markdown, baseDir) {
   const header = buildHeader(markdown);
 
   // Strip the @header block so its inner markers never get parsed as body.
-  const body = markdown.replace(/<!--\s*@header\s*-->[\s\S]*?<!--\s*\/@header\s*-->/, '');
+  let body = markdown.replace(/<!--\s*@header\s*-->[\s\S]*?<!--\s*\/@header\s*-->/, '');
+
+  // Pre-extract @chart blocks → [[CHART:N]] sentinels + resolved chart objects.
+  const extracted = extractChartPlaceholders(body, baseDir || process.cwd());
+  body = extracted.text;
+  const charts = extracted.charts;
 
   // Split on `## ` headings → sections.
   const sectionSplits = body.split(/^##\s+/m);
@@ -240,7 +254,7 @@ function parseArticle(markdown) {
     sections.push({ number: idx, title: sectionTitle, short: shortLabel(sectionTitle), blocks });
   }
 
-  return { header, sections };
+  return { header, sections, charts };
 }
 
 // Emit the content as an ESM module that default-exports CONTENT (the bundler

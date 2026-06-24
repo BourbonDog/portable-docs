@@ -294,7 +294,7 @@ async function runArticle(args, md) {
 
   // 1. Parse the article into a content object (no slug registry).
   const { parseArticle, generateArticleOutput } = require('./parse-article.js');
-  const content = parseArticle(md);
+  const content = parseArticle(md, path.dirname(path.resolve(args.input)));
   applyConfigToContent(args, content);
   inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 

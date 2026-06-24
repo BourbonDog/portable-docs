@@ -25,6 +25,7 @@ import { Section, SectionDivider, Subsection, Paragraph, BulletList } from './co
 import Table from './components/Table';
 import RichText from './components/RichText';
 import ReadingProgress from './components/ReadingProgress';
+import Chart from './components/Chart';
 
 // =============================================================================
 // ARTICLE HEADER — full-viewport hero, data-driven title/subtitle/nav
@@ -1005,6 +1006,10 @@ const BlockRenderer = ({ block }) => {
       return <ArticleYouTube videoId={block.videoId} caption={block.caption} />;
     case 'heading':
       return <ArticleHeading text={block.text} />;
+    case 'chart': {
+      const c = CONTENT.charts && CONTENT.charts[block.index];
+      return c ? <Chart type={c.type} data={c} /> : null;
+    }
     case 'subsection':
       return (
         <Subsection title={block.title}>
