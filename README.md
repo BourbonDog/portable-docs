@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="plugins/portable-docs/assets/icon-512.png" width="128" height="128" alt="portable-docs">
+</p>
+
 # portable-docs
 
 **Turn your content into polished, self-contained, shareable HTML documents — inside Claude Code.**

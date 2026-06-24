@@ -24,6 +24,20 @@ const VENDOR = path.join(__dirname, '..', 'vendor');
 const REACT_UMD = fs.readFileSync(path.join(VENDOR, 'react.production.min.js'), 'utf-8');
 const REACTDOM_UMD = fs.readFileSync(path.join(VENDOR, 'react-dom.production.min.js'), 'utf-8');
 
+// App icon embedded as a self-contained favicon data URI so every generated
+// document carries the portable-docs mark with no external request. Sourced
+// from the plugin's assets/icon.svg (single source of truth); if that file is
+// absent (e.g. the engine is exercised in isolation), the favicon is omitted.
+const ICON_SVG_PATH = path.join(__dirname, '..', '..', 'assets', 'icon.svg');
+let FAVICON_LINK = '';
+try {
+  const iconSvg = fs.readFileSync(ICON_SVG_PATH, 'utf-8');
+  const iconB64 = Buffer.from(iconSvg, 'utf-8').toString('base64');
+  FAVICON_LINK = `\n  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,${iconB64}">`;
+} catch (_e) {
+  FAVICON_LINK = '';
+}
+
 /**
  * Strip ESM import/export lines that are not valid in a UMD/browser context.
  * The bundle uses React/ReactDOM as globals; we remove:
@@ -95,7 +109,7 @@ root.render(<App />);`;
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
+  <title>${title}</title>${FAVICON_LINK}
 
   <!-- React + ReactDOM (production UMD) inlined for offline, self-contained output. -->
   <script>${REACT_UMD}</script>

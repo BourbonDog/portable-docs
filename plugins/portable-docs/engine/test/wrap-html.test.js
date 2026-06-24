@@ -36,6 +36,14 @@ test('wrapHtml threads type onto the output html tag', () => {
   }
 });
 
+test('generateHTML embeds the portable-docs favicon as a self-contained data URI', () => {
+  const bundle = 'const App = () => React.createElement("div", null, "x");';
+  const out = generateHTML(bundle, 'T', 'editorial');
+  assert.ok(out.includes('rel="icon"'), 'favicon link present in <head>');
+  assert.ok(out.includes('type="image/svg+xml"'), 'favicon declared as SVG');
+  assert.ok(out.includes('href="data:image/svg+xml;base64,'), 'favicon inlined as data URI (no external request)');
+});
+
 test('generateHTML escapes </script> in the inlined app body', () => {
   // A bundle whose compiled output embeds the literal closing tag in content.
   const bundle = 'const App = () => React.createElement("pre", null, "a</script>b");';
