@@ -56,7 +56,39 @@ export. Each `type` renders differently:
 | `range` | Horizontal range bands (min→max) with optional highlight | Salary bands, comp ranges |
 
 **Use when:** Quantitative data that benefits from a visual chart rather than a
-table.
+table. These four types are **proposal-only** and use nested marker syntax.
+
+---
+
+### Data-driven SVG chart components
+
+**File:** `ChartsSVG.jsx`
+**Marker:** `@chart type="pie|donut|grouped-bar|stacked-bar|area|line|scatter"`
+**What it is:** Seven chart components that render hand-rolled inline SVG from
+CSV or JSON data supplied at build time. All seven components share the same
+editorial card chrome via `ChartFrame` and are **static** (no scroll-in
+animation). They work in **all three formats** (proposal, article, slides).
+
+| Component | `type=` | Best for |
+|-----------|---------|----------|
+| `PieChart` | `pie` | Part-to-whole proportions, 3–8 segments |
+| `DonutChart` | `donut` | Part-to-whole with center emphasis |
+| `GroupedBarChart` | `grouped-bar` | Side-by-side category comparisons |
+| `StackedBarChart` | `stacked-bar` | Composition within categories |
+| `AreaChart` | `area` | Filled trend lines, single or multi-series |
+| `LineChart` | `line` | Trend lines, single or multi-series |
+| `ScatterChart` | `scatter` | Correlation / distribution of (x, y) pairs |
+
+Data is resolved at build time from an inline fenced CSV/JSON block or a
+`src="…"` file — nothing is fetched at view time. If data is missing or
+malformed the component is replaced by `ChartError`, which renders a visible
+warning card. `ChartFrame` wraps every chart with the editorial card chrome
+(title, subtitle, border). `Legend` renders the color-keyed series key for
+multi-series types.
+
+**Use when:** You have tabular data that tells a clearer story as a chart. See
+`markers.md` → _Data-driven types_ for the CSV column conventions and optional
+attributes.
 
 ---
 

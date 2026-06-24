@@ -87,7 +87,7 @@ for the complete syntax. The key rules per format:
   | Content type | Marker to use |
   |---|---|
   | 2–5 key stats | `@stats` / `@stat` |
-  | Trend or comparison data | `@chart type="growth"` or `type="bar"` |
+  | Trend or comparison data | `@chart type="growth"` or `type="bar"` (proposal-only, nested markers); or data-driven: `pie`, `donut`, `grouped-bar`, `stacked-bar`, `area`, `line`, `scatter` from inline CSV/JSON or `src=` file — all three formats |
   | 3–9 parallel items / pillars | `@cards type="feature"` |
   | Career history or roadmap | `@timeline` / `@entry` |
   | External validation quotes | `@quotes` / `@quote` |

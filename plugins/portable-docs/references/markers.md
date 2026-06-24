@@ -122,6 +122,42 @@ One `@chart` block per chart. `type` is required and selects the sub-parser.
 
 Parser: `extractCharts()` — lines 87–144.
 
+#### Data-driven types (CSV / JSON)
+
+Seven additional types render as hand-rolled inline SVG from CSV or JSON data,
+supplied **inline** (a fenced block in the marker body) or from an **external
+file** (`src="…"`, resolved relative to the `.md`). `src=` wins if both are given.
+Data is read at build time and baked into the output — nothing is fetched at view
+time. These types work in **all three formats** (proposal, article, slides).
+
+| `type` | Data (CSV header → meaning) |
+|--------|-----------------------------|
+| `pie` / `donut` | `label,value` (optional third `color` column) |
+| `grouped-bar` / `stacked-bar` | wide: `category,SeriesA,SeriesB,…` |
+| `area` / `line` | wide: `x,SeriesA,SeriesB,…` |
+| `scatter` | `x,y` (optional `label`, `series` columns) |
+
+Optional attributes: `title`, `subtitle`, `src`, and (for `area`/`line`/`scatter`)
+`xlabel` / `ylabel`. JSON is an array of row-objects mirroring the same columns.
+
+```markdown
+<!-- @chart type="pie" title="Browser Share" subtitle="Q2 2026" -->
+```csv
+label,value
+Chrome,65
+Safari,35
+```
+<!-- /@chart -->
+
+<!-- @chart type="area" title="Revenue" src="./data/finance.csv" xlabel="Year" ylabel="$M" -->
+<!-- /@chart -->
+```
+
+If the data source is missing or malformed, the build prints a diagnostic and
+renders a visible error card in place (and `--strict` aborts). The four legacy
+types above (`growth`/`bar`/`hierarchy`/`range`) use nested markers and remain
+**proposal-only**.
+
 ---
 
 ### `@convergence` block
