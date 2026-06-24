@@ -182,3 +182,18 @@ test('lint: rfp.md is error-free and warning-free under --type rfp', () => {
   assert.deepStrictEqual(r.errors, []);
   assert.deepStrictEqual(r.warnings, []);
 });
+
+// ── 9. resume.md — --type resume (Phase 5a) ──────────────────────────────────
+
+test('templates: resume.md builds clean under --type resume', async () => {
+  const html = await runBuild({ input: path.join(TEMPLATES, 'resume.md'), type: 'resume' });
+  assert.ok(html.length > 1000);
+  assert.ok(html.includes('<!DOCTYPE html'));
+  assertNoBannedLiterals(html, 'resume.md');
+});
+
+test('lint: resume.md is error-free under --type resume', () => {
+  const md = fs.readFileSync(path.join(TEMPLATES, 'resume.md'), 'utf8');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'resume' });
+  assert.deepStrictEqual(r.errors, [], 'resume template must have no lint errors');
+});

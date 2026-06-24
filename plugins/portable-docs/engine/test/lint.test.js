@@ -405,3 +405,30 @@ test('rfp rules are silent when type is null', () => {
     assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
   }
 });
+
+test('resume: missing @timeline is an ERROR (resume-no-experience)', () => {
+  const md = ['<!-- @header -->', '<!-- @from name="Jo" email="jo@x.example" -->', '<!-- /@header -->', '## 1. Summary', 'prose'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'resume' });
+  assert.ok(r.errors.some((e) => e.code === 'resume-no-experience'));
+});
+
+test('resume: no @from name/email warns (resume-no-header)', () => {
+  const md = ['## 1. Summary', '<!-- @timeline -->', '<!-- @entry year="2024" company="X" title="Eng" highlight="true" -->b<!-- /@entry -->', '<!-- /@timeline -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'resume' });
+  assert.ok(r.warnings.some((w) => w.code === 'resume-no-header'));
+});
+
+test('resume: an @entry with a non-date year warns (resume-entry-missing-dates)', () => {
+  const md = ['<!-- @timeline -->', '<!-- @entry year="TBD" company="X" title="Eng" highlight="true" -->b<!-- /@entry -->', '<!-- /@timeline -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'resume' });
+  assert.ok(r.warnings.some((w) => w.code === 'resume-entry-missing-dates'));
+});
+
+test('resume rules are silent when type is null', () => {
+  const md = ['## 1. Summary', 'prose'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  const codes = [...r.errors, ...r.warnings].map((d) => d.code);
+  for (const c of ['resume-no-header', 'resume-no-experience', 'resume-entry-missing-dates', 'resume-density-warning']) {
+    assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
+  }
+});

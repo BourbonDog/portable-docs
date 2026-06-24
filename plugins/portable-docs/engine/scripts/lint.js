@@ -320,6 +320,37 @@ function lintMarkdown(md, opts = {}) {
     }
   }
 
+  if (type === 'resume') {
+    const src = String(md);
+    const hasHeader = /<!--\s*@header\s*-->/.test(src);
+    const fromM = src.match(/<!--\s*@from\b([^>]*)-->/);
+    const fromAttrs = fromM ? parseAttrs(fromM[1]) : {};
+    if (!hasHeader || !fromAttrs.name || !fromAttrs.email) {
+      warnings.push({ line: 0, severity: 'warning', code: 'resume-no-header',
+        message: `Résumé has no @header with @from name/email — add the candidate's identity to the header` });
+    }
+    if (!/<!--\s*@timeline\s*-->/.test(src)) {
+      errors.push({ line: 0, severity: 'error', code: 'resume-no-experience',
+        message: `Résumé has no @timeline (Experience) block — experience is the load-bearing résumé section` });
+    }
+    const entryRe = /<!--\s*@entry\b([^>]*)-->/g;
+    let em;
+    while ((em = entryRe.exec(src)) !== null) {
+      const attrs = parseAttrs(em[1]);
+      if (attrs.year != null && !/\d/.test(attrs.year)) {
+        const lineNo = src.slice(0, em.index).split('\n').length;
+        warnings.push({ line: lineNo, severity: 'warning', code: 'resume-entry-missing-dates',
+          message: `@entry year="${attrs.year}" has no date — résumé entries should carry a real year or range` });
+      }
+    }
+    const cardBlocks = (src.match(/<!--\s*@cards\b/g) || []).length + (src.match(/<!--\s*@worklist\b/g) || []).length;
+    const entryCount = (src.match(/<!--\s*@entry\b/g) || []).length;
+    if (cardBlocks > 2 || entryCount > 6) {
+      warnings.push({ line: 0, severity: 'warning', code: 'resume-density-warning',
+        message: `Résumé is dense (${entryCount} entries, ${cardBlocks} card/worklist blocks) — keep it scannable: cap entries and prefer concise bullets` });
+    }
+  }
+
   if (type === 'case-study') {
     const src = String(md);
     const hasStats = /<!--\s*@stats\b/.test(src);
