@@ -140,20 +140,21 @@ async function killAndClean(child, ws, dir) {
 }
 
 /**
- * Capture the ENTIRE page (beyond the viewport) as a PNG via the Chrome
- * DevTools Protocol. Returns true on success. Never throws — on any failure it
- * warns and returns false so the caller degrades gracefully.
+ * Launch a CDP browser session, navigate to htmlAbs, wait for load + React
+ * settle, scroll through the full page to fire every IntersectionObserver
+ * (so fade-in content becomes visible), then invoke `captureFn(send)`.
+ * captureFn receives the bound `send` helper and must return true/false.
+ * Never throws — on any failure warns and returns false.
  * Requires Node's global WebSocket (Node >= 22).
  */
-async function captureFullPagePng(browser, htmlAbs, outAbs) {
+async function withCdpSession(browser, htmlAbs, captureFn) {
   if (typeof WebSocket === 'undefined') {
-    console.warn('export: full-page PNG needs Node >= 22 (global WebSocket); skipping PNG.');
+    console.warn('export: CDP capture needs Node >= 22 (global WebSocket); skipping.');
     return false;
   }
-  // Fix 1: declare resource vars before try so finally can always guard them.
+  // Declare resource vars before try so finally can always guard them.
   let userDataDir, child, ws;
   try {
-    // Fix 1: mkdtempSync + spawn moved inside try so any throw is caught.
     userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-cdp-'));
     child = spawn(browser, [
       '--headless=new', '--disable-gpu', '--hide-scrollbars',
@@ -195,7 +196,7 @@ async function captureFullPagePng(browser, htmlAbs, outAbs) {
     }
     if (!target) throw new Error('no CDP page target found');
 
-    // 3. Connect, navigate, wait for load, measure, screenshot.
+    // 3. Connect, navigate, wait for load, scroll-reveal, then hand off to captureFn.
     ws = new WebSocket(target.webSocketDebuggerUrl);
     await new Promise((resolve, reject) => {
       ws.addEventListener('open', resolve, { once: true });
@@ -230,13 +231,46 @@ async function captureFullPagePng(browser, htmlAbs, outAbs) {
     await withTimeout(send('Page.enable'), 10000, 'Page.enable');
     const loaded = new Promise((resolve) => { onLoad = resolve; });
     // F4: a failed navigation (missing/blocked file) returns errorText rather than a
-    // CDP error — without this check we would screenshot a blank page and report success.
+    // CDP error — without this check we would capture a blank page and report success.
     const nav = await withTimeout(send('Page.navigate', { url: toFileUrl(htmlAbs) }), 15000, 'Page.navigate');
     const navErr = cdpNavError(nav);
     if (navErr) throw new Error(`navigation failed: ${navErr}`);
     await Promise.race([loaded, new Promise((r) => { const t = setTimeout(r, 8000); t.unref(); })]);
     await new Promise((r) => setTimeout(r, 300)); // settle: let React client-render finish
 
+    // Trigger scroll-reveal animations: content fades in via IntersectionObserver
+    // (opacity:0 until in view). A headless browser never scrolls, so without this
+    // the page is captured blank. Scroll through to fire every observer, return to
+    // top, then let the ~0.5s fade transitions settle before capturing.
+    await withTimeout(send('Runtime.evaluate', {
+      expression: `(async () => {
+        const vh = window.innerHeight || 900;
+        const total = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, vh);
+        for (let y = 0; y <= total; y += vh) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); }
+        window.scrollTo(0, 0);
+        await new Promise(r => setTimeout(r, 700));
+      })()`,
+      awaitPromise: true,
+    }), 45000, 'scroll-reveal');
+
+    return await captureFn(send);
+  } catch (e) {
+    console.warn(`export: CDP capture failed: ${e.message}`);
+    return false;
+  } finally {
+    // F2: close ws, kill the browser, wait for it to release the profile lock, then
+    // remove the temp dir with retries. killAndClean guards every undefined resource.
+    await killAndClean(child, ws, userDataDir);
+  }
+}
+
+/**
+ * Capture the ENTIRE page (beyond the viewport) as a PNG via CDP.
+ * Returns true on success. Never throws — degrades gracefully.
+ * Requires Node's global WebSocket (Node >= 22).
+ */
+async function captureFullPagePng(browser, htmlAbs, outAbs) {
+  return withCdpSession(browser, htmlAbs, async (send) => {
     const metrics = await withTimeout(send('Page.getLayoutMetrics'), 10000, 'Page.getLayoutMetrics');
     const size = metrics.cssContentSize || metrics.contentSize;
     // F5: extreme heights exceed the browser's max capture surface and get clipped.
@@ -252,14 +286,27 @@ async function captureFullPagePng(browser, htmlAbs, outAbs) {
     if (!shot || !shot.data) throw new Error('empty screenshot');
     fs.writeFileSync(outAbs, Buffer.from(shot.data, 'base64'));
     return fs.existsSync(outAbs) && fs.statSync(outAbs).size > 0;
-  } catch (e) {
-    console.warn(`export: full-page PNG failed: ${e.message}`);
-    return false;
-  } finally {
-    // F2: close ws, kill the browser, wait for it to release the profile lock, then
-    // remove the temp dir with retries. killAndClean guards every undefined resource.
-    await killAndClean(child, ws, userDataDir);
-  }
+  });
+}
+
+/**
+ * Print the page to PDF via CDP (Page.printToPDF). Uses the same CDP session
+ * as PNG — including the scroll-reveal step — so fade-in content is visible.
+ * Equivalent to the old CLI --print-to-pdf args: background, no header/footer,
+ * CSS page size. Returns true on success. Never throws — degrades gracefully.
+ * Requires Node's global WebSocket (Node >= 22).
+ */
+async function captureFullPagePdf(browser, htmlAbs, outAbs) {
+  return withCdpSession(browser, htmlAbs, async (send) => {
+    const result = await withTimeout(send('Page.printToPDF', {
+      printBackground: true,
+      displayHeaderFooter: false,
+      preferCSSPageSize: true,
+    }), 60000, 'Page.printToPDF');
+    if (!result || !result.data) throw new Error('empty PDF data');
+    fs.writeFileSync(outAbs, Buffer.from(result.data, 'base64'));
+    return fs.existsSync(outAbs) && fs.statSync(outAbs).size > 0;
+  });
 }
 
 async function runExport({ htmlPath, browser, pdf = false, png = false, outDir } = {}) {
@@ -274,9 +321,10 @@ async function runExport({ htmlPath, browser, pdf = false, png = false, outDir }
 
   if (pdf) {
     const out = `${base}.pdf`;
-    const r = spawnSync(browser, buildPdfArgs(htmlAbs, out), { stdio: ['ignore', 'ignore', 'pipe'] });
-    if (r.status === 0 && fs.existsSync(out)) result.pdf = out;
-    else console.warn(`export: PDF failed${r.stderr && r.stderr.length ? ': ' + r.stderr.toString().slice(-300) : ''}`);
+    // Route through the same CDP session as PNG so the scroll-reveal step fires
+    // IntersectionObservers before printing. The old CLI --print-to-pdf path
+    // couldn't scroll, leaving fade-in content blank in the PDF.
+    if (await captureFullPagePdf(browser, htmlAbs, out)) result.pdf = out;
   }
 
   if (png) {
@@ -301,7 +349,7 @@ async function exportFile(htmlPath, opts = {}) {
   return runExport({ ...opts, htmlPath, browser: detectBrowser() });
 }
 
-module.exports = { detectBrowser, toFileUrl, buildPdfArgs, buildPngArgs, detectFormat, runExport, exportFile, killAndClean, withTimeout, cdpNavError, exceedsCaptureLimit };
+module.exports = { detectBrowser, toFileUrl, buildPdfArgs, buildPngArgs, detectFormat, runExport, exportFile, killAndClean, withTimeout, cdpNavError, exceedsCaptureLimit, captureFullPagePng, captureFullPagePdf, withCdpSession };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);
