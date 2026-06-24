@@ -9,6 +9,8 @@
  * The >=length rule makes nested fences work (a 4-backtick span swallows 3-backtick
  * fences until a >=4-backtick close).
  */
+const NUL = String.fromCharCode(0); // sentinel wrapper — NUL never appears in Markdown
+
 function maskFences(text) {
   const lines = String(text).split('\n');
   const spans = [];
@@ -30,7 +32,9 @@ function maskFences(text) {
         i++;
         if (closed) break;
       }
-      const token = ' PDFENCE' + spans.length + ' ';
+      // NUL-wrapped so the sentinel cannot collide with real document text and
+      // contains no `<!--` for marker regexes to match.
+      const token = NUL + 'PDFENCE' + spans.length + NUL;
       spans.push({ token, original: block.join('\n') });
       out.push(token);
     } else {

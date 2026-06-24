@@ -43,3 +43,24 @@ test('nested fences: 4-backtick outer swallows 3-backtick inner', () => {
   assert.ok(!masked.includes('@chart'), 'inner content masked as one span');
   assert.strictEqual(restore(masked), t);
 });
+
+test('sentinel does not collide with literal "PDFENCE0" in prose', () => {
+  const t = 'mentions PDFENCE0 in prose\n\n```\n<!-- @chart -->\n```\nend';
+  const { masked, restore } = maskFences(t);
+  assert.ok(masked.includes('PDFENCE0 in prose'), 'prose mention is untouched');
+  assert.strictEqual(restore(masked), t, 'round-trip preserves the prose mention');
+});
+
+test('unterminated fence (EOF before close) is masked and restored', () => {
+  const t = 'before\n```\n<!-- @stats -->\nno closing fence';
+  const { masked, restore } = maskFences(t);
+  assert.ok(!masked.includes('@stats'), 'unterminated fence content is masked');
+  assert.strictEqual(restore(masked), t);
+});
+
+test('multiple consecutive fenced blocks each get a distinct sentinel', () => {
+  const t = '```\n<!-- @a -->\n```\n\n```\n<!-- @b -->\n```';
+  const { masked, restore } = maskFences(t);
+  assert.ok(!masked.includes('@a') && !masked.includes('@b'), 'both fences masked');
+  assert.strictEqual(restore(masked), t);
+});
