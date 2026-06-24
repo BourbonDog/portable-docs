@@ -231,6 +231,7 @@ function buildHeader(markdown) {
 // ── Main parse ────────────────────────────────────────────────────────────────
 
 function parseArticle(markdown, baseDir) {
+  markdown = String(markdown).replace(/\r\n?/g, '\n');
   const header = buildHeader(markdown);
 
   // Strip the @header block so its inner markers never get parsed as body.

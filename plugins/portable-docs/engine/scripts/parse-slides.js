@@ -61,6 +61,7 @@ function extractSlideTitle(text) {
 // ── Main parse ────────────────────────────────────────────────────────────────
 
 function parseSlides(markdown, baseDir) {
+  markdown = String(markdown).replace(/\r\n?/g, '\n');
   // 1. Extract @header (shared schema: title/subtitle/brand/brandSub/logo/footer …)
   const header = extractHeader(markdown) || {
     from: '', fromEmail: '', linkedin: '', github: '', headshot: '',

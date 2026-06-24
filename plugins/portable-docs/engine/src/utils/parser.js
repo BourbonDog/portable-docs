@@ -529,6 +529,7 @@ function extractDocument(content) {
 // ============================================================================
 
 function extractContent(markdown, baseDir) {
+  markdown = String(markdown).replace(/\r\n?/g, '\n');
   return {
     header: extractHeader(markdown),
     stats: extractStats(markdown),
