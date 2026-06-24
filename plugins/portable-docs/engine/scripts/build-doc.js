@@ -395,9 +395,10 @@ async function runArticle(args, md) {
 async function runProposal(args, md) {
   // 2. Parse content
   const { extractContent, generateOutput } = require('../src/utils/parser.js');
-  const content = extractContent(md);
+  const inputBaseDir = path.dirname(path.resolve(args.input));
+  const content = extractContent(md, inputBaseDir);
   applyConfigToContent(args, content);
-  inlineLocalImages(content, path.dirname(path.resolve(args.input)));
+  inlineLocalImages(content, inputBaseDir);
 
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-build-'));
   const prevContentOut = process.env.PD_CONTENT_OUT;

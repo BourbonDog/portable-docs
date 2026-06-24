@@ -82,8 +82,47 @@ const ChartEmpty = ({ title }) => (
 );
 
 // ── Chart components (added in Tasks 6–9) ────────────────────────────────────
-const PieChart = ({ data }) => <ChartEmpty title={data.title} />;
-const DonutChart = ({ data }) => <ChartEmpty title={data.title} />;
+
+// Shared geometry for pie/donut.
+const polar = (cx, cy, r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+const arcPath = (cx, cy, r, a0, a1) => {
+  const [x0, y0] = polar(cx, cy, r, a0);
+  const [x1, y1] = polar(cx, cy, r, a1);
+  const large = a1 - a0 > Math.PI ? 1 : 0;
+  return `M ${cx} ${cy} L ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z`;
+};
+
+const PieSlices = ({ data, hole }) => {
+  const { title, subtitle, slices = [] } = data;
+  if (!slices.length) return <ChartEmpty title={title} />;
+  const total = slices.reduce((s, x) => s + (x.value || 0), 0) || 1;
+  const cx = 130, cy = 130, r = 120;
+  let angle = -Math.PI / 2;
+  const segs = slices.map((s, i) => {
+    const frac = (s.value || 0) / total;
+    const seg = { ...s, a0: angle, a1: angle + frac * Math.PI * 2,
+      color: s.color || CHART_COLORS[i % CHART_COLORS.length], pct: Math.round(frac * 100) };
+    angle = seg.a1;
+    return seg;
+  });
+  return (
+    <ChartFrame title={title} subtitle={subtitle}>
+      <div style={{ display: 'flex', gap: SPACE[6], alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <svg viewBox="0 0 260 260" width="240" height="240" role="img" aria-label={title || 'Pie chart'}>
+          {segs.map((s, i) => (
+            <path key={i} d={arcPath(cx, cy, r, s.a0, s.a1)} fill={s.color}
+                  stroke={COLORS.surface.elevated} strokeWidth="2" />
+          ))}
+          {hole > 0 && <circle cx={cx} cy={cy} r={r * hole} fill={COLORS.surface.elevated} />}
+        </svg>
+        <Legend items={segs.map((s) => ({ label: `${s.label} — ${s.pct}%`, color: s.color }))} />
+      </div>
+    </ChartFrame>
+  );
+};
+
+const PieChart = ({ data }) => <PieSlices data={data} hole={0} />;
+const DonutChart = ({ data }) => <PieSlices data={data} hole={0.58} />;
 const GroupedBarChart = ({ data }) => <ChartEmpty title={data.title} />;
 const StackedBarChart = ({ data }) => <ChartEmpty title={data.title} />;
 const AreaChart = ({ data }) => <ChartEmpty title={data.title} />;
@@ -92,5 +131,6 @@ const ScatterChart = ({ data }) => <ChartEmpty title={data.title} />;
 
 export {
   niceScale, ChartFrame, Legend, ChartError, ChartEmpty,
+  polar, arcPath, PieSlices,
   PieChart, DonutChart, GroupedBarChart, StackedBarChart, AreaChart, LineChart, ScatterChart,
 };

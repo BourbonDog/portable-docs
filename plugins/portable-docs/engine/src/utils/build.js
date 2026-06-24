@@ -119,8 +119,12 @@ function extractDesignTokensCode(source) {
 
 // Extract component code (remove imports/exports for inline bundling)
 function extractComponentCode(source, componentName) {
-  // Remove import statements (including design-tokens imports)
-  let code = source.replace(/^import.*$/gm, '');
+  // Remove multi-line imports first: import { a, b } from 'y'; (before single-line pass)
+  let code = source.replace(/^import\s*\{[\s\S]*?\}\s*from\s*['"][^'"]+['"];?\s*/gm, '');
+
+  // Remove single-line imports (default imports, side-effect imports)
+  code = code.replace(/^import\s+.*?from\s+['"][^'"]+['"];?\s*$/gm, '');
+  code = code.replace(/^import\s+\w+\s+from\s+['"][^'"]+['"];?\s*$/gm, '');
 
   // Remove export default
   code = code.replace(/export default \w+;?\s*$/gm, '');
@@ -179,6 +183,7 @@ function build() {
     'Header',
     'CardGrid',
     'StatsGrid',
+    'ChartsSVG',
     'Chart',
     'Convergence',
     'QuoteCarousel',

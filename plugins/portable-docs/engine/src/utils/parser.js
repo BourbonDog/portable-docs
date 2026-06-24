@@ -10,6 +10,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { parseChartBlock, NEW_CHART_TYPES } = require('./charts.js');
 
 const INPUT_FILE = process.env.PD_INPUT || path.resolve(__dirname, '../../Product_Engineer_Proposal.md');
 const OUTPUT_FILE = process.env.PD_CONTENT_OUT || path.resolve(__dirname, '../content.js');
@@ -84,7 +85,7 @@ function extractStats(content) {
   return stats;
 }
 
-function extractCharts(content) {
+function extractCharts(content, baseDir) {
   const charts = [];
   const chartRegex = /<!-- @chart type="([^"]*)"([^>]*) -->[\s\S]*?<!-- \/@chart -->/g;
   let match;
@@ -95,6 +96,13 @@ function extractCharts(content) {
     const block = match[0];
     const title = extractAttr(attrs, 'title') || '';
     const subtitle = extractAttr(attrs, 'subtitle') || '';
+
+    // New data-driven chart types: delegate to parseChartBlock (charts.js)
+    if (NEW_CHART_TYPES.includes(type)) {
+      charts.push(parseChartBlock(block, baseDir || process.cwd()));
+      continue;
+    }
+
     const chart = { type, title, subtitle };
 
     if (type === 'growth') {
@@ -523,11 +531,11 @@ function extractDocument(content) {
 // MAIN EXTRACTION
 // ============================================================================
 
-function extractContent(markdown) {
+function extractContent(markdown, baseDir) {
   return {
     header: extractHeader(markdown),
     stats: extractStats(markdown),
-    charts: extractCharts(markdown),
+    charts: extractCharts(markdown, baseDir),
     convergence: extractConvergence(markdown),
     quotes: extractQuotes(markdown),
     pullquotes: extractPullQuotes(markdown),

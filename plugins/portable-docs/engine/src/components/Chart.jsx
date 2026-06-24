@@ -8,6 +8,10 @@
  */
 import React from 'react';
 import { COLORS, FONTS, TYPE_SCALE, EFFECTS, SPACE, CHART_COLORS } from '../design-tokens';
+import {
+  PieChart, DonutChart, GroupedBarChart, StackedBarChart,
+  AreaChart, LineChart, ScatterChart, ChartError,
+} from './ChartsSVG';
 
 // Growth Chart - Editorial comparison layout
 const GrowthChart = ({ data }) => {
@@ -610,20 +614,27 @@ const RangeChart = ({ data }) => {
   );
 };
 
-// Main Chart router
+const NEW_CHART_COMPONENTS = {
+  pie: PieChart, donut: DonutChart, 'grouped-bar': GroupedBarChart,
+  'stacked-bar': StackedBarChart, area: AreaChart, line: LineChart, scatter: ScatterChart,
+};
+
 const Chart = ({ type, data }) => {
+  // Error check FIRST: a legacy-type chart authored in an article/slide is resolved
+  // by parseChartBlock to an { error } object (legacy nested-marker types are
+  // proposal-only). It must hit the error card, NOT the legacy sub-components
+  // (which would read data.bars/.series off an object that has none). Proposal
+  // legacy charts have no `.error` field, so this is a no-op for them (golden-safe).
+  if (data && data.error) return <ChartError title={data.title} message={data.error} />;
   switch (type) {
-    case 'growth':
-      return <GrowthChart data={data} />;
-    case 'bar':
-      return <BarChart data={data} />;
-    case 'hierarchy':
-      return <HierarchyChart data={data} />;
-    case 'range':
-      return <RangeChart data={data} />;
-    default:
-      return null;
+    case 'growth':    return <GrowthChart data={data} />;
+    case 'bar':       return <BarChart data={data} />;
+    case 'hierarchy': return <HierarchyChart data={data} />;
+    case 'range':     return <RangeChart data={data} />;
+    default: break;
   }
+  const Cmp = NEW_CHART_COMPONENTS[type];
+  return Cmp ? <Cmp data={data} /> : null;
 };
 
 export default Chart;

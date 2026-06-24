@@ -94,20 +94,12 @@ const renderComponent = (block, context) => {
     case 'stats':
       return CONTENT.stats.length > 0 ? <StatsGrid stats={CONTENT.stats} /> : null;
 
-    case 'chart':
-      if (block.param === 'growth' && chartsByType.growth?.[0]) {
-        return <Chart type="growth" data={chartsByType.growth[0]} />;
-      }
-      if (block.param === 'range' && chartsByType.range?.[0]) {
-        return <Chart type="range" data={chartsByType.range[0]} />;
-      }
-      if (block.param === 'bar' && chartsByType.bar?.[0]) {
-        return <Chart type="bar" data={chartsByType.bar[0]} />;
-      }
-      if (block.param === 'hierarchy' && chartsByType.hierarchy?.[0]) {
-        return <Chart type="hierarchy" data={chartsByType.hierarchy[0]} />;
-      }
+    case 'chart': {
+      const chartType = block.param;
+      const chartData = chartsByType[chartType]?.[0];
+      if (chartData) return <Chart type={chartType} data={chartData} />;
       return null;
+    }
 
     case 'convergence':
       return CONTENT.convergence.roles.length > 0 ? (
