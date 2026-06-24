@@ -9,3 +9,12 @@ These files are committed (not installed) so the plugin runs with zero `npm inst
 | babel.min.js | @babel/standalone | 7.26.4 | https://unpkg.com/@babel/standalone@7.26.4/babel.min.js | build-time JSX→JS compile (Node only; never shipped) |
 
 React and Babel are both MIT-licensed. To update, re-download the pinned URLs and bump the versions here.
+
+## mermaid.min.js (build-only)
+
+`mermaid.min.js` is the pinned Mermaid UMD build (v11.4.1). It is a **build-time
+tool only** — it is loaded by the system headless browser during `@mermaid`
+rendering to turn diagram source into inline SVG. It **never ships in the output
+artifact**; only the rendered `<svg>` is inlined. Same posture as `babel.min.js`.
+To update: re-download the same `dist/mermaid.min.js` path at the new version and
+re-run the suite.
