@@ -23,3 +23,4 @@ export { default as ReadingProgress } from './ReadingProgress';
 export { default as WorkList } from './WorkList';
 export { default as QuadrantChart } from './QuadrantChart';
 export { default as FlowDiagram } from './FlowDiagram';
+export { default as DiagramError } from './DiagramError';
