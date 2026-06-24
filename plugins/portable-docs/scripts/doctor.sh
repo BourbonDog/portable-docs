@@ -125,7 +125,7 @@ if [ -f "$QUAD_MD" ]; then
   TMP_QUAD="$(mktemp -d)"
   OUT_QUAD="$TMP_QUAD/out.html"
   if node "$BUILD" --input "$QUAD_MD" --out "$OUT_QUAD" --no-open >/dev/null 2>&1 \
-     && grep -q "<svg" "$OUT_QUAD"; then
+     && grep -q "Self-test Quadrant" "$OUT_QUAD"; then
     pass "build quadrant  (quadrant-doctor.md)"
   else
     fail "build quadrant  (quadrant-doctor.md)"
