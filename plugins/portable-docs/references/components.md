@@ -125,6 +125,20 @@ mark, optional author / title attribution, and a decorative accent bar.
 
 ---
 
+### `CallToAction`
+
+**File:** `CallToAction.jsx`
+**Marker:** `@cta` / `/@cta`
+**What it is:** A full-width accent button band with an optional headline, subtext,
+and a primary action button. Supports a secondary action button alongside the primary
+(e.g. "Start free trial" + "Book a demo"). Buttons carry `pd-no-print`; the PDF/PNG
+export prints the destination URL(s) in their place so printed output stays actionable.
+**Use when:** You need a clickable call-to-action — the one element no other component
+covers. Primarily for the `landing` document type, at the close of a section or the
+document. Use sparingly: one or two per document reads better than many.
+
+---
+
 ### `CardGrid`
 
 **File:** `CardGrid.jsx`
@@ -361,5 +375,5 @@ These components exist in `engine/src/components/` and are exported from
 be triggered by any markdown marker in the current engine. They are available
 for direct JSX use or future marker additions.
 
-_(None at this time — FlowDiagram, QuadrantChart, and MermaidFigure are now
-all wired to their respective `@flow`, `@quadrant`, and `@mermaid` markers.)_
+_(None at this time — FlowDiagram, QuadrantChart, MermaidFigure, and CallToAction are now
+all wired to their respective `@flow`, `@quadrant`, `@mermaid`, and `@cta` markers.)_

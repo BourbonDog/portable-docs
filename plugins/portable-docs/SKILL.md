@@ -70,6 +70,27 @@ Ask (or infer from context) what the user has:
 
 ---
 
+## Document types (`--type`)
+
+`--type <name>` selects a document type: it picks the base format, applies a default
+theme (lowest priority — your `--theme`/`--brand`/config always win), and turns on
+type-aware linting. Start from the matching `templates/<type>.md`.
+
+| `--type` | Base format | Start from | Notes |
+|----------|-------------|-----------|-------|
+| `resume` | proposal | `templates/resume.md` | Numbered sections. `@timeline` is the Experience spine (required — `resume-no-experience` errors without it). `@from name/email` in the header. Keep it scannable (density lint warns on overload). |
+| `case-study` | proposal | `templates/case-study.md` | Numbered sections. Lead Results with a 3–4 stat `@stats` row and an attributed `@pullquote`. |
+| `changelog` | article | `templates/changelog.md` | Unnumbered `## <version> — <date>` releases, `### Added/Changed/Fixed/Removed/Deprecated/Security` groups. |
+| `newsletter` | article | `templates/newsletter.md` | Masthead via `@header` (`@brand` + `@brandsub` issue label + `@date`). An "In This Issue" intro plus 2+ sections. |
+| `landing` | proposal | `templates/landing.md` | Numbered sections. Hero via `@header`, feature grid via `@cards type="feature"`, proof via `@stats`/`@testimonials`, and at least one `@cta`. |
+| `rfp` | proposal | `templates/rfp.md` | Numbered sections (scope/requirements/timeline/pricing/terms). Compliance matrix = a GFM table with ✓/✗ cells (`Table` auto-badges them). |
+
+**Field-repurposing note:** `@entry` requires `year`, `company`, `title`, `highlight`.
+For case-study phases use `year="Phase 1"`, `company=<workstream>`; for résumé education
+use `company=<school>`, `title=<degree>`. Pre-fill all four or `missing-attr` fires.
+
+---
+
 ## Step 2 — Auto-markup the content
 
 Before building, structure the source markdown correctly for the chosen format.

@@ -1,6 +1,6 @@
 ---
 description: Generate a polished, self-contained HTML document from a source file or inline content
-argument-hint: <source> [--style proposal|article] [--slides] [--theme editorial|dark|brand] [--brand <name>] [--lint] [--strict] [--watch] [--jsx]
+argument-hint: <source> [--type resume|case-study|changelog|newsletter|landing|rfp] [--style proposal|article] [--slides] [--theme editorial|dark|brand] [--brand <name>] [--lint] [--strict] [--watch] [--jsx]
 ---
 
 Turn `$ARGUMENTS` into a polished, portable HTML file using the portable-docs engine.
@@ -18,6 +18,7 @@ Extract any flags the user passed:
 
 | Flag | Engine flag | Notes |
 |------|-------------|-------|
+| `--type <name>` | `--type <name>` | Select a document type (`resume`, `case-study`, `changelog`, `newsletter`, `landing`, `rfp`); sets the base format, a default theme, and type-aware linting. See `SKILL.md` → _Document types_ for per-type details. |
 | `--style proposal` | `--style proposal` | Default — rich proposal/pitch layout |
 | `--style article` | `--style article` | Long-form editorial layout |
 | `--slides` | `--slides` | Slide deck; wins over `--style article` if both present |

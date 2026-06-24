@@ -218,6 +218,22 @@ Parser: `extractPullQuotes()` — lines 179–187.
 
 ---
 
+### `@cta` (call-to-action band) — paired
+
+```
+<!-- @cta label="Start free trial" href="https://…/signup" variant="primary"
+     headline="Ready to start?" secondaryLabel="Book a demo" secondaryHref="https://…/demo" -->
+Optional supporting subtext (the paired body).
+<!-- /@cta -->
+```
+
+- Required: `label`, `href`. Optional: `variant` (`primary`|`secondary`, default `primary`),
+  `headline`, `subtext`, `secondaryLabel`, `secondaryHref`. The paired body is the subtext.
+- Renders an accent button band. Buttons carry `pd-no-print`; the PDF/PNG export prints the
+  destination URL(s) instead of a dead button. Primarily for the `landing` type.
+
+---
+
 ### `@cards` / `@card` block
 
 A grid of cards. Three visual styles depending on `type`.
@@ -667,6 +683,10 @@ Use `/lint <file>` (or `--lint`) to check without building; exits non-zero on er
 | warning | `unknown-icon` | `icon=` name not in the icon set — falls back to the placeholder glyph |
 | warning | `unnumbered-section` | `## Heading` in a proposal without the required `N.` number prefix |
 | warning | `duplicate-header` | More than one `@header` block in the document |
+| error | `resume-no-experience` | `--type resume` document has no `@timeline` block |
+| error | `changelog-no-releases` | `--type changelog` document has no `## <version>` release headings |
 
 Article and slides formats are plain markdown; only the shared `@header` block and
 structural balance are linted (the `@`-marker DSL linting applies to proposal format).
+Type-aware rules are gated on the active `--type` and never affect default
+proposal/article/slides linting.

@@ -6,6 +6,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 0.6.0 — 2026-06-24
+
+### Added
+- Six document types via a new `--type` flag: `resume`, `case-study`, `changelog`, `newsletter`, `landing`, `rfp`. Each maps to a base format, a default theme, a starter template, and type-aware linting.
+- `@cta` (CallToAction) component for landing pages — an accent button band with primary/secondary actions; prints the destination URL instead of a dead button.
+
+### Changed
+- Linter now accepts a `type` option; type-aware rules are gated on the active `--type` and never affect default proposal/article/slides linting.
+
+---
+
 ## [0.5.1] — 2026-06-24
 
 ### Added
