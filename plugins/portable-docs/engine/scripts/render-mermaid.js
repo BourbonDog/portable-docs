@@ -79,6 +79,21 @@ function resolveSource(block, baseDir) {
   return { source: block.source };
 }
 
+/** Escape JSON for safe embedding inside an HTML <script> (prevents </script> / <!-- breakout). */
+function safeJson(v) {
+  return JSON.stringify(v).replace(/</g, '\\u003c');
+}
+
+/** Build the headless render harness HTML. Pure + testable. `lib` is the vendored mermaid UMD. */
+function buildHarness(lib, sources, themeCfg) {
+  const safeLib = String(lib).replace(/<\/script>/gi, '<\\/script>');
+  return `<!doctype html><html><head><meta charset="utf-8"><script>${safeLib}<\/script></head>
+<body><div id="host"></div><script>
+  window.__SOURCES__ = ${safeJson(sources)};
+  window.__CFG__ = ${safeJson(themeCfg)};
+<\/script></body></html>`;
+}
+
 /**
  * Default renderer: launch ONE headless session, load vendored mermaid, render
  * every source. Returns one { svg } | { error } per source, in order. Graceful:
@@ -87,13 +102,10 @@ function resolveSource(block, baseDir) {
 async function renderViaBrowser(sources, themeCfg) {
   const browser = detectBrowser();
   if (!browser) return sources.map(() => ({ error: 'no headless browser found' }));
+  if (!fs.existsSync(MERMAID_LIB)) return sources.map(() => ({ error: 'mermaid library not vendored (engine/vendor/mermaid.min.js missing)' }));
   const lib = fs.readFileSync(MERMAID_LIB, 'utf-8');
   // Build a harness HTML: load mermaid, expose a render-all function.
-  const harness = `<!doctype html><html><head><meta charset="utf-8"><script>${lib}<\/script></head>
-<body><div id="host"></div><script>
-  window.__SOURCES__ = ${JSON.stringify(sources)};
-  window.__CFG__ = ${JSON.stringify(themeCfg)};
-<\/script></body></html>`;
+  const harness = buildHarness(lib, sources, themeCfg);
   const os = require('os');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pd-mmd-'));
   const htmlPath = path.join(tmp, 'mermaid.html');
@@ -183,5 +195,5 @@ async function renderMermaid(md, { theme, accent, baseDir, strict = false, rende
 
 module.exports = {
   MERMAID_BLOCK_RE, extractMermaidBlocks, themeVariables, resolveSource,
-  renderViaBrowser, renderMermaid,
+  renderViaBrowser, renderMermaid, buildHarness, safeJson,
 };

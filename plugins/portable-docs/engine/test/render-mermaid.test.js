@@ -2,7 +2,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { extractMermaidBlocks, themeVariables, renderMermaid } = require('../scripts/render-mermaid.js');
+const { extractMermaidBlocks, themeVariables, renderMermaid, buildHarness, safeJson } = require('../scripts/render-mermaid.js');
 
 const MD = [
   '# Doc',
@@ -69,4 +69,21 @@ test('renderMermaid: no-browser default → fallbacks, NOT a strict abort', asyn
   const r = await renderMermaid(MD, { theme: 'editorial', accent: '', strict: true, render: noBrowser });
   assert.ok(r.mermaids[0].source.includes('graph TD'), 'source preserved for fallback');
   assert.strictEqual(r.diagnostics.strictAbort, false, 'a missing browser must NOT abort under --strict');
+});
+
+const { buildHarness: _bh, safeJson: _sj } = require('../scripts/render-mermaid.js');
+
+test('buildHarness escapes </script> in the injected library', () => {
+  const evilLib = 'var x = "</script><script>alert(1)</script>";';
+  const html = buildHarness(evilLib, ['graph TD; A-->B'], { base: 'base', themeVariables: {} });
+  // The injected lib must NOT contain a raw closing tag that would end our first <script> early.
+  const firstScriptClose = html.indexOf('<\/script>');
+  const libStart = html.indexOf('var x =');
+  assert.ok(firstScriptClose > libStart, 'the lib content is escaped so the first </script> is our own closing tag, after the lib');
+  assert.ok(html.includes('<\\/script>'), 'embedded </script> is backslash-escaped');
+});
+
+test('safeJson escapes < to \\u003c so </script> cannot break out', () => {
+  assert.ok(!safeJson('</script>').includes('</'), 'no raw </ in JSON-embedded payload');
+  assert.ok(safeJson('a<b').includes('\\u003c'), '< is unicode-escaped');
 });
