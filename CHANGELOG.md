@@ -6,6 +6,42 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.5.1] — 2026-06-24
+
+### Added
+
+- **Diagrams (Phase 4b).** Three diagram markers, available in all three document formats
+  (proposal, article, slides):
+  - **`@flow`** and **`@quadrant`** — native, theme-aware diagrams (a tabbed architecture-flow
+    diagram and a 2×2 positioning chart). Data is authored as an inline fenced ` ```json ` block
+    or an external `src="./file.json"` (resolved at build time; `src=` wins). Bad data renders a
+    visible inline error card instead of crashing the build.
+  - **`@mermaid`** — author any [Mermaid](https://mermaid.js.org/) diagram (raw source in the
+    block body, or `src="./diagram.mmd"`). Rendered to **inline SVG at build time** via a vendored,
+    build-only Mermaid bundle in your system's headless browser — only the SVG ships in the output,
+    never Mermaid itself. Diagrams match the document theme and `PD_ACCENT`. When no headless
+    browser is available (or a diagram has a syntax error), it degrades gracefully to a fenced code
+    block preserving the source.
+
+- **Linting & `/doctor` coverage** for the new markers: `@flow`/`@quadrant`/`@mermaid` are
+  registered in the marker spec with presence checks (data-or-`src` required), and `/doctor` gains
+  a quadrant build check plus a Mermaid render check that skips gracefully without a browser.
+
+### Fixed
+
+- **`FlowDiagram` rendering.** The previously-orphaned `FlowDiagram` component referenced an
+  unimported `useInView` hook; it now uses its own self-contained `IntersectionObserver` and is
+  reachable via `@flow`.
+
+### Notes
+
+- `--strict` aborts the build on a diagram data error or a Mermaid syntax error, but degrades
+  gracefully (does not abort) when no headless browser is found.
+- Documents that use none of the new markers are unaffected — the Mermaid pre-pass is a no-op and
+  launches no browser when there are no `@mermaid` blocks.
+
+---
+
 ## [0.5.0] — 2026-06-24
 
 ### Added
