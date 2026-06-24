@@ -48,6 +48,8 @@ import {
   SectionNav,
   WorkList,
   ReadingProgress,
+  FlowDiagram,
+  QuadrantChart,
 } from './components';
 
 
@@ -186,6 +188,24 @@ const renderComponent = (block, context) => {
       }
       return null;
 
+    case 'flow': {
+      const flow = CONTENT.flows?.[context.flowIndex.current];
+      if (flow) {
+        context.flowIndex.current++;
+        return <FlowDiagram data={flow} />;
+      }
+      return null;
+    }
+
+    case 'quadrant': {
+      const quadrant = CONTENT.quadrants?.[context.quadrantIndex.current];
+      if (quadrant) {
+        context.quadrantIndex.current++;
+        return <QuadrantChart data={quadrant} />;
+      }
+      return null;
+    }
+
     default:
       return null;
   }
@@ -236,11 +256,13 @@ const App = () => {
     injectGlobalStyles();
   }, []);
 
-  // Index refs for sequential components (tables, terminals, pullquotes, charts)
+  // Index refs for sequential components (tables, terminals, pullquotes, charts, flows, quadrants)
   const tableIndex = { current: 0 };
   const terminalIndex = { current: 0 };
   const pullquoteIndex = { current: 0 };
   const chartIndex = { current: 0 };
+  const flowIndex = { current: 0 };
+  const quadrantIndex = { current: 0 };
 
   // Helper to get cards by section
   const getCardsBySection = (sectionNum) => {
@@ -255,6 +277,8 @@ const App = () => {
   // Context object passed to renderers
   const context = {
     chartIndex,
+    flowIndex,
+    quadrantIndex,
     getCardsBySection,
     getQuotesBySection,
     pullquoteIndex,

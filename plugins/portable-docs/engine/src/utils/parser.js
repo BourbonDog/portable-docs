@@ -11,6 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseChartBlock, NEW_CHART_TYPES } = require('./charts.js');
+const { extractFlowPlaceholders, extractQuadrantPlaceholders } = require('./diagrams.js');
 
 const INPUT_FILE = process.env.PD_INPUT || path.resolve(__dirname, '../../Product_Engineer_Proposal.md');
 const OUTPUT_FILE = process.env.PD_CONTENT_OUT || path.resolve(__dirname, '../content.js');
@@ -346,6 +347,16 @@ function extractWorkLists(content) {
   return workLists;
 }
 
+function extractFlows(content, baseDir) {
+  const { flows } = extractFlowPlaceholders(content, baseDir || process.cwd());
+  return flows;
+}
+
+function extractQuadrants(content, baseDir) {
+  const { quadrants } = extractQuadrantPlaceholders(content, baseDir || process.cwd());
+  return quadrants;
+}
+
 function extractCitations(content) {
   const citationsMatch = content.match(/## Citations\s*\n([\s\S]*?)$/);
   if (!citationsMatch) return [];
@@ -380,6 +391,8 @@ function parseContentBlocks(text) {
   let cleaned = text
     .replace(/<!-- @stats -->[\s\S]*?<!-- \/@stats -->/g, '<!--COMPONENT:stats-->')
     .replace(/<!-- @chart[^>]*-->[\s\S]*?<!-- \/@chart -->/g, '<!--COMPONENT:chart-->')
+    .replace(/<!--\s*@flow\b[\s\S]*?<!--\s*\/@flow\s*-->/g, '<!--COMPONENT:flow-->')
+    .replace(/<!--\s*@quadrant\b[\s\S]*?<!--\s*\/@quadrant\s*-->/g, '<!--COMPONENT:quadrant-->')
     .replace(/<!-- @convergence[^>]*-->[\s\S]*?<!-- \/@convergence -->/g, '<!--COMPONENT:convergence-->')
     .replace(/<!-- @quotes[^>]*-->[\s\S]*?<!-- \/@quotes -->/g, (match) => {
       const sectionMatch = match.match(/section="([^"]*)"/);
@@ -534,6 +547,8 @@ function extractContent(markdown, baseDir) {
     header: extractHeader(markdown),
     stats: extractStats(markdown),
     charts: extractCharts(markdown, baseDir),
+    flows: extractFlows(markdown, baseDir),
+    quadrants: extractQuadrants(markdown, baseDir),
     convergence: extractConvergence(markdown),
     quotes: extractQuotes(markdown),
     pullquotes: extractPullQuotes(markdown),
@@ -577,6 +592,8 @@ function main() {
   console.log(`- Header: ${content.header ? 'yes' : 'no'}`);
   console.log(`- Stats: ${content.stats.length}`);
   console.log(`- Charts: ${content.charts.length}`);
+  console.log(`- Flows: ${content.flows.length}`);
+  console.log(`- Quadrants: ${content.quadrants.length}`);
   console.log(`- Convergence roles: ${content.convergence.roles.length}`);
   console.log(`- Industry quotes: ${content.quotes.length}`);
   console.log(`- Pull quotes: ${content.pullquotes.length}`);
