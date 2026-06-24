@@ -168,7 +168,7 @@ See [commands-and-cli.md](commands-and-cli.md) for the full flag reference.
 
 Only `@header`, the seven data-driven chart types, and the three diagram
 types (`@flow`, `@quadrant`, `@mermaid`) are cross-format. All other
-proposal-only markers (`@stats`, `@cta`, `@icons`, etc.) are ignored in
+proposal-only markers (`@stats`, `@cta`, `@timeline`, etc.) are ignored in
 article and slides output — they don't render and produce no visible output.
 
 Full per-marker format support is documented in [markers.md](markers.md).
