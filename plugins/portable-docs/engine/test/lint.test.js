@@ -293,3 +293,10 @@ test('changelog rules are silent when type is null', () => {
     assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
   }
 });
+
+test('changelog: a ### under a non-versioned section does NOT warn unknown-group', () => {
+  const md = ['## Random Heading', '### Whatever', '- x'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'changelog' });
+  assert.ok(r.warnings.some((w) => w.code === 'changelog-section-not-versioned'));
+  assert.ok(!r.warnings.some((w) => w.code === 'changelog-unknown-group'), 'group check must not run outside a release');
+});

@@ -213,8 +213,9 @@ function lintMarkdown(md, opts = {}) {
     const ALLOW = new Set(['unreleased', 'about']);
     const GROUPS = new Set(['added', 'changed', 'deprecated', 'removed', 'fixed', 'security']);
     let releaseCount = 0;
-    let pendingReleaseLine = 0;   // line of a version heading whose content we are still scanning
+    let pendingReleaseLine = 0;   // line of a versioned release whose content we are still scanning
     let releaseHadContent = false;
+    let inRelease = false;        // true only inside a versioned release or the Unreleased section
     const flushEmpty = () => {
       if (pendingReleaseLine && !releaseHadContent) {
         warnings.push({ line: pendingReleaseLine, severity: 'warning', code: 'changelog-empty-release',
@@ -226,10 +227,12 @@ function lintMarkdown(md, opts = {}) {
       if (h2) {
         flushEmpty();
         const title = h2[1].trim();
+        const lower = title.toLowerCase();
         pendingReleaseLine = 0; releaseHadContent = false;
-        if (ALLOW.has(title.toLowerCase())) continue;
-        if (VERSION_RE.test(title)) { releaseCount++; pendingReleaseLine = li + 1; }
+        if (ALLOW.has(lower)) { inRelease = (lower === 'unreleased'); continue; }
+        if (VERSION_RE.test(title)) { releaseCount++; pendingReleaseLine = li + 1; inRelease = true; }
         else {
+          inRelease = false;
           warnings.push({ line: li + 1, severity: 'warning', code: 'changelog-section-not-versioned',
             message: `Changelog section "## ${title}" has no version number (expected e.g. "## 1.2.0 — 2026-06-20")` });
         }
@@ -237,15 +240,17 @@ function lintMarkdown(md, opts = {}) {
       }
       const h3 = lines[li].match(/^###\s+(.+?)\s*$/);
       if (h3) {
-        releaseHadContent = true;
-        const g = h3[1].trim().toLowerCase();
-        if (!GROUPS.has(g)) {
-          warnings.push({ line: li + 1, severity: 'warning', code: 'changelog-unknown-group',
-            message: `Changelog group "### ${h3[1].trim()}" is not a Keep-a-Changelog group (Added, Changed, Deprecated, Removed, Fixed, Security)` });
+        if (inRelease) {
+          releaseHadContent = true;
+          const g = h3[1].trim().toLowerCase();
+          if (!GROUPS.has(g)) {
+            warnings.push({ line: li + 1, severity: 'warning', code: 'changelog-unknown-group',
+              message: `Changelog group "### ${h3[1].trim()}" is not a Keep-a-Changelog group (Added, Changed, Deprecated, Removed, Fixed, Security)` });
+          }
         }
         continue;
       }
-      if (/^\s*[-*]\s+/.test(lines[li])) releaseHadContent = true;
+      if (inRelease && /^\s*[-*]\s+/.test(lines[li])) releaseHadContent = true;
     }
     flushEmpty();
     if (releaseCount === 0) {
