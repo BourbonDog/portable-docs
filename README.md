@@ -6,6 +6,8 @@ One command. Three formats. Zero runtime dependencies. A single `.html` file you
 
 ---
 
+> 📖 **Full guide:** [plugins/portable-docs/docs/](plugins/portable-docs/docs/) — getting started, every format/type/marker/command, how it works, and troubleshooting.
+
 ## Install
 
 ```
