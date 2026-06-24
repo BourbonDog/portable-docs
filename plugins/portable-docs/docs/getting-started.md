@@ -62,7 +62,7 @@ By default every build writes to `~/Documents/portable-docs/<slug>.html`.
 
 - Override for one run with `--out <path>`, or set a project-wide default in `portable-docs.config.json` (the `outDir` key).
 
-See [commands-and-cli.md](commands-and-cli.md) for the full flag reference and [theming-and-branding.md](theming-and-branding.md#output-location) for config-file options.
+See [commands-and-cli.md](commands-and-cli.md) for the full flag reference and [theming-and-branding.md](theming-and-branding.md#config-file-and-brand-presets) for config-file options.
 
 ---
 
