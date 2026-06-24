@@ -13,8 +13,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { COLORS, FONTS, TYPE_SCALE, EFFECTS, SPACE } from '../design-tokens';
-
-// useInView hook is defined in Section.jsx and shared across all components
+import DiagramError from './DiagramError';
 
 // =============================================================================
 // NODE TYPE COLOR MAP
@@ -200,9 +199,26 @@ const FlowTabPanel = ({ stages, accentColor }) => (
 // =============================================================================
 // MAIN FLOW DIAGRAM
 // =============================================================================
-const FlowDiagram = ({ systemName, accentColor, tabs, callouts }) => {
+const FlowDiagram = ({ data }) => {
+  if (data && data.error) return <DiagramError kind="flow" title={data.title} message={data.error} />;
+  const { systemName, accentColor, tabs, callouts } = data || {};
+
   const [activeTab, setActiveTab] = useState(0);
-  const [containerRef, inView] = useInView();
+  const containerRef = useRef(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.bottom < window.innerHeight + 100) { setInView(true); return; }
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setInView(true); },
+      { threshold: 0.1, rootMargin: '-30px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   if (!tabs || tabs.length === 0) return null;
 
