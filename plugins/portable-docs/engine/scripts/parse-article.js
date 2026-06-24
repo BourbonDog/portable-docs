@@ -89,6 +89,14 @@ function parseBlocks(text) {
       continue;
     }
 
+    // Mermaid placeholder (mermaids are pre-rendered before block parsing).
+    const mermaidMatch = line.trim().match(/^\[\[MERMAIDSVG:(\d+)\]\]$/);
+    if (mermaidMatch) {
+      blocks.push({ type: 'mermaid', index: Number(mermaidMatch[1]) });
+      i++;
+      continue;
+    }
+
     // H3 subsection marker
     if (line.startsWith('### ')) {
       blocks.push({ type: 'subsectionStart', title: line.slice(4).trim() });

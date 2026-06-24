@@ -23,6 +23,7 @@ import RichText from './components/RichText';
 import Chart from './components/Chart';
 import FlowDiagram from './components/FlowDiagram';
 import QuadrantChart from './components/QuadrantChart';
+import MermaidFigure from './components/MermaidFigure';
 
 // =============================================================================
 // SLIDE BLOCK RENDERER — reuses ArticleApp's block components
@@ -203,6 +204,15 @@ const SlideBlockRenderer = ({ block }) => {
       return (
         <div style={{ width: '100%', height: '70vh', overflow: 'auto', margin: `${SPACE[4]} 0` }}>
           <QuadrantChart data={q} />
+        </div>
+      );
+    }
+    case 'mermaid': {
+      const m = CONTENT.mermaids && CONTENT.mermaids[block.index];
+      if (!m) return null;
+      return (
+        <div style={{ maxWidth: '900px', maxHeight: '64vh', overflow: 'auto', margin: `${SPACE[4]} auto` }}>
+          <MermaidFigure data={m} />
         </div>
       );
     }

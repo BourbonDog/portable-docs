@@ -63,6 +63,34 @@ test('@mermaid proposal: content.mermaids is present in output (data threaded th
   assert.ok(/mermaids/.test(html), 'mermaids key present in baked CONTENT');
 });
 
+// ── @mermaid in article ───────────────────────────────────────────────────────
+
+test('@mermaid article: mermaid source preserved in fallback output', async () => {
+  const html = await build('mermaid-article.md', ['--style', 'article']);
+  assert.ok(html.includes('graph TD'), 'mermaid source preserved in article fallback pre');
+});
+
+test('@mermaid article: sentinel [[MERMAIDSVG:N]] is consumed (not leaked as paragraph)', async () => {
+  const html = await build('mermaid-article.md', ['--style', 'article']);
+  // The sentinel must be consumed by the mermaid block arm, not fall through to paragraph
+  assert.ok(!/"\[\[MERMAIDSVG:\d+\]\]"/.test(html),
+    'MERMAIDSVG sentinel must not leak as a paragraph text value in CONTENT');
+});
+
+// ── @mermaid in slides ────────────────────────────────────────────────────────
+
+test('@mermaid slides: mermaid source preserved in fallback output', async () => {
+  const html = await build('mermaid-slides.md', ['--slides']);
+  assert.ok(html.includes('graph TD'), 'mermaid source preserved in slides fallback pre');
+});
+
+test('@mermaid slides: sentinel [[MERMAIDSVG:N]] is consumed (not leaked as paragraph)', async () => {
+  const html = await build('mermaid-slides.md', ['--slides']);
+  // The sentinel must be consumed by the mermaid block arm, not fall through to paragraph
+  assert.ok(!/"\[\[MERMAIDSVG:\d+\]\]"/.test(html),
+    'MERMAIDSVG sentinel must not leak as a paragraph text value in CONTENT');
+});
+
 // ── assertDiagramsStrict ──────────────────────────────────────────────────────
 
 test('--strict aborts on a @flow/@quadrant data error', async () => {

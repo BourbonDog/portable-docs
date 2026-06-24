@@ -28,6 +28,7 @@ import ReadingProgress from './components/ReadingProgress';
 import Chart from './components/Chart';
 import FlowDiagram from './components/FlowDiagram';
 import QuadrantChart from './components/QuadrantChart';
+import MermaidFigure from './components/MermaidFigure';
 
 // =============================================================================
 // ARTICLE HEADER — full-viewport hero, data-driven title/subtitle/nav
@@ -1019,6 +1020,10 @@ const BlockRenderer = ({ block }) => {
     case 'quadrant': {
       const q = CONTENT.quadrants && CONTENT.quadrants[block.index];
       return q ? <QuadrantChart data={q} /> : null;
+    }
+    case 'mermaid': {
+      const m = CONTENT.mermaids && CONTENT.mermaids[block.index];
+      return m ? <MermaidFigure data={m} /> : null;
     }
     case 'subsection':
       return (
