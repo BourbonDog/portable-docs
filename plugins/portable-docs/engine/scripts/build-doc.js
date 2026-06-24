@@ -20,6 +20,7 @@ const { inlineLocalImages } = require('./inline-assets.js');
 const { exportFile } = require('./export.js');
 const { loadConfig, selectBrand, pick, applyIdentity } = require('./config.js');
 const { lintMarkdown, loadIconNames, formatDiagnostics } = require('./lint.js');
+const { renderMermaid } = require('./render-mermaid.js');
 
 /**
  * Load + resolve config; mutate args with effective theme/style/out/identity.
@@ -70,6 +71,24 @@ function assertChartsStrict(args, content) {
   const bad = content.charts.filter((c) => c && c.error);
   if (bad.length) {
     throw new Error(`build aborted: ${bad.length} chart data error(s) (--strict): ${bad.map((c) => c.error).join('; ')}`);
+  }
+}
+
+/** Under --strict, abort if any @flow or @quadrant entry has a data error. */
+function assertDiagramsStrict(args, content) {
+  if (!args.strict) return;
+  const bad = [...(content.flows || []), ...(content.quadrants || [])].filter((d) => d && d.error);
+  if (bad.length) {
+    throw new Error(`build aborted: ${bad.length} diagram data error(s) (--strict): ${bad.map((d) => d.error).join('; ')}`);
+  }
+}
+
+/** Under --strict, abort if renderMermaid reported a strictAbort. */
+function assertMermaidStrict(args, diagnostics) {
+  if (!args.strict || !diagnostics) return;
+  if (diagnostics.strictAbort) {
+    const msgs = (diagnostics.errors || []).join('; ');
+    throw new Error(`build aborted: mermaid render error(s) (--strict): ${msgs}`);
   }
 }
 
@@ -185,10 +204,22 @@ function resolveOutPath({ out, title, input, outDir }) {
  * @param {string} md   - the input markdown text (already read by main()).
  */
 async function runSlides(args, md) {
+  // 1a. Pre-render @mermaid blocks → [[MERMAIDSVG:N]] sentinels.
+  const slidesBaseDir = path.dirname(path.resolve(args.input));
+  const mmd = await renderMermaid(md, {
+    theme: args.theme, accent: process.env.PD_ACCENT, baseDir: slidesBaseDir, strict: args.strict,
+  });
+  assertMermaidStrict(args, mmd.diagnostics);
+  if (mmd.diagnostics.errors.length) {
+    mmd.diagnostics.errors.forEach((e) => console.warn(`build-doc: mermaid warning: ${e}`));
+  }
+
   // 1. Parse the slides into a content object.
   const { parseSlides, generateSlidesOutput } = require('./parse-slides.js');
-  const content = parseSlides(md, path.dirname(path.resolve(args.input)));
+  const content = parseSlides(mmd.md, slidesBaseDir);
+  content.mermaids = mmd.mermaids;
   assertChartsStrict(args, content);
+  assertDiagramsStrict(args, content);
   applyConfigToContent(args, content);
   inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 
@@ -302,10 +333,22 @@ async function runSlides(args, md) {
 async function runArticle(args, md) {
   if (args.slides) console.log('build-doc: NOTE --slides is ignored for --style article (slide deck is Task 2.4b)');
 
+  // 1a. Pre-render @mermaid blocks → [[MERMAIDSVG:N]] sentinels.
+  const articleBaseDir = path.dirname(path.resolve(args.input));
+  const mmd = await renderMermaid(md, {
+    theme: args.theme, accent: process.env.PD_ACCENT, baseDir: articleBaseDir, strict: args.strict,
+  });
+  assertMermaidStrict(args, mmd.diagnostics);
+  if (mmd.diagnostics.errors.length) {
+    mmd.diagnostics.errors.forEach((e) => console.warn(`build-doc: mermaid warning: ${e}`));
+  }
+
   // 1. Parse the article into a content object (no slug registry).
   const { parseArticle, generateArticleOutput } = require('./parse-article.js');
-  const content = parseArticle(md, path.dirname(path.resolve(args.input)));
+  const content = parseArticle(mmd.md, articleBaseDir);
+  content.mermaids = mmd.mermaids;
   assertChartsStrict(args, content);
+  assertDiagramsStrict(args, content);
   applyConfigToContent(args, content);
   inlineLocalImages(content, path.dirname(path.resolve(args.input)));
 
@@ -404,11 +447,22 @@ async function runArticle(args, md) {
 
 // ── Proposal pipeline (extracted from main; byte-identical behavior) ─────────
 async function runProposal(args, md) {
+  // 1a. Pre-render @mermaid blocks → [[MERMAIDSVG:N]] sentinels.
+  const inputBaseDir = path.dirname(path.resolve(args.input));
+  const mmd = await renderMermaid(md, {
+    theme: args.theme, accent: process.env.PD_ACCENT, baseDir: inputBaseDir, strict: args.strict,
+  });
+  assertMermaidStrict(args, mmd.diagnostics);
+  if (mmd.diagnostics.errors.length) {
+    mmd.diagnostics.errors.forEach((e) => console.warn(`build-doc: mermaid warning: ${e}`));
+  }
+
   // 2. Parse content
   const { extractContent, generateOutput } = require('../src/utils/parser.js');
-  const inputBaseDir = path.dirname(path.resolve(args.input));
-  const content = extractContent(md, inputBaseDir);
+  const content = extractContent(mmd.md, inputBaseDir);
+  content.mermaids = mmd.mermaids;
   assertChartsStrict(args, content);
+  assertDiagramsStrict(args, content);
   applyConfigToContent(args, content);
   inlineLocalImages(content, inputBaseDir);
 

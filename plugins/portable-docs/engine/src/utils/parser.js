@@ -389,6 +389,7 @@ function parseContentBlocks(text) {
 
   // Remove component markers (they'll be handled separately)
   let cleaned = text
+    .replace(/\[\[MERMAIDSVG:(\d+)\]\]/g, (_m, n) => `<!--COMPONENT:mermaid:${n}-->`)
     .replace(/<!-- @stats -->[\s\S]*?<!-- \/@stats -->/g, '<!--COMPONENT:stats-->')
     .replace(/<!-- @chart[^>]*-->[\s\S]*?<!-- \/@chart -->/g, '<!--COMPONENT:chart-->')
     .replace(/<!--\s*@flow\b[\s\S]*?<!--\s*\/@flow\s*-->/g, '<!--COMPONENT:flow-->')

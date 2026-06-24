@@ -50,6 +50,7 @@ import {
   ReadingProgress,
   FlowDiagram,
   QuadrantChart,
+  MermaidFigure,
 } from './components';
 
 
@@ -204,6 +205,11 @@ const renderComponent = (block, context) => {
         return <QuadrantChart data={quadrant} />;
       }
       return null;
+    }
+
+    case 'mermaid': {
+      const mermaidData = CONTENT.mermaids?.[Number(block.param)];
+      return mermaidData ? <MermaidFigure data={mermaidData} /> : null;
     }
 
     default:

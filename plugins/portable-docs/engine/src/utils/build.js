@@ -190,6 +190,7 @@ function build() {
     'DiagramError',
     'QuadrantChart',
     'FlowDiagram',
+    'MermaidFigure',
     'Convergence',
     'QuoteCarousel',
     'PullQuote',
