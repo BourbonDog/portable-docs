@@ -166,3 +166,19 @@ test('lint: case-study.md is error-free and warning-free under --type case-study
   assert.deepStrictEqual(r.errors, []);
   assert.deepStrictEqual(r.warnings, []);
 });
+
+// ── 8. rfp.md — --type rfp (Phase 5a) ───────────────────────────────────────
+
+test('templates: rfp.md builds clean under --type rfp', async () => {
+  const html = await runBuild({ input: path.join(TEMPLATES, 'rfp.md'), type: 'rfp' });
+  assert.ok(html.length > 1000);
+  assert.ok(html.includes('<!DOCTYPE html'));
+  assertNoBannedLiterals(html, 'rfp.md');
+});
+
+test('lint: rfp.md is error-free and warning-free under --type rfp', () => {
+  const md = fs.readFileSync(path.join(TEMPLATES, 'rfp.md'), 'utf8');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'rfp' });
+  assert.deepStrictEqual(r.errors, []);
+  assert.deepStrictEqual(r.warnings, []);
+});

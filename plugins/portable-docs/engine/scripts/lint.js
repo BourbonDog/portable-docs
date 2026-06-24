@@ -279,6 +279,47 @@ function lintMarkdown(md, opts = {}) {
     }
   }
 
+  if (type === 'rfp') {
+    const BACKBONE = /scope|requirement|timeline|pricing|cost|terms/i;
+    const titles = lines.filter((l) => /^##\s+/.test(l)).map((l) => l.replace(/^##\s+/, '').trim());
+    if (!titles.some((t) => BACKBONE.test(t))) {
+      warnings.push({ line: 0, severity: 'warning', code: 'rfp-missing-section',
+        message: `RFP has no scope/requirements/timeline/pricing/terms section — RFP readers expect that backbone` });
+    }
+    // Compliance-matrix cells must use a recognized badge token (Table.jsx only badges ✓ ✔ yes ✗ ✘ no).
+    const OK = new Set(['✓', '✔', 'yes', '✗', '✘', 'no']);
+    const STATUS_COL = /compl|status|meets|support/i;
+    const isRow = (s) => /^\s*\|.*\|\s*$/.test(s);
+    const isSep = (s) => /^\s*\|[\s:|-]+\|\s*$/.test(s);
+    const cellsOf = (s) => s.split('|').slice(1, -1).map((c) => c.trim());
+    for (let li = 0; li < lines.length; li++) {
+      if (!isRow(lines[li]) || !isSep(lines[li + 1] || '')) continue; // a header row
+      const colIdx = cellsOf(lines[li]).findIndex((c) => STATUS_COL.test(c));
+      if (colIdx === -1) continue;
+      for (let bj = li + 2; bj < lines.length && isRow(lines[bj]); bj++) {
+        const raw = (cellsOf(lines[bj])[colIdx] || '').trim();
+        if (raw && !OK.has(raw) && !OK.has(raw.toLowerCase())) {
+          warnings.push({ line: bj + 1, severity: 'warning', code: 'rfp-matrix-checkmark',
+            message: `Compliance cell "${raw}" is not a recognized badge token (✓ / ✔ / yes / ✗ / ✘ / no) — it renders as plain text` });
+        }
+      }
+    }
+    // A pricing section should carry a table or @stats.
+    const PRICING = /pricing|cost|fees/i;
+    for (let li = 0; li < lines.length; li++) {
+      const h2 = lines[li].match(/^##\s+(.+?)\s*$/);
+      if (!h2 || !PRICING.test(h2[1])) continue;
+      let ok = false;
+      for (let bj = li + 1; bj < lines.length && !/^##\s+/.test(lines[bj]); bj++) {
+        if (isRow(lines[bj]) || /<!--\s*@stats\b/.test(lines[bj])) { ok = true; break; }
+      }
+      if (!ok) {
+        warnings.push({ line: li + 1, severity: 'warning', code: 'rfp-pricing-no-table',
+          message: `Pricing section "## ${h2[1].trim()}" has no table or @stats — pricing reads best as a table or stat row` });
+      }
+    }
+  }
+
   if (type === 'case-study') {
     const src = String(md);
     const hasStats = /<!--\s*@stats\b/.test(src);

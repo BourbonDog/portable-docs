@@ -366,3 +366,42 @@ test('case-study rules are silent when type is null', () => {
     assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
   }
 });
+
+test('rfp: no backbone section warns (rfp-missing-section)', () => {
+  const md = ['## 1. Hello', 'prose'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'rfp' });
+  assert.ok(r.warnings.some((w) => w.code === 'rfp-missing-section'));
+});
+
+test('rfp: a scope/pricing section clears rfp-missing-section', () => {
+  const md = ['## 1. Scope of Work', 'prose', '## 2. Pricing', '<!-- @stats -->', '<!-- @stat value="1" label="a" source="s" -->', '<!-- /@stats -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'rfp' });
+  assert.ok(!r.warnings.some((w) => w.code === 'rfp-missing-section'));
+});
+
+test('rfp: an unrecognized compliance cell warns (rfp-matrix-checkmark)', () => {
+  const md = ['| Requirement | Meets | Notes |', '|---|---|---|', '| SSO | Partial | hybrid |'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'rfp' });
+  assert.ok(r.warnings.some((w) => w.code === 'rfp-matrix-checkmark'));
+});
+
+test('rfp: a checkmark compliance cell does not warn', () => {
+  const md = ['| Requirement | Meets | Notes |', '|---|---|---|', '| SSO | ✓ | native |'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'rfp' });
+  assert.ok(!r.warnings.some((w) => w.code === 'rfp-matrix-checkmark'));
+});
+
+test('rfp: pricing section without table or stats warns (rfp-pricing-no-table)', () => {
+  const md = ['## 1. Pricing', 'We charge a fixed fee.'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal', type: 'rfp' });
+  assert.ok(r.warnings.some((w) => w.code === 'rfp-pricing-no-table'));
+});
+
+test('rfp rules are silent when type is null', () => {
+  const md = ['| Requirement | Meets | Notes |', '|---|---|---|', '| SSO | Partial | hybrid |'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  const codes = [...r.errors, ...r.warnings].map((d) => d.code);
+  for (const c of ['rfp-missing-section', 'rfp-matrix-checkmark', 'rfp-pricing-no-table']) {
+    assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
+  }
+});
