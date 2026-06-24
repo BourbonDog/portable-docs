@@ -118,7 +118,9 @@ year,A,B
 #### Scatter
 
 CSV columns must be named `x` and `y`; optional `label` and `series`.
-`xlabel` is the only chart attribute that renders an axis label for this type.
+Scatter is the **only** chart type that renders an `xlabel` (X-axis label) — and
+it renders `ylabel` too. (The other cartesian types, bar/area/line, render only
+`ylabel`.)
 
 ```
 <!-- @chart type="scatter" title="Effort vs Impact" xlabel="Effort" ylabel="Impact" -->
@@ -135,7 +137,7 @@ x,y,label
 
 ### Notes on data
 
-- **`num()` silently strips non-numeric characters.** `$3.5k` → `3`, `1,200` → `1`. This lets you paste financial data without preprocessing.
+- **`num()` silently strips non-numeric characters** (it keeps only digits, `.`, and `-`). `$3.5k` → `3.5`, `1,200` → `1200`, `65%` → `65`. Handy for pasting currency/percent values — but unit suffixes are **not** expanded: `3.5k` becomes `3.5`, not `3500`.
 - **Color palette wraps.** The engine has a 4-color built-in palette; if a series has more than 4 items (pie/donut) or more than 4 series columns (bar/area/line), colors repeat from the beginning.
 - **JSON alternative.** Replace the ` ```csv ``` ` fence with ` ```json ``` ` containing a non-empty array of row objects (keys become column names).
 
