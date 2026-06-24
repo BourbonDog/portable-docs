@@ -421,7 +421,7 @@ End-to-end inference pipeline handling 10k req/s.
 
 ### `@convergence` / `@role`
 
-**Both are paired.** Renders a Venn-style role-evolution diagram (e.g. PM +
+**`@convergence` is paired; `@role` is inline (self-closing).** Renders a Venn-style role-evolution diagram (e.g. PM +
 Designer + Engineer converging to Product Engineer). Only the **first**
 `@convergence` block in the document is parsed; subsequent ones are silently
 ignored.
