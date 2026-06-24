@@ -29,7 +29,7 @@ Run `/lint` (or `/doc --lint`) to see all diagnostics before building. Errors bl
 
 `--strict` turns the following into a build abort:
 - All lint **errors** (any code with severity `error`).
-- Chart data errors (`chart-no-data`), diagram data errors (`diagram-no-data`), and Mermaid render errors (`mermaid-no-source`), which are resolved at build time even without `--strict`.
+- Chart, diagram, and Mermaid **data/render errors** detected at build time — malformed `@chart`/`@flow`/`@quadrant` data, or a Mermaid render failure. Without `--strict` these render as visible inline error cards and the build still succeeds; `--strict` turns them into a build abort. (A *missing browser* for `@mermaid` is the one exception — it degrades to a `<pre>` fallback even under `--strict`; see [charts-and-diagrams.md](charts-and-diagrams.md).)
 
 ### Errors
 
@@ -59,10 +59,10 @@ Run `/lint` (or `/doc --lint`) to see all diagnostics before building. Errors bl
 | `newsletter-no-date` | A `newsletter`-type document is missing a date. | Add a date in the newsletter header. See [document-types.md](document-types.md). |
 | `newsletter-thin` | A `newsletter`-type document has too few sections. | Add more content sections to the newsletter. |
 | `rfp-missing-section` | A required section is absent from an `rfp`-type document. | Add the missing section. See [document-types.md](document-types.md) for the required RFP structure. |
-| `rfp-matrix-checkmark` | An RFP compliance matrix cell does not use the expected checkmark format. | Use `✓` or `✗` in matrix cells. |
+| `rfp-matrix-checkmark` | A compliance-matrix status cell uses a token that won't render as a badge. | Use one of the recognized badge tokens: `✓`, `✔`, `yes`, `✗`, `✘`, or `no`. |
 | `rfp-pricing-no-table` | An RFP pricing section exists but contains no Markdown table. | Add a pricing table inside the pricing section. |
 | `resume-no-header` | A `resume`-type document has no header block. | Add an `@header`/`/@header` block with your name and contact details. See [document-types.md](document-types.md). |
-| `resume-entry-missing-dates` | A resume experience entry is missing start/end dates. | Add date information to the entry. |
+| `resume-entry-missing-dates` | A resume `@entry` has a `year` attribute that contains no digits (e.g. `year="TBD"`) instead of a real year or range. | Give the entry a real year or range, e.g. `year="2021–2024"`. |
 | `resume-density-warning` | The resume is unusually long or dense. | Trim entries or enable compact CV mode (`data-pd-type`). See [document-types.md](document-types.md). |
 | `landing-no-cta` | A `landing`-type document has no call-to-action section. | Add a CTA section. See [document-types.md](document-types.md). |
 | `landing-no-hero` | A `landing`-type document has no hero section. | Add a hero section at the top of the page. See [document-types.md](document-types.md). |
