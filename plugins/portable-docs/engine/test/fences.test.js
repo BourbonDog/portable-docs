@@ -25,8 +25,9 @@ test('masks a fenced block so a marker inside is hidden', () => {
 test('a real marker OUTSIDE a fence is left untouched', () => {
   const t = '```\n<!-- @stats -->\n```\n\n<!-- @stats -->\nreal\n<!-- /@stats -->';
   const { masked } = maskFences(t);
-  // exactly one @stats survives (the unfenced one); the fenced one is masked
-  assert.strictEqual((masked.match(/@stats/g) || []).length, 1);
+  // the fenced @stats is masked; the unfenced opening marker survives exactly once
+  assert.strictEqual((masked.match(/<!-- @stats -->/g) || []).length, 1);
+  assert.ok(masked.includes('real'), 'unfenced marker body survives');
 });
 
 test('handles ~~~ fences and info strings', () => {
