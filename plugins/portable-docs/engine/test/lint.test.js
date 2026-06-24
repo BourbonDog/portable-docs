@@ -181,3 +181,68 @@ test('--strict aborts a build with lint errors', async () => {
   finally { process.argv = origArgv; fs.rmSync(dir, { recursive: true, force: true }); }
   assert.ok(threw, '--strict must throw on lint errors');
 });
+
+// ── @flow / @quadrant diagram-no-data checks ────────────────────────────────
+
+test('MARKER_SPEC contains mermaid entry (Task 16)', () => {
+  assert.ok(MARKER_SPEC.mermaid, 'mermaid must be in MARKER_SPEC');
+  assert.strictEqual(MARKER_SPEC.mermaid.paired, true);
+});
+
+test('@flow with no data is a diagram-no-data error', () => {
+  const md = ['<!-- @flow title="x" -->', '<!-- /@flow -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(r.errors.some((e) => e.code === 'diagram-no-data' && e.marker === 'flow'),
+    'expected diagram-no-data for @flow with no data');
+});
+
+test('@flow with src= is clean (no diagram-no-data)', () => {
+  const md = ['<!-- @flow src="diagram.mermaid" -->', '<!-- /@flow -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(!r.errors.some((e) => e.code === 'diagram-no-data'),
+    '@flow with src= should not be a diagram-no-data error');
+});
+
+test('@flow with fenced block body is clean (no diagram-no-data)', () => {
+  const md = ['<!-- @flow title="x" -->', '```mermaid', 'graph TD', '  A --> B', '```', '<!-- /@flow -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(!r.errors.some((e) => e.code === 'diagram-no-data'),
+    '@flow with fenced block should not be a diagram-no-data error');
+});
+
+test('@quadrant with src= is clean (no diagram-no-data)', () => {
+  const md = ['<!-- @quadrant src="q.csv" -->', '<!-- /@quadrant -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(!r.errors.some((e) => e.code === 'diagram-no-data'),
+    '@quadrant with src= should not be a diagram-no-data error');
+});
+
+test('@quadrant with no data is a diagram-no-data error', () => {
+  const md = ['<!-- @quadrant title="x" -->', '<!-- /@quadrant -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(r.errors.some((e) => e.code === 'diagram-no-data' && e.marker === 'quadrant'),
+    'expected diagram-no-data for @quadrant with no data');
+});
+
+// ── @mermaid mermaid-no-source checks ───────────────────────────────────────
+
+test('@mermaid with non-empty body is clean (no mermaid-no-source)', () => {
+  const md = ['<!-- @mermaid -->', 'graph TD', '  A --> B', '<!-- /@mermaid -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(!r.errors.some((e) => e.code === 'mermaid-no-source'),
+    '@mermaid with body content should not be a mermaid-no-source error');
+});
+
+test('@mermaid with src= is clean (no mermaid-no-source)', () => {
+  const md = ['<!-- @mermaid src="diagram.mmd" -->', '<!-- /@mermaid -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(!r.errors.some((e) => e.code === 'mermaid-no-source'),
+    '@mermaid with src= should not be a mermaid-no-source error');
+});
+
+test('@mermaid with empty body and no src= is a mermaid-no-source error', () => {
+  const md = ['<!-- @mermaid -->', '<!-- /@mermaid -->'].join('\n');
+  const r = lintMarkdown(md, { format: 'proposal' });
+  assert.ok(r.errors.some((e) => e.code === 'mermaid-no-source' && e.marker === 'mermaid'),
+    'expected mermaid-no-source for @mermaid with no source');
+});

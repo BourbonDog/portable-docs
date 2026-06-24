@@ -30,6 +30,7 @@ const MARKER_SPEC = {
   chart:        { paired: true,  required: ['type'],                        optional: ['title', 'subtitle', 'src', 'xlabel', 'ylabel'], enums: { type: ['growth', 'bar', 'hierarchy', 'range', 'pie', 'donut', 'grouped-bar', 'stacked-bar', 'area', 'line', 'scatter'] } },
   flow:         { paired: true,  required: [],                              optional: ['title', 'src'],                                  enums: {} },
   quadrant:     { paired: true,  required: [],                              optional: ['title', 'subtitle', 'src'],                      enums: {} },
+  mermaid:      { paired: true,  required: [],                              optional: ['title', 'src'],                                  enums: {} },
   series:       { paired: true,  required: ['label'],                       optional: [],                       enums: {} },
   point:        { paired: false, required: ['year', 'value'],               optional: [],                       enums: {} },
   bar:          { paired: false, required: ['label', 'value', 'unit'],      optional: ['source', 'cite'],       enums: {} },
@@ -173,6 +174,35 @@ function lintMarkdown(md, opts = {}) {
       const lineNo = String(md).slice(0, cm.index).split('\n').length;
       errors.push({ line: lineNo, severity: 'error', code: 'chart-no-data', marker: 'chart',
         message: `@chart type="${attrs.type}" has no data — add src="…" or an inline \`\`\`csv\`\`\` / \`\`\`json\`\`\` block` });
+    }
+  }
+
+  // @flow and @quadrant must carry data: a `src=` attribute or an inline fenced block.
+  const diagramBlockRe = /<!--\s*@(flow|quadrant)\b([^>]*)-->([\s\S]*?)<!--\s*\/@\1\s*-->/g;
+  let dm;
+  while ((dm = diagramBlockRe.exec(String(md))) !== null) {
+    const name   = dm[1];
+    const attrs  = parseAttrs(dm[2]);
+    const hasSrc  = !!attrs.src;
+    const hasFence = /```/.test(dm[3]);
+    if (!hasSrc && !hasFence) {
+      const lineNo = String(md).slice(0, dm.index).split('\n').length;
+      errors.push({ line: lineNo, severity: 'error', code: 'diagram-no-data', marker: name,
+        message: `@${name} has no data — add src="…" or an inline fenced block` });
+    }
+  }
+
+  // @mermaid must have a non-empty body or a `src=` attribute.
+  const mermaidBlockRe = /<!--\s*@mermaid\b([^>]*)-->([\s\S]*?)<!--\s*\/@mermaid\s*-->/g;
+  let mm;
+  while ((mm = mermaidBlockRe.exec(String(md))) !== null) {
+    const attrs  = parseAttrs(mm[1]);
+    const hasSrc  = !!attrs.src;
+    const hasBody = mm[2].trim().length > 0;
+    if (!hasSrc && !hasBody) {
+      const lineNo = String(md).slice(0, mm.index).split('\n').length;
+      errors.push({ line: lineNo, severity: 'error', code: 'mermaid-no-source', marker: 'mermaid',
+        message: `@mermaid has no source — add a Mermaid diagram body or src="…"` });
     }
   }
 
