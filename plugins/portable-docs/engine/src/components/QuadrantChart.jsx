@@ -6,8 +6,9 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { COLORS, FONTS, TYPE_SCALE, EFFECTS, SPACE, LAYOUT } from '../design-tokens';
+import DiagramError from './DiagramError';
 
-const QuadrantChart = ({ title, subtitle, xAxisLow, xAxisHigh, yAxisLow, yAxisHigh, quadrantLabels, dots }) => {
+const QuadrantChart = ({ data }) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
 
@@ -23,6 +24,9 @@ const QuadrantChart = ({ title, subtitle, xAxisLow, xAxisHigh, yAxisLow, yAxisHi
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  if (data && data.error) return <DiagramError kind="quadrant" title={data.title} message={data.error} />;
+  const { title, subtitle, xAxisLow, xAxisHigh, yAxisLow, yAxisHigh, quadrantLabels, dots } = data || {};
 
   // Quadrant background colors — very light washes
   const quadrantColors = [
