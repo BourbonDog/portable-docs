@@ -119,6 +119,38 @@ else
   echo "  SKIP  build charts    (charts-doctor.md not found — optional)"
 fi
 
+# ── Check 7: quadrant fixture builds (no browser needed) ──────────────────────
+QUAD_MD="$FIXTURES/quadrant-doctor.md"
+if [ -f "$QUAD_MD" ]; then
+  TMP_QUAD="$(mktemp -d)"
+  OUT_QUAD="$TMP_QUAD/out.html"
+  if node "$BUILD" --input "$QUAD_MD" --out "$OUT_QUAD" --no-open >/dev/null 2>&1 \
+     && grep -q "<svg" "$OUT_QUAD"; then
+    pass "build quadrant  (quadrant-doctor.md)"
+  else
+    fail "build quadrant  (quadrant-doctor.md)"
+  fi
+  rm -rf "$TMP_QUAD"
+else
+  echo "  SKIP  build quadrant  (quadrant-doctor.md not found — optional)"
+fi
+
+# ── Check 8: mermaid renders to SVG when a browser is present (else SKIP) ──────
+MMD_MD="$FIXTURES/mermaid-doctor.md"
+if [ -f "$MMD_MD" ]; then
+  TMP_MMD="$(mktemp -d)"
+  OUT_MMD="$TMP_MMD/out.html"
+  node "$BUILD" --input "$MMD_MD" --out "$OUT_MMD" --no-open >/dev/null 2>&1 || true
+  if [ -f "$OUT_MMD" ] && grep -q "</svg>" "$OUT_MMD"; then
+    pass "build mermaid   (mermaid-doctor.md → inline SVG)"
+  else
+    echo "  SKIP  build mermaid   (no headless browser — @mermaid degraded to a code block)"
+  fi
+  rm -rf "$TMP_MMD"
+else
+  echo "  SKIP  build mermaid   (mermaid-doctor.md not found — optional)"
+fi
+
 # ── Check 4: article fixture ──────────────────────────────────────────────────
 SAMPLE_ARTICLE="$FIXTURES/sample-article.md"
 if [ -f "$SAMPLE_ARTICLE" ]; then
