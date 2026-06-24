@@ -123,14 +123,90 @@ const PieSlices = ({ data, hole }) => {
 
 const PieChart = ({ data }) => <PieSlices data={data} hole={0} />;
 const DonutChart = ({ data }) => <PieSlices data={data} hole={0.58} />;
-const GroupedBarChart = ({ data }) => <ChartEmpty title={data.title} />;
-const StackedBarChart = ({ data }) => <ChartEmpty title={data.title} />;
+// Shared plotted-area geometry for cartesian charts.
+const PLOT = { w: 640, h: 320, padL: 56, padR: 16, padT: 16, padB: 48 };
+const plotBox = () => ({
+  x0: PLOT.padL, x1: PLOT.w - PLOT.padR, y0: PLOT.h - PLOT.padB, y1: PLOT.padT,
+  iw: PLOT.w - PLOT.padL - PLOT.padR, ih: PLOT.h - PLOT.padT - PLOT.padB,
+});
+
+// Y axis (grid lines + tick labels) for a 0..max scale.
+const YAxis = ({ scale, box, ylabel }) => (
+  <g>
+    {scale.ticks.map((t, i) => {
+      const y = box.y0 - (t / scale.max) * box.ih;
+      return (
+        <g key={i}>
+          <line x1={box.x0} y1={y} x2={box.x1} y2={y} stroke={COLORS.ink[100]} strokeWidth="1" />
+          <text x={box.x0 - 8} y={y + 4} textAnchor="end"
+                fontFamily={FONTS.mono} fontSize="11" fill={COLORS.ink[400]}>{t}</text>
+        </g>
+      );
+    })}
+    {ylabel && (
+      <text x={14} y={box.y1 + box.ih / 2} textAnchor="middle"
+            transform={`rotate(-90 14 ${box.y1 + box.ih / 2})`}
+            fontFamily={FONTS.mono} fontSize="11" fill={COLORS.ink[400]}>{ylabel}</text>
+    )}
+  </g>
+);
+
+const BarChartBase = ({ data, stacked }) => {
+  const { title, subtitle, categories = [], series = [], ylabel } = data;
+  if (!categories.length || !series.length) return <ChartEmpty title={title} />;
+  const box = plotBox();
+  const max = stacked
+    ? Math.max(...categories.map((_, ci) => series.reduce((s, se) => s + (se.values[ci] || 0), 0)))
+    : Math.max(...series.flatMap((se) => se.values));
+  const scale = niceScale(0, max);
+  const groupW = box.iw / categories.length;
+  const colorOf = (i) => CHART_COLORS[i % CHART_COLORS.length];
+  return (
+    <ChartFrame title={title} subtitle={subtitle}>
+      <svg viewBox={`0 0 ${PLOT.w} ${PLOT.h}`} width="100%" role="img" aria-label={title || 'Bar chart'}>
+        <YAxis scale={scale} box={box} ylabel={ylabel} />
+        {categories.map((cat, ci) => {
+          const gx = box.x0 + ci * groupW;
+          let stackTop = box.y0;
+          return (
+            <g key={ci}>
+              {series.map((se, si) => {
+                const v = se.values[ci] || 0;
+                const hgt = (v / scale.max) * box.ih;
+                if (stacked) {
+                  const y = stackTop - hgt;
+                  const barW = groupW * 0.6;
+                  const rect = (
+                    <rect key={si} x={gx + (groupW - barW) / 2} y={y} width={barW} height={hgt}
+                          fill={colorOf(si)} />
+                  );
+                  stackTop = y;
+                  return rect;
+                }
+                const barW = (groupW * 0.7) / series.length;
+                const x = gx + groupW * 0.15 + si * barW;
+                return <rect key={si} x={x} y={box.y0 - hgt} width={barW * 0.85} height={hgt} fill={colorOf(si)} />;
+              })}
+              <text x={gx + groupW / 2} y={box.y0 + 18} textAnchor="middle"
+                    fontFamily={FONTS.ui} fontSize="11" fill={COLORS.ink[600]}>{cat}</text>
+            </g>
+          );
+        })}
+      </svg>
+      <Legend items={series.map((se, i) => ({ label: se.name, color: colorOf(i) }))} />
+    </ChartFrame>
+  );
+};
+
+const GroupedBarChart = ({ data }) => <BarChartBase data={data} stacked={false} />;
+const StackedBarChart = ({ data }) => <BarChartBase data={data} stacked={true} />;
 const AreaChart = ({ data }) => <ChartEmpty title={data.title} />;
 const LineChart = ({ data }) => <ChartEmpty title={data.title} />;
 const ScatterChart = ({ data }) => <ChartEmpty title={data.title} />;
 
 export {
   niceScale, ChartFrame, Legend, ChartError, ChartEmpty,
+  PLOT, plotBox, YAxis,
   polar, arcPath, PieSlices,
   PieChart, DonutChart, GroupedBarChart, StackedBarChart, AreaChart, LineChart, ScatterChart,
 };
