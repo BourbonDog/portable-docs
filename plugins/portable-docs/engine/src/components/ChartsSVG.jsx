@@ -130,11 +130,11 @@ const plotBox = () => ({
   iw: PLOT.w - PLOT.padL - PLOT.padR, ih: PLOT.h - PLOT.padT - PLOT.padB,
 });
 
-// Y axis (grid lines + tick labels) for a 0..max scale.
+// Y axis (grid lines + tick labels) for any [min,max] scale.
 const YAxis = ({ scale, box, ylabel }) => (
   <g>
     {scale.ticks.map((t, i) => {
-      const y = box.y0 - (t / scale.max) * box.ih;
+      const y = box.y0 - ((t - scale.min) / (scale.max - scale.min)) * box.ih;
       return (
         <g key={i}>
           <line x1={box.x0} y1={y} x2={box.x1} y2={y} stroke={COLORS.ink[100]} strokeWidth="1" />
