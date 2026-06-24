@@ -95,6 +95,9 @@ const renderComponent = (block, context) => {
       return CONTENT.stats.length > 0 ? <StatsGrid stats={CONTENT.stats} /> : null;
 
     case 'chart': {
+      // Proposal charts render in document order: the Nth <!--COMPONENT:chart--> placeholder
+      // maps to CONTENT.charts[N] because extractCharts collects blocks in the same top-to-bottom
+      // document order the placeholders are emitted (sequential index, like terminalIndex/tableIndex).
       const chart = CONTENT.charts[context.chartIndex.current];
       if (!chart) return null;
       context.chartIndex.current++;

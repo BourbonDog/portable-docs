@@ -26,7 +26,7 @@ Ops,20
 
 ## 2. Comparison
 
-<!-- @chart type="grouped-bar" title="Revenue by Quarter" xlabel="Quarter" ylabel="$M" -->
+<!-- @chart type="grouped-bar" title="Revenue by Quarter" ylabel="$M" -->
 ```csv
 quarter,Product A,Product B
 Q1,120,80
