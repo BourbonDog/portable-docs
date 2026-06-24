@@ -33,6 +33,7 @@ import {
   Convergence,
   QuoteCarousel,
   PullQuote,
+  CallToAction,
   CardGrid,
   Credentials,
   Timeline,
@@ -131,6 +132,15 @@ const renderComponent = (block, context) => {
         );
       }
       return null;
+
+    case 'cta': {
+      // Match by href (the placeholder param); consume in document order so duplicate
+      // hrefs (e.g. a hero CTA and a closing CTA to the same URL) render correctly.
+      const cta = CONTENT.ctas.find((c) => c.href === block.param && !c._used);
+      if (!cta) return null;
+      cta._used = true;
+      return <CallToAction {...cta} />;
+    }
 
     case 'cards':
       const cardGroup = getCardsBySection(block.param);

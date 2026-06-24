@@ -10,6 +10,7 @@ export { default as Chart, GrowthChart, BarChart, HierarchyChart, RangeChart } f
 export { default as Convergence } from './Convergence';
 export { default as QuoteCarousel } from './QuoteCarousel';
 export { default as PullQuote } from './PullQuote';
+export { default as CallToAction } from './CallToAction';
 export { default as CardGrid, ProfileCard, FeatureCard, TopicCard, icons } from './CardGrid';
 export { default as Credentials } from './Credentials';
 export { default as Timeline } from './Timeline';

@@ -6,8 +6,10 @@
  */
 
 const PRINT_CSS = `
+    .pd-print-only { display: none; }
     @media print {
       .pd-no-print { display: none !important; }
+      .pd-print-only { display: block !important; }
       .pd-collapsible { max-height: none !important; overflow: visible !important; }
       .pd-card, .pd-figure, figure, blockquote, .pd-stat, .pd-testimonial { break-inside: avoid; }
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }

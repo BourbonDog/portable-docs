@@ -195,6 +195,30 @@ function extractPullQuotes(content) {
   return pullquotes;
 }
 
+function extractCtas(content) {
+  const ctas = [];
+  const re = /<!-- @cta\b([^>]*)-->([\s\S]*?)<!-- \/@cta -->/g;
+  const attrOf = (s) => {
+    const a = {}; const r = /([a-zA-Z][\w-]*)="([^"]*)"/g; let m;
+    while ((m = r.exec(s)) !== null) a[m[1]] = m[2];
+    return a;
+  };
+  let match;
+  while ((match = re.exec(content)) !== null) {
+    const at = attrOf(match[1] || '');
+    ctas.push({
+      label: at.label || '',
+      href: at.href || '',
+      variant: at.variant === 'secondary' ? 'secondary' : 'primary',
+      headline: at.headline || '',
+      subtext: cleanText(match[2] || '') || at.subtext || '',
+      secondaryLabel: at.secondaryLabel || '',
+      secondaryHref: at.secondaryHref || '',
+    });
+  }
+  return ctas;
+}
+
 function extractCards(content) {
   const cardsGroups = [];
   const cardsRegex = /<!-- @cards\s+([^>]*?)-->([\s\S]*?)<!-- \/@cards -->/g;
@@ -402,6 +426,10 @@ function parseContentBlocks(text) {
     .replace(/<!-- @pullquote[^>]*-->([\s\S]*?)<!-- \/@pullquote -->/g, (match, content) => {
       return `<!--COMPONENT:pullquote:${cleanText(content).substring(0, 50)}-->`;
     })
+    .replace(/<!-- @cta\b[^>]*-->[\s\S]*?<!-- \/@cta -->/g, (match) => {
+      const h = match.match(/href="([^"]*)"/);
+      return `<!--COMPONENT:cta:${h ? h[1] : ''}-->`;
+    })
     .replace(/<!-- @cards[^>]*-->[\s\S]*?<!-- \/@cards -->/g, (match) => {
       const sectionMatch = match.match(/section="([^"]*)"/);
       return `<!--COMPONENT:cards:${sectionMatch ? sectionMatch[1] : ''}-->`;
@@ -553,6 +581,7 @@ function extractContent(markdown, baseDir) {
     convergence: extractConvergence(markdown),
     quotes: extractQuotes(markdown),
     pullquotes: extractPullQuotes(markdown),
+    ctas: extractCtas(markdown),
     cards: extractCards(markdown),
     credentials: extractCredentials(markdown),
     timeline: extractTimeline(markdown),

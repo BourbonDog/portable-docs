@@ -54,6 +54,7 @@ const MARKER_SPEC = {
   terminal:     { paired: true,  required: ['title'],                       optional: ['command', 'variant'],   enums: {} },
   worklist:     { paired: true,  required: ['section'],                     optional: [],                       enums: {} },
   workitem:     { paired: true,  required: ['icon', 'title'],              optional: ['technologies'],         enums: {} },
+  cta:          { paired: true,  required: ['label', 'href'],              optional: ['variant', 'headline', 'subtext', 'secondaryLabel', 'secondaryHref'], enums: { variant: ['primary', 'secondary'] } },
 };
 
 // @header + its sub-markers — the only markers linted for attributes in article/slides.
