@@ -28,6 +28,7 @@ const path = require('path');
 
 const { extractHeader } = require('../src/utils/parser.js');
 const { extractChartPlaceholders } = require('../src/utils/charts.js');
+const { extractFlowPlaceholders, extractQuadrantPlaceholders } = require('../src/utils/diagrams.js');
 
 // ── Block helpers ────────────────────────────────────────────────────────────
 
@@ -68,6 +69,22 @@ function parseBlocks(text) {
     const chartMatch = line.trim().match(/^\[\[CHART:(\d+)\]\]$/);
     if (chartMatch) {
       blocks.push({ type: 'chart', index: Number(chartMatch[1]) });
+      i++;
+      continue;
+    }
+
+    // Flow placeholder (flows are pre-extracted before block parsing).
+    const flowMatch = line.trim().match(/^\[\[FLOW:(\d+)\]\]$/);
+    if (flowMatch) {
+      blocks.push({ type: 'flow', index: Number(flowMatch[1]) });
+      i++;
+      continue;
+    }
+
+    // Quadrant placeholder (quadrants are pre-extracted before block parsing).
+    const quadrantMatch = line.trim().match(/^\[\[QUADRANT:(\d+)\]\]$/);
+    if (quadrantMatch) {
+      blocks.push({ type: 'quadrant', index: Number(quadrantMatch[1]) });
       i++;
       continue;
     }
@@ -242,6 +259,16 @@ function parseArticle(markdown, baseDir) {
   body = extracted.text;
   const charts = extracted.charts;
 
+  // Pre-extract @flow blocks → [[FLOW:N]] sentinels + resolved flow objects.
+  const extractedFlows = extractFlowPlaceholders(body, baseDir || process.cwd());
+  body = extractedFlows.text;
+  const flows = extractedFlows.flows;
+
+  // Pre-extract @quadrant blocks → [[QUADRANT:N]] sentinels + resolved quadrant objects.
+  const extractedQuadrants = extractQuadrantPlaceholders(body, baseDir || process.cwd());
+  body = extractedQuadrants.text;
+  const quadrants = extractedQuadrants.quadrants;
+
   // Split on `## ` headings → sections.
   const sectionSplits = body.split(/^##\s+/m);
   const sections = [];
@@ -255,7 +282,7 @@ function parseArticle(markdown, baseDir) {
     sections.push({ number: idx, title: sectionTitle, short: shortLabel(sectionTitle), blocks });
   }
 
-  return { header, sections, charts };
+  return { header, sections, charts, flows, quadrants };
 }
 
 // Emit the content as an ESM module that default-exports CONTENT (the bundler

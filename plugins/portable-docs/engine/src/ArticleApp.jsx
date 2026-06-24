@@ -26,6 +26,8 @@ import Table from './components/Table';
 import RichText from './components/RichText';
 import ReadingProgress from './components/ReadingProgress';
 import Chart from './components/Chart';
+import FlowDiagram from './components/FlowDiagram';
+import QuadrantChart from './components/QuadrantChart';
 
 // =============================================================================
 // ARTICLE HEADER — full-viewport hero, data-driven title/subtitle/nav
@@ -1009,6 +1011,14 @@ const BlockRenderer = ({ block }) => {
     case 'chart': {
       const c = CONTENT.charts && CONTENT.charts[block.index];
       return c ? <Chart type={c.type} data={c} /> : null;
+    }
+    case 'flow': {
+      const f = CONTENT.flows && CONTENT.flows[block.index];
+      return f ? <FlowDiagram data={f} /> : null;
+    }
+    case 'quadrant': {
+      const q = CONTENT.quadrants && CONTENT.quadrants[block.index];
+      return q ? <QuadrantChart data={q} /> : null;
     }
     case 'subsection':
       return (

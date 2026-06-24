@@ -28,6 +28,8 @@ const MARKER_SPEC = {
   stats:        { paired: true,  required: [],                              optional: [],                       enums: {} },
   stat:         { paired: false, required: ['value', 'label', 'source'],    optional: [],                       enums: {} },
   chart:        { paired: true,  required: ['type'],                        optional: ['title', 'subtitle', 'src', 'xlabel', 'ylabel'], enums: { type: ['growth', 'bar', 'hierarchy', 'range', 'pie', 'donut', 'grouped-bar', 'stacked-bar', 'area', 'line', 'scatter'] } },
+  flow:         { paired: true,  required: [],                              optional: ['title', 'src'],                                  enums: {} },
+  quadrant:     { paired: true,  required: [],                              optional: ['title', 'subtitle', 'src'],                      enums: {} },
   series:       { paired: true,  required: ['label'],                       optional: [],                       enums: {} },
   point:        { paired: false, required: ['year', 'value'],               optional: [],                       enums: {} },
   bar:          { paired: false, required: ['label', 'value', 'unit'],      optional: ['source', 'cite'],       enums: {} },
