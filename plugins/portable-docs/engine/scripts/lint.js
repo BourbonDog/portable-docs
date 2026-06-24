@@ -207,6 +207,53 @@ function lintMarkdown(md, opts = {}) {
     }
   }
 
+  // ── Type-aware rules (Phase 5a) — gated on opts.type; inert when type is null ──
+  if (type === 'changelog') {
+    const VERSION_RE = /^v?\d+[.\d]*\b/;
+    const ALLOW = new Set(['unreleased', 'about']);
+    const GROUPS = new Set(['added', 'changed', 'deprecated', 'removed', 'fixed', 'security']);
+    let releaseCount = 0;
+    let pendingReleaseLine = 0;   // line of a version heading whose content we are still scanning
+    let releaseHadContent = false;
+    const flushEmpty = () => {
+      if (pendingReleaseLine && !releaseHadContent) {
+        warnings.push({ line: pendingReleaseLine, severity: 'warning', code: 'changelog-empty-release',
+          message: `Release section has no recorded changes — add a "### Added/Changed/Fixed" group or a bullet` });
+      }
+    };
+    for (let li = 0; li < lines.length; li++) {
+      const h2 = lines[li].match(/^##\s+(.+?)\s*$/);
+      if (h2) {
+        flushEmpty();
+        const title = h2[1].trim();
+        pendingReleaseLine = 0; releaseHadContent = false;
+        if (ALLOW.has(title.toLowerCase())) continue;
+        if (VERSION_RE.test(title)) { releaseCount++; pendingReleaseLine = li + 1; }
+        else {
+          warnings.push({ line: li + 1, severity: 'warning', code: 'changelog-section-not-versioned',
+            message: `Changelog section "## ${title}" has no version number (expected e.g. "## 1.2.0 — 2026-06-20")` });
+        }
+        continue;
+      }
+      const h3 = lines[li].match(/^###\s+(.+?)\s*$/);
+      if (h3) {
+        releaseHadContent = true;
+        const g = h3[1].trim().toLowerCase();
+        if (!GROUPS.has(g)) {
+          warnings.push({ line: li + 1, severity: 'warning', code: 'changelog-unknown-group',
+            message: `Changelog group "### ${h3[1].trim()}" is not a Keep-a-Changelog group (Added, Changed, Deprecated, Removed, Fixed, Security)` });
+        }
+        continue;
+      }
+      if (/^\s*[-*]\s+/.test(lines[li])) releaseHadContent = true;
+    }
+    flushEmpty();
+    if (releaseCount === 0) {
+      errors.push({ line: 0, severity: 'error', code: 'changelog-no-releases',
+        message: `Changelog has no versioned release sections (expected at least one "## <version>" heading)` });
+    }
+  }
+
   return { errors, warnings };
 }
 

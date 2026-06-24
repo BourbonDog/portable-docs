@@ -246,3 +246,50 @@ test('@mermaid with empty body and no src= is a mermaid-no-source error', () => 
   assert.ok(r.errors.some((e) => e.code === 'mermaid-no-source' && e.marker === 'mermaid'),
     'expected mermaid-no-source for @mermaid with no source');
 });
+
+// ── changelog type-aware rules (Phase 5a) ───────────────────────────────────
+
+test('changelog: a non-versioned section warns (changelog-section-not-versioned)', () => {
+  const md = ['## Random Heading', '### Added', '- thing'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'changelog' });
+  assert.ok(r.warnings.some((w) => w.code === 'changelog-section-not-versioned'));
+});
+
+test('changelog: a versioned section does not warn', () => {
+  const md = ['## 1.2.0 — 2026-06-20', '### Added', '- thing'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'changelog' });
+  assert.ok(!r.warnings.some((w) => w.code === 'changelog-section-not-versioned'));
+});
+
+test('changelog: an unknown group heading warns (changelog-unknown-group)', () => {
+  const md = ['## 1.0.0', '### Frobnicated', '- thing'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'changelog' });
+  assert.ok(r.warnings.some((w) => w.code === 'changelog-unknown-group'));
+});
+
+test('changelog: a known group heading does not warn', () => {
+  const md = ['## 1.0.0', '### Security', '- thing'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'changelog' });
+  assert.ok(!r.warnings.some((w) => w.code === 'changelog-unknown-group'));
+});
+
+test('changelog: an empty release warns (changelog-empty-release)', () => {
+  const md = ['## 1.1.0', '', '## 1.0.0', '### Added', '- thing'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'changelog' });
+  assert.ok(r.warnings.some((w) => w.code === 'changelog-empty-release'));
+});
+
+test('changelog: zero releases is an error (changelog-no-releases)', () => {
+  const md = ['# Just a title', '', 'Some prose, no releases.'].join('\n');
+  const r = lintMarkdown(md, { format: 'article', type: 'changelog' });
+  assert.ok(r.errors.some((e) => e.code === 'changelog-no-releases'));
+});
+
+test('changelog rules are silent when type is null', () => {
+  const md = ['## Random Heading', '### Frobnicated', '- x'].join('\n');
+  const r = lintMarkdown(md, { format: 'article' });
+  const codes = [...r.errors, ...r.warnings].map((d) => d.code);
+  for (const c of ['changelog-section-not-versioned', 'changelog-unknown-group', 'changelog-empty-release', 'changelog-no-releases']) {
+    assert.ok(!codes.includes(c), `${c} must not fire when type is null`);
+  }
+});

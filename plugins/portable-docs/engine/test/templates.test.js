@@ -17,12 +17,14 @@
  *   report.md     — --style article
  *   one-pager.md  — default (proposal) format
  *   recap.md      — --slides
+ *   changelog.md  — --type changelog (Phase 5a)
  */
 const test   = require('node:test');
 const assert = require('node:assert');
 const fs     = require('fs');
 const path   = require('path');
 const os     = require('os');
+const { lintMarkdown } = require('../scripts/lint.js');
 
 const ENGINE    = path.join(__dirname, '..');
 const TEMPLATES = path.join(__dirname, '..', '..', 'templates');
@@ -116,4 +118,19 @@ test('templates: recap.md builds clean (--slides)', async () => {
   assert.ok(html.includes('<!DOCTYPE html'), 'output must be an HTML document');
   // Slides bundle is also lean — confirm template content is clean.
   assertNoBannedLiterals(html, 'recap.md');
+});
+
+// ── 5. changelog.md — --type changelog (Phase 5a) ───────────────────────────
+
+test('templates: changelog.md builds clean under --type changelog', async () => {
+  const html = await runBuild({ input: path.join(TEMPLATES, 'changelog.md'), type: 'changelog' });
+  assert.ok(html.length > 1000, 'output must be non-trivially large');
+  assert.ok(html.includes('<!DOCTYPE html'), 'output must be an HTML document');
+  assertNoBannedLiterals(html, 'changelog.md');
+});
+
+test('lint: changelog.md is error-free under --type changelog', () => {
+  const md = fs.readFileSync(path.join(TEMPLATES, 'changelog.md'), 'utf8');
+  const r = lintMarkdown(md, { format: 'article', type: 'changelog' });
+  assert.deepStrictEqual(r.errors, [], 'changelog template must have no lint errors');
 });
