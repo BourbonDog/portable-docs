@@ -13,6 +13,7 @@ Run the portable-docs self-test (`doctor.sh`) and report the result.
 3c. **Data-driven chart build** — builds `charts-doctor.md` (a pie chart from inline CSV) and confirms the output contains inline SVG.
 4. **Article build** — builds `sample-article.md` through the `--style article` pipeline (if the fixture exists).
 5. **Slides build** — builds `sample-slides.md` through the `--slides` pipeline (if the fixture exists).
+6–11. **Type-template builds** — for each Phase 5a document type (`resume`, `case-study`, `changelog`, `newsletter`, `rfp`, `landing`), builds `templates/<type>.md` with `--type <type>` and asserts the output is a valid HTML document.  The `landing` type gets a second assertion that the `@cta` block rendered its `href` (`crestline.example/signup`).
 
 Each check prints `PASS` or `FAIL`. The script exits non-zero if any check fails.
 

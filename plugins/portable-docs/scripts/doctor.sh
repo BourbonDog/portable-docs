@@ -181,6 +181,52 @@ else
   echo "  SKIP  build slides    (sample-slides.md not found — optional)"
 fi
 
+# ── Phase 5a type-template checks ────────────────────────────────────────────
+# For each --type introduced in Phase 5a, build its starter template and assert
+# the output is a valid HTML document (<!DOCTYPE html).  For the landing type,
+# also assert the @cta block rendered its href (proves CTA component executed).
+
+TEMPLATES="$DIR/../templates"
+
+for TYPE in resume case-study changelog newsletter rfp; do
+  TMPL="$TEMPLATES/${TYPE}.md"
+  if [ -f "$TMPL" ]; then
+    TMP_TYPE="$(mktemp -d)"
+    OUT_TYPE="$TMP_TYPE/out.html"
+    if node "$BUILD" --input "$TMPL" --type "$TYPE" --no-open --no-config --out "$OUT_TYPE" >/dev/null 2>&1 \
+       && grep -q "<!DOCTYPE html" "$OUT_TYPE"; then
+      pass "build type:${TYPE}  (${TYPE}.md → HTML)"
+    else
+      fail "build type:${TYPE}  (${TYPE}.md)"
+    fi
+    rm -rf "$TMP_TYPE"
+  else
+    fail "build type:${TYPE}  (template not found at $TMPL)"
+  fi
+done
+
+# landing — extra assertion: @cta must render its href
+LANDING_TMPL="$TEMPLATES/landing.md"
+if [ -f "$LANDING_TMPL" ]; then
+  TMP_LANDING="$(mktemp -d)"
+  OUT_LANDING="$TMP_LANDING/out.html"
+  if node "$BUILD" --input "$LANDING_TMPL" --type landing --no-open --no-config --out "$OUT_LANDING" >/dev/null 2>&1 \
+     && grep -q "<!DOCTYPE html" "$OUT_LANDING"; then
+    pass "build type:landing  (landing.md → HTML)"
+  else
+    fail "build type:landing  (landing.md)"
+  fi
+  if [ -f "$OUT_LANDING" ] && grep -q "crestline.example/signup" "$OUT_LANDING"; then
+    pass "build type:landing  (@cta href rendered)"
+  else
+    fail "build type:landing  (@cta href not found in output)"
+  fi
+  rm -rf "$TMP_LANDING"
+else
+  fail "build type:landing  (template not found at $LANDING_TMPL)"
+  fail "build type:landing  (@cta href rendered — template missing)"
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "Summary: $PASS_COUNT passed, $FAIL_COUNT failed"
