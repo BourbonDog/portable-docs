@@ -7,3 +7,5 @@ Thumbs.db
 plugins/portable-docs/engine/src/content.js
 # Build output dir — stray node build.js run should not get committed
 plugins/portable-docs/engine/dist/
+# GitHub Pages build output (built fresh in CI; never committed)
+site/
