@@ -95,6 +95,12 @@ test('validate: content that QUOTES a full "import ... from" passes (the how-it-
   assert.ok(r.ok, 'prose quoting an import-from must pass: ' + JSON.stringify(r.errors));
 });
 
+test('validate: a multi-line import statement in the app body still fails', () => {
+  const app = '<script>import {\n  jsx as _jsx\n} from "react/jsx-runtime";\nReactDOM.createRoot(document.getElementById("root")).render(_jsx("p",{children:"hi"}));</script>';
+  const r = validate({ htmlPath: writeHtml(SHELL_HEAD + app + '</body></html>') });
+  assert.ok(!r.ok && r.errors.some(e => /import/.test(e)), 'a multi-line import statement must fail');
+});
+
 test('validate: real @babel/standalone script still fails', () => {
   const head = SHELL_HEAD.replace('</head>', '<script src="https://x/@babel/standalone/babel.min.js"></script></head>');
   const app = '<script>ReactDOM.createRoot(document.getElementById("root")).render(React.createElement("p",null,"hi"));</script>';

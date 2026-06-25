@@ -75,7 +75,9 @@ function validate({ htmlPath }) {
   // import lives inside a string literal and is emptied, so it cannot match.
   const appCode = maskStringLiterals(appBody);
   if (/\bimport\s+React\b/.test(appCode)) errors.push('ESM leak: "import React" found — use the inlined UMD global');
-  if (/\bimport\b[^\n;]*\bfrom\b/.test(appCode)) errors.push('ESM leak: uncompiled "import … from" statement found — JSX must be precompiled');
+  // `[^;]*?` is newline-tolerant (catches multi-line `import {\n…\n} from`) but stops
+  // at the statement-ending `;`, so it can't span two unrelated statements.
+  if (/\bimport\b[^;]*?\bfrom\b/.test(appCode)) errors.push('ESM leak: uncompiled "import … from" statement found — JSX must be precompiled');
 
   return { ok: errors.length === 0, errors };
 }
