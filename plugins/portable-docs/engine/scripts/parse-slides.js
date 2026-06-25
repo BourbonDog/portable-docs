@@ -107,7 +107,7 @@ function parseSlides(markdown, baseDir) {
   const rawSlides = [];
   let current = [];
   for (let li = 0; li < bodyLines.length; li++) {
-    if (!lineInFence[li] && /^---\s*$/.test(bodyLines[li])) {
+    if (!lineInFence[li] && /^-{3,}\s*$/.test(bodyLines[li])) {
       rawSlides.push(current.join('\n'));
       current = [];
     } else {
