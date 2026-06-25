@@ -14,6 +14,29 @@
 
 const fs = require('fs');
 
+/** Replace the CONTENTS of '…' / "…" / `…` literals with empty, honoring \\ escapes. */
+function maskStringLiterals(src) {
+  let out = '';
+  let i = 0;
+  const s = String(src);
+  while (i < s.length) {
+    const ch = s[i];
+    if (ch === '"' || ch === "'" || ch === '`') {
+      out += ch; // keep the opening quote
+      i++;
+      while (i < s.length && s[i] !== ch) {
+        if (s[i] === '\\') { i += 2; continue; } // skip escaped char
+        i++;
+      }
+      if (i < s.length) { out += ch; i++; } // keep the closing quote
+    } else {
+      out += ch;
+      i++;
+    }
+  }
+  return out;
+}
+
 /**
  * Validate a generated HTML file against offline render-safety checks.
  * @param {{ htmlPath: string }} opts
@@ -34,17 +57,21 @@ function validate({ htmlPath }) {
   if (!content.includes('.render(')) errors.push('Missing .render( call');
   if (!content.includes('<div id="root"')) errors.push('Missing <div id="root" — no mount point');
 
-  // Offline: no CDN
-  if (content.includes('unpkg.com')) errors.push('CDN reference found (unpkg.com) — output must be self-contained/offline');
+  // Locate the app content script (the one that mounts React).
+  const scripts = [...content.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
+  const appBody = (scripts.find(m => m[1].includes('ReactDOM.createRoot')) || [,''])[1];
+  const shell = appBody ? content.replace(appBody, '') : content;
 
-  // No in-browser compile
-  if (content.includes('@babel/standalone')) errors.push('In-browser Babel found (@babel/standalone) — JSX must be precompiled at build time');
-  if (content.includes('type="text/babel"')) errors.push('type="text/babel" script found — JSX must be precompiled at build time');
+  // Structural leaks live in real tags (head scripts/links), not in document content.
+  if (shell.includes('unpkg.com')) errors.push('CDN reference found (unpkg.com) — output must be self-contained/offline');
+  if (shell.includes('@babel/standalone')) errors.push('In-browser Babel found (@babel/standalone) — JSX must be precompiled at build time');
+  if (shell.includes('type="text/babel"')) errors.push('type="text/babel" script found — JSX must be precompiled at build time');
 
-  // No ESM/JSX leak (strip HTML comments first)
-  const noComments = content.replace(/<!--[\s\S]*?-->/g, '');
-  if (noComments.includes('import React')) errors.push('ESM leak: "import React" found — use the inlined UMD global');
-  if (noComments.includes('react/jsx-runtime')) errors.push('ESM leak: "react/jsx-runtime" found');
+  // ESM leaks are CODE in the app body; mask string-literal contents so document
+  // text that merely mentions these tokens does not trip the gate.
+  const appCode = maskStringLiterals(appBody);
+  if (appCode.includes('import React')) errors.push('ESM leak: "import React" found — use the inlined UMD global');
+  if (appCode.includes('react/jsx-runtime')) errors.push('ESM leak: "react/jsx-runtime" found');
 
   return { ok: errors.length === 0, errors };
 }
