@@ -227,6 +227,37 @@ else
   fail "build type:landing  (@cta href rendered — template missing)"
 fi
 
+# ── Check: fence-article.md example survives as code ─────────────────────────
+FENCE_ARTICLE="$FIXTURES/fence-article.md"
+if [ -f "$FENCE_ARTICLE" ]; then
+  TMP_FENCE="$(mktemp -d)"
+  OUT_FENCE="$TMP_FENCE/out.html"
+  if node "$BUILD" --input "$FENCE_ARTICLE" --out "$OUT_FENCE" --style article --no-config --no-open >/dev/null 2>&1 \
+     && grep -qE 'title=(\\"|\&quot;|")Example' "$OUT_FENCE"; then
+    pass "fence-article: in-fence example survives as code (title=Example present)"
+  else
+    fail "fence-article: in-fence example not rendered as code (title=Example missing)"
+  fi
+  rm -rf "$TMP_FENCE"
+else
+  fail "fence-article: fixture not found at $FENCE_ARTICLE"
+fi
+
+# ── Check: how-it-works.md self-referential doc builds ───────────────────────
+HOW_IT_WORKS="$DIR/../docs/how-it-works.md"
+if [ -f "$HOW_IT_WORKS" ]; then
+  TMP_HIW="$(mktemp -d)"
+  OUT_HIW="$TMP_HIW/out.html"
+  if node "$BUILD" --input "$HOW_IT_WORKS" --out "$OUT_HIW" --style article --no-config --no-open >/dev/null 2>&1; then
+    pass "how-it-works: self-referential guide doc builds (exit 0)"
+  else
+    fail "how-it-works: self-referential guide doc failed to build"
+  fi
+  rm -rf "$TMP_HIW"
+else
+  fail "how-it-works: docs/how-it-works.md not found at $HOW_IT_WORKS"
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "Summary: $PASS_COUNT passed, $FAIL_COUNT failed"

@@ -10,7 +10,7 @@ Back to [README.md](README.md) | See also [markers.md](markers.md) | [formats.md
 
 ### Anatomy
 
-```
+````markdown
 <!-- @chart type="pie" title="Browser Share" subtitle="Q2 2026" -->
 ```csv
 label,value
@@ -18,7 +18,7 @@ Chrome,65
 Safari,35
 ```
 <!-- /@chart -->
-```
+````
 
 **Required:** `type`
 
@@ -44,7 +44,7 @@ All seven types render in every output format (proposal, article, slides).
 
 CSV columns: `label, value[, color]`
 
-```
+````markdown
 <!-- @chart type="pie" title="Browser Share" subtitle="Q2 2026" -->
 ```csv
 label,value
@@ -52,9 +52,9 @@ Chrome,65
 Safari,35
 ```
 <!-- /@chart -->
-```
+````
 
-```
+````markdown
 <!-- @chart type="donut" title="Budget Split" -->
 ```csv
 label,value,color
@@ -63,13 +63,13 @@ Sales,25,#6366f1
 Ops,20,#94a3b8
 ```
 <!-- /@chart -->
-```
+````
 
 #### Grouped-bar / Stacked-bar
 
 **Wide CSV:** column 0 = category, every later column = a series.
 
-```
+````markdown
 <!-- @chart type="grouped-bar" title="Revenue by Quarter" ylabel="$M" -->
 ```csv
 quarter,Product A,Product B
@@ -77,9 +77,9 @@ Q1,120,80
 Q2,150,95
 ```
 <!-- /@chart -->
-```
+````
 
-```
+````markdown
 <!-- @chart type="stacked-bar" title="Headcount by Team" -->
 ```csv
 team,Eng,Design,PM
@@ -87,13 +87,13 @@ team,Eng,Design,PM
 2025,32,8,6
 ```
 <!-- /@chart -->
-```
+````
 
 #### Area / Line
 
 Same wide-CSV shape as bar charts (column 0 = x/category, remaining columns = series).
 
-```
+````markdown
 <!-- @chart type="area" title="Demand Index" ylabel="Index" -->
 ```csv
 year,AI/ML
@@ -102,9 +102,9 @@ year,AI/ML
 2025,340
 ```
 <!-- /@chart -->
-```
+````
 
-```
+````markdown
 <!-- @chart type="line" title="Two Series" -->
 ```csv
 year,A,B
@@ -113,7 +113,7 @@ year,A,B
 2025,40,30
 ```
 <!-- /@chart -->
-```
+````
 
 #### Scatter
 
@@ -122,7 +122,7 @@ Scatter is the **only** chart type that renders an `xlabel` (X-axis label) — a
 it renders `ylabel` too. (The other cartesian types, bar/area/line, render only
 `ylabel`.)
 
-```
+````markdown
 <!-- @chart type="scatter" title="Effort vs Impact" xlabel="Effort" ylabel="Impact" -->
 ```csv
 x,y,label
@@ -131,7 +131,7 @@ x,y,label
 9,90,Gamma
 ```
 <!-- /@chart -->
-```
+````
 
 ---
 
@@ -176,7 +176,7 @@ Any unknown type falls back to `process`.
 
 **Minimal example:**
 
-```
+````markdown
 <!-- @flow title="System" -->
 ```json
 {
@@ -194,11 +194,11 @@ Any unknown type falls back to `process`.
 }
 ```
 <!-- /@flow -->
-```
+````
 
 **Full example with two tabs and callouts:**
 
-```
+````markdown
 <!-- @flow title="AI Memory System" -->
 ```json
 {
@@ -228,7 +228,7 @@ Any unknown type falls back to `process`.
 }
 ```
 <!-- /@flow -->
-```
+````
 
 ---
 
@@ -258,7 +258,7 @@ Any unknown type falls back to `process`.
 
 **Coordinate system:** x `0` = left, x `100` = right; y `0` = **bottom**, y `100` = **top**. A dot at `(75, 80)` appears in the upper-right quadrant.
 
-```
+````markdown
 <!-- @quadrant title="Market Map" -->
 ```json
 {
@@ -273,7 +273,7 @@ Any unknown type falls back to `process`.
 }
 ```
 <!-- /@quadrant -->
-```
+````
 
 ---
 
