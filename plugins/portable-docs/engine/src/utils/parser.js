@@ -570,27 +570,53 @@ function extractDocument(content) {
 // MAIN EXTRACTION
 // ============================================================================
 
+// Walk an object/array tree and apply restoreFn to every string leaf.
+// Used to restore masked fence sentinels in the document tree returned by
+// extractDocument (so NUL tokens never escape to the caller).
+function restoreInObject(obj, restoreFn) {
+  if (typeof obj === 'string') return restoreFn(obj);
+  if (Array.isArray(obj)) return obj.map(item => restoreInObject(item, restoreFn));
+  if (obj !== null && typeof obj === 'object') {
+    const out = {};
+    for (const key of Object.keys(obj)) out[key] = restoreInObject(obj[key], restoreFn);
+    return out;
+  }
+  return obj;
+}
+
 function extractContent(markdown, baseDir) {
   markdown = String(markdown).replace(/\r\n?/g, '\n');
+
+  // Mask marker comments inside fenced code blocks so in-fence @examples are
+  // not consumed by the extractors below. Real markers (outside fences) are
+  // unaffected. Restore before parseContentBlocks / extractDocument so fenced
+  // examples render as literal code in the output.
+  const { maskFencedMarkers } = require('./fences.js');
+  const fence = maskFencedMarkers(markdown);
+  const masked = fence.masked;
+
   return {
-    header: extractHeader(markdown),
-    stats: extractStats(markdown),
-    charts: extractCharts(markdown, baseDir),
-    flows: extractFlows(markdown, baseDir),
-    quadrants: extractQuadrants(markdown, baseDir),
-    convergence: extractConvergence(markdown),
-    quotes: extractQuotes(markdown),
-    pullquotes: extractPullQuotes(markdown),
-    ctas: extractCtas(markdown),
-    cards: extractCards(markdown),
-    credentials: extractCredentials(markdown),
-    timeline: extractTimeline(markdown),
-    testimonials: extractTestimonials(markdown),
-    tables: extractTables(markdown),
-    terminals: extractTerminals(markdown),
-    workLists: extractWorkLists(markdown),
-    citations: extractCitations(markdown),
-    document: extractDocument(markdown),
+    header: extractHeader(masked),
+    stats: extractStats(masked),
+    charts: extractCharts(masked, baseDir),
+    flows: extractFlows(masked, baseDir),
+    quadrants: extractQuadrants(masked, baseDir),
+    convergence: extractConvergence(masked),
+    quotes: extractQuotes(masked),
+    pullquotes: extractPullQuotes(masked),
+    ctas: extractCtas(masked),
+    cards: extractCards(masked),
+    credentials: extractCredentials(masked),
+    timeline: extractTimeline(masked),
+    testimonials: extractTestimonials(masked),
+    tables: extractTables(masked),
+    terminals: extractTerminals(masked),
+    workLists: extractWorkLists(masked),
+    citations: extractCitations(masked),
+    // Pass masked text so in-fence sentinels survive parseContentBlocks intact,
+    // then walk the document tree restoring sentinel strings back to the original
+    // marker comment text so fenced examples render as literal code.
+    document: restoreInObject(extractDocument(masked), fence.restore),
   };
 }
 
