@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { maskFencedMarkers } = require('../src/utils/fences.js');
+const { maskFencedMarkers, fencedLineFlags } = require('../src/utils/fences.js');
 
 test('no-op when no marker comment is inside a fence (byte-identical)', () => {
   const t = 'hello\n\n## 1. Section\n\n<!-- @stats -->\nreal\n<!-- /@stats -->\n';
@@ -58,4 +58,22 @@ test('sentinel does not collide with literal "PDMARK0" in prose', () => {
   const { masked, restore } = maskFencedMarkers(t);
   assert.ok(masked.includes('PDMARK0 here'), 'prose mention untouched');
   assert.strictEqual(restore(masked), t);
+});
+
+test('fencedLineFlags: --- and marker inside fence are flagged true; lines outside are false', () => {
+  const text = [
+    'outside',          // 0 false
+    '```markdown',      // 1 true (open fence)
+    '---',              // 2 true (inside fence)
+    '<!-- @chart -->',  // 3 true (inside fence)
+    '```',              // 4 true (close fence)
+    'also outside',     // 5 false
+  ].join('\n');
+  const flags = fencedLineFlags(text);
+  assert.strictEqual(flags[0], false, 'line 0 outside fence');
+  assert.strictEqual(flags[1], true,  'line 1 open fence delimiter');
+  assert.strictEqual(flags[2], true,  'line 2 --- inside fence');
+  assert.strictEqual(flags[3], true,  'line 3 marker inside fence');
+  assert.strictEqual(flags[4], true,  'line 4 close fence delimiter');
+  assert.strictEqual(flags[5], false, 'line 5 outside fence');
 });

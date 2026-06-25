@@ -35,6 +35,7 @@ const { extractHeader } = require('../src/utils/parser.js');
 const { parseBlocks, groupSubsections } = require('./parse-article.js');
 const { extractChartPlaceholders } = require('../src/utils/charts.js');
 const { extractFlowPlaceholders, extractQuadrantPlaceholders } = require('../src/utils/diagrams.js');
+const { maskFencedMarkers, fencedLineFlags } = require('../src/utils/fences.js');
 
 // ── Slide-level header extraction ────────────────────────────────────────────
 
@@ -64,7 +65,9 @@ function extractSlideTitle(text) {
 function parseSlides(markdown, baseDir) {
   markdown = String(markdown).replace(/\r\n?/g, '\n');
   // 1. Extract @header (shared schema: title/subtitle/brand/brandSub/logo/footer …)
-  const header = extractHeader(markdown) || {
+  //    Mask in-fence marker comments so a fenced @header EXAMPLE is not extracted.
+  const { masked: maskedForHeader, restore: restoreHeader } = maskFencedMarkers(markdown);
+  const header = extractHeader(maskedForHeader) || {
     from: '', fromEmail: '', linkedin: '', github: '', headshot: '',
     date: '', title: '', subtitle: '',
     eyebrow: '', brand: '', brandSub: '', logo: '', footer: '',
@@ -72,6 +75,10 @@ function parseSlides(markdown, baseDir) {
 
   // 2. Strip the @header block so its markers never leak into slide bodies.
   let body = markdown.replace(/<!--\s*@header\s*-->[\s\S]*?<!--\s*\/@header\s*-->/, '');
+
+  // 2b. Mask in-fence marker comments so chart/flow/quadrant extractors skip fenced examples.
+  const fence = maskFencedMarkers(body);
+  body = fence.masked;
 
   // 3. Pre-extract @chart blocks BEFORE the `---` split so fenced data can never be
   //    mistaken for a slide delimiter, and so charts render in document order.
@@ -89,9 +96,25 @@ function parseSlides(markdown, baseDir) {
   body = extractedQuadrants.text;
   const quadrants = extractedQuadrants.quadrants;
 
-  // 4. Split on `---` horizontal-rule delimiters.
-  //    We split on lines that are ONLY dashes (at least 3), ignoring surrounding whitespace.
-  const rawSlides = body.split(/\n---+\n/);
+  // 3d. Restore fenced marker comments before the split + block parse so examples
+  //     render as code in the output (no NUL sentinels reach the HTML).
+  body = fence.restore(body);
+
+  // 4. Split on `---` horizontal-rule delimiters — fence-aware so a `---` INSIDE
+  //    a fenced code block does not create a spurious new slide.
+  const bodyLines = body.split('\n');
+  const lineInFence = fencedLineFlags(body);
+  const rawSlides = [];
+  let current = [];
+  for (let li = 0; li < bodyLines.length; li++) {
+    if (!lineInFence[li] && /^---\s*$/.test(bodyLines[li])) {
+      rawSlides.push(current.join('\n'));
+      current = [];
+    } else {
+      current.push(bodyLines[li]);
+    }
+  }
+  rawSlides.push(current.join('\n'));
 
   // 5. Convert each raw chunk into a { title, blocks } slide.
   const slides = rawSlides

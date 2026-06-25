@@ -62,4 +62,24 @@ function maskFencedMarkers(text) {
   return { masked, restore };
 }
 
-module.exports = { maskFencedMarkers };
+// Return boolean[] where flags[i] === true if line i is inside a fenced code block
+// (delimiter lines included). Used to split slides only at `---` OUTSIDE fences.
+function fencedLineFlags(text) {
+  const lines = String(text).split('\n');
+  const flags = new Array(lines.length).fill(false);
+  let i = 0;
+  while (i < lines.length) {
+    const open = lines[i].match(/^( {0,3})(`{3,}|~{3,})(.*)$/);
+    const validOpen = open && !(open[2][0] === '`' && open[3].includes('`'));
+    if (validOpen) {
+      const ch = open[2][0];
+      const len = open[2].length;
+      const closeRe = new RegExp('^ {0,3}\\' + ch + '{' + len + ',}[ \\t]*$');
+      flags[i] = true; i++;
+      while (i < lines.length) { flags[i] = true; const closed = closeRe.test(lines[i]); i++; if (closed) break; }
+    } else { i++; }
+  }
+  return flags;
+}
+
+module.exports = { maskFencedMarkers, fencedLineFlags };
