@@ -15,6 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const { detectBrowser, withCdpSession } = require('./export.js');
+const { maskFencedMarkers } = require('../src/utils/fences.js');
 
 const MERMAID_BLOCK_RE = /<!--\s*@mermaid\b([^>]*)-->([\s\S]*?)<!--\s*\/@mermaid\s*-->/g;
 const MERMAID_LIB = path.join(__dirname, '..', 'vendor', 'mermaid.min.js');
@@ -152,9 +153,12 @@ async function renderViaBrowser(sources, themeCfg) {
  */
 async function renderMermaid(md, { theme, accent, baseDir, strict = false, render } = {}) {
   const text = String(md).replace(/\r\n?/g, '\n');
-  const blocks = extractMermaidBlocks(text);
+  // Mask @-marker comments inside fenced code blocks so fenced examples are
+  // not treated as real @mermaid blocks to extract and render.
+  const fence = maskFencedMarkers(text);
+  const blocks = extractMermaidBlocks(fence.masked);
   const diagnostics = { errors: [], strictAbort: false };
-  if (blocks.length === 0) return { md, mermaids: [], diagnostics };
+  if (blocks.length === 0) return { md: fence.restore(fence.masked), mermaids: [], diagnostics };
 
   // Resolve each source (src= file or body); a resolve error is a fallback too.
   const resolved = blocks.map((b) => resolveSource(b, baseDir));
@@ -187,9 +191,13 @@ async function renderMermaid(md, { theme, accent, baseDir, strict = false, rende
     return { title: b.title, svg: out.svg };
   });
 
-  // Rewrite blocks → neutral sentinels, in order.
+  // Rewrite blocks → neutral sentinels, in order (operate on masked text so
+  // fenced examples — already neutralized — are not matched).
   let n = 0;
-  const outMd = text.replace(MERMAID_BLOCK_RE, () => `\n[[MERMAIDSVG:${n++}]]\n`);
+  const sentineled = fence.masked.replace(MERMAID_BLOCK_RE, () => `\n[[MERMAIDSVG:${n++}]]\n`);
+  // Restore fenced-block content (in-fence marker comments back to original text).
+  // Real [[MERMAIDSVG:N]] sentinels are never inside fences, so they survive intact.
+  const outMd = fence.restore(sentineled);
   return { md: outMd, mermaids, diagnostics };
 }
 
