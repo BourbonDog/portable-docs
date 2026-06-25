@@ -60,7 +60,7 @@ function validate({ htmlPath }) {
   // Locate the app content script (the one that mounts React).
   const scripts = [...content.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
   const appBody = (scripts.find(m => m[1].includes('ReactDOM.createRoot')) || [,''])[1];
-  const shell = appBody ? content.replace(appBody, '') : content;
+  const shell = appBody ? content.split(appBody).join('') : content;
 
   // Structural leaks live in real tags (head scripts/links), not in document content.
   if (shell.includes('unpkg.com')) errors.push('CDN reference found (unpkg.com) — output must be self-contained/offline');
@@ -68,10 +68,14 @@ function validate({ htmlPath }) {
   if (shell.includes('type="text/babel"')) errors.push('type="text/babel" script found — JSX must be precompiled at build time');
 
   // ESM leaks are CODE in the app body; mask string-literal contents so document
-  // text that merely mentions these tokens does not trip the gate.
+  // text that merely mentions these tokens does not trip the gate. A real leak shows
+  // up as an `import … from` STATEMENT — the specific module string (e.g.
+  // "react/jsx-runtime") is itself a string literal that masking empties, so we detect
+  // the statement SHAPE rather than the module name. Document prose that quotes an
+  // import lives inside a string literal and is emptied, so it cannot match.
   const appCode = maskStringLiterals(appBody);
-  if (appCode.includes('import React')) errors.push('ESM leak: "import React" found — use the inlined UMD global');
-  if (appCode.includes('react/jsx-runtime')) errors.push('ESM leak: "react/jsx-runtime" found');
+  if (/\bimport\s+React\b/.test(appCode)) errors.push('ESM leak: "import React" found — use the inlined UMD global');
+  if (/\bimport\b[^\n;]*\bfrom\b/.test(appCode)) errors.push('ESM leak: uncompiled "import … from" statement found — JSX must be precompiled');
 
   return { ok: errors.length === 0, errors };
 }

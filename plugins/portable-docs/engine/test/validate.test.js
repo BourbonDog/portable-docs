@@ -81,3 +81,23 @@ test('validate: real text/babel script still fails', () => {
   const r = validate({ htmlPath: writeHtml(head + app + '</body></html>') });
   assert.ok(!r.ok && r.errors.some(e => /text\/babel/.test(e)), 'real text/babel must fail');
 });
+
+test('validate: real react/jsx-runtime import in app body still fails', () => {
+  const app = '<script>import {jsx as _jsx} from "react/jsx-runtime";\nReactDOM.createRoot(document.getElementById("root")).render(_jsx("p",{children:"hi"}));</script>';
+  const r = validate({ htmlPath: writeHtml(SHELL_HEAD + app + '</body></html>') });
+  assert.ok(!r.ok && r.errors.some(e => /import/.test(e)), 'a real react/jsx-runtime import statement must fail');
+});
+
+test('validate: content that QUOTES a full "import ... from" passes (the how-it-works case)', () => {
+  // the page explains the engine and shows the literal syntax as prose/code text
+  const app = '<script>ReactDOM.createRoot(document.getElementById("root")).render(React.createElement("code", null, "import { jsx } from \'react/jsx-runtime\'"));</script>';
+  const r = validate({ htmlPath: writeHtml(SHELL_HEAD + app + '</body></html>') });
+  assert.ok(r.ok, 'prose quoting an import-from must pass: ' + JSON.stringify(r.errors));
+});
+
+test('validate: real @babel/standalone script still fails', () => {
+  const head = SHELL_HEAD.replace('</head>', '<script src="https://x/@babel/standalone/babel.min.js"></script></head>');
+  const app = '<script>ReactDOM.createRoot(document.getElementById("root")).render(React.createElement("p",null,"hi"));</script>';
+  const r = validate({ htmlPath: writeHtml(head + app + '</body></html>') });
+  assert.ok(!r.ok && r.errors.some(e => /babel/i.test(e)), 'real @babel/standalone must fail');
+});
