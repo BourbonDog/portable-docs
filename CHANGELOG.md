@@ -6,6 +6,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.6.3] — 2026-06-24
+
+### Fixed
+- **Marker extraction now respects fenced code blocks** in all three formats. A marker shown as an example inside a ```` ``` ```` fence renders as literal code instead of being extracted and rendered — so you can document the `@`-marker DSL (and charts/diagrams) with the engine itself. A real marker's own inline data fence (e.g. a `@chart`'s ```` ```csv ```` block) is preserved.
+- **The never-blank validator no longer false-positives** on documents that discuss the engine's offline internals (e.g. a page explaining the "no `react/jsx-runtime`" guarantee). Structural CDN/Babel checks run on the HTML shell and ESM checks detect an `import … from` statement on the string-masked app code, so real leaks still fail while document content passes.
+
+> Note: to show a marker example that itself contains a ```` ```csv ````/```` ```json ```` data fence, wrap it in a **4-backtick** outer fence (standard CommonMark nesting).
+
+---
+
 ## [0.6.2] — 2026-06-24
 
 ### Added

@@ -230,6 +230,9 @@ function groupSubsections(blocks) {
 // fall back to `# H1` (title) and the first `*italic*` line (subtitle).
 function buildHeader(markdown) {
   const { maskFencedMarkers } = require('../src/utils/fences.js');
+  // Mask in-fence marker comments so a fenced @header EXAMPLE isn't parsed as the
+  // real header. No restore needed: extractHeader returns a parsed object (string
+  // attribute values from real, unmasked markers), not raw text — no sentinel can leak.
   const mh = maskFencedMarkers(markdown);
   const fromBlock = extractHeader(mh.masked);
 
