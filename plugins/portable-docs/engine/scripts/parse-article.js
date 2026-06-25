@@ -229,8 +229,8 @@ function groupSubsections(blocks) {
 // Build the article header. Prefer the @header block (reused extractHeader);
 // fall back to `# H1` (title) and the first `*italic*` line (subtitle).
 function buildHeader(markdown) {
-  const { maskFences } = require('../src/utils/fences.js');
-  const mh = maskFences(markdown);
+  const { maskFencedMarkers } = require('../src/utils/fences.js');
+  const mh = maskFencedMarkers(markdown);
   const fromBlock = extractHeader(mh.masked);
 
   // H1 / first-italic fallbacks
@@ -265,8 +265,8 @@ function parseArticle(markdown, baseDir) {
   let body = markdown.replace(/<!--\s*@header\s*-->[\s\S]*?<!--\s*\/@header\s*-->/, '');
 
   // Mask fenced code blocks so markers inside them are not extracted.
-  const { maskFences } = require('../src/utils/fences.js');
-  const fence = maskFences(body);
+  const { maskFencedMarkers } = require('../src/utils/fences.js');
+  const fence = maskFencedMarkers(body);
   body = fence.masked;
 
   // Pre-extract @chart blocks → [[CHART:N]] sentinels + resolved chart objects.

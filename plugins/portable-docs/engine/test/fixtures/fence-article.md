@@ -4,9 +4,10 @@
 
 ## 1. Example
 
-Here is a chart marker shown as an example:
+A chart marker shown as an example. Because the example itself contains a
+data fence, the outer fence uses **four** backticks (CommonMark nesting):
 
-```markdown
+````markdown
 <!-- @chart type="pie" title="Example" -->
 ```csv
 label,value
@@ -14,14 +15,14 @@ A,60
 B,40
 ```
 <!-- /@chart -->
-```
+````
 
-And a real chart that SHOULD render:
+And a real chart that SHOULD render with its data:
 
 <!-- @chart type="pie" title="Real" -->
 ```csv
 label,value
-X,70
-Y,30
+Chrome,70
+Safari,30
 ```
 <!-- /@chart -->

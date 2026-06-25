@@ -1,21 +1,38 @@
 'use strict';
 /**
- * fences.js — mask fenced code blocks so marker extractors don't match markers
- * shown as code EXAMPLES. Round-trip identity: restore(maskFences(t).masked)===t;
- * masked===t when t has no fenced code.
+ * fences.js — neutralize @-marker COMMENTS that appear INSIDE fenced code blocks,
+ * so marker extractors treat them as code EXAMPLES instead of real markers.
  *
- * A fence opens with >=3 backticks or >=3 tildes (indented up to 3 spaces) plus an
- * optional info string, and closes on a line of the SAME fence char and >= length.
- * The >=length rule makes nested fences work (a 4-backtick span swallows 3-backtick
- * fences until a >=4-backtick close).
+ * Only the `<!-- @name … -->` / `<!-- /@name … -->` comments on lines inside a fence
+ * are masked. The fences themselves and ALL other content are left intact — crucially
+ * including a REAL marker's own inline data fence (e.g. a `@chart`'s ```csv``` block):
+ * a real marker's comments sit at top level (the data fence is INSIDE the marker, not
+ * the marker inside a fence), so they are never masked.
+ *
+ *   maskFencedMarkers(text) → { masked, restore }
+ *     masked    — in-fence marker comments replaced by NUL-wrapped sentinels (no `<!--`).
+ *     restore(t)— swaps the sentinels back to the original comment text.
+ *   Round-trip: restore(masked) === text; masked === text when no in-fence marker exists.
+ *
+ * Fences: >=3 backticks or >=3 tildes (indented up to 3 spaces) + optional info string,
+ * closing on the SAME char and >= length (so a longer outer fence nests shorter inner
+ * ones — show an example that itself contains a ```data``` fence with a 4-backtick outer).
  */
 const NUL = String.fromCharCode(0); // sentinel wrapper — NUL never appears in Markdown
+const MARKER_RE = /<!--\s*\/?@[\s\S]*?-->/g;
 
-function maskFences(text) {
+function maskFencedMarkers(text) {
   const lines = String(text).split('\n');
   const spans = [];
   const out = [];
   let i = 0;
+  function maskLine(line) {
+    return line.replace(MARKER_RE, (m) => {
+      const token = NUL + 'PDMARK' + spans.length + NUL;
+      spans.push({ token, original: m });
+      return token;
+    });
+  }
   while (i < lines.length) {
     const open = lines[i].match(/^( {0,3})(`{3,}|~{3,})(.*)$/);
     // a backtick info string may not contain backticks (CommonMark); ~~~ may.
@@ -24,21 +41,15 @@ function maskFences(text) {
       const ch = open[2][0];
       const len = open[2].length;
       const closeRe = new RegExp('^ {0,3}\\' + ch + '{' + len + ',}[ \\t]*$');
-      const block = [lines[i]];
+      out.push(lines[i]); // opening fence line — kept as-is
       i++;
       while (i < lines.length) {
-        block.push(lines[i]);
-        const closed = closeRe.test(lines[i]);
+        if (closeRe.test(lines[i])) { out.push(lines[i]); i++; break; }
+        out.push(maskLine(lines[i])); // inside the fence: neutralize marker comments only
         i++;
-        if (closed) break;
       }
-      // NUL-wrapped so the sentinel cannot collide with real document text and
-      // contains no `<!--` for marker regexes to match.
-      const token = NUL + 'PDFENCE' + spans.length + NUL;
-      spans.push({ token, original: block.join('\n') });
-      out.push(token);
     } else {
-      out.push(lines[i]);
+      out.push(lines[i]); // outside any fence: real markers stay intact
       i++;
     }
   }
@@ -51,4 +62,4 @@ function maskFences(text) {
   return { masked, restore };
 }
 
-module.exports = { maskFences };
+module.exports = { maskFencedMarkers };
