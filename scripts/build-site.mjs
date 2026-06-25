@@ -1,6 +1,12 @@
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import {
+  mkdtempSync, mkdirSync, readFileSync, writeFileSync,
+  copyFileSync, rmSync, existsSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(__dirname, '..');
@@ -52,4 +58,49 @@ export function rewriteLinks(md, sourceRel, manifest) {
     }
     return `](https://github.com/${REPO_SLUG}/blob/${BRANCH}/${resolved}${anchor})`;
   });
+}
+
+const ENGINE = path.join(PLUGIN, 'engine', 'scripts', 'build-doc.js');
+const SITE = path.join(REPO_ROOT, 'site');
+const ASSETS = path.join(PLUGIN, 'assets');
+
+function buildPage(entry, manifest, tmpDir, index) {
+  const md = readFileSync(entry.srcAbs, 'utf8');
+  const rewritten = rewriteLinks(md, entry.srcRel, manifest);
+  const tmpMd = path.join(tmpDir, `${index}-${path.basename(entry.srcAbs)}`);
+  writeFileSync(tmpMd, rewritten);
+  const outAbs = path.join(SITE, entry.outRel);
+  mkdirSync(path.dirname(outAbs), { recursive: true });
+  try {
+    execFileSync(
+      'node',
+      [ENGINE, '--input', tmpMd, '--out', outAbs, '--no-open', '--no-config', '--style', 'article'],
+      { stdio: ['ignore', 'pipe', 'pipe'] },
+    );
+  } catch (err) {
+    process.stderr.write(`\nEngine failed for ${entry.srcRel}:\n`);
+    if (err.stdout) process.stderr.write(err.stdout);
+    if (err.stderr) process.stderr.write(err.stderr);
+    throw err;
+  }
+  if (!existsSync(outAbs)) throw new Error(`Engine produced no output for ${entry.outRel}`);
+}
+
+function main() {
+  const manifest = buildManifest();
+  rmSync(SITE, { recursive: true, force: true });
+  mkdirSync(SITE, { recursive: true });
+  const tmpDir = mkdtempSync(path.join(tmpdir(), 'pd-site-'));
+  manifest.forEach((entry, i) => buildPage(entry, manifest, tmpDir, i));
+  for (const asset of ['favicon.ico', 'icon-32.png', 'icon-192.png']) {
+    const src = path.join(ASSETS, asset);
+    if (existsSync(src)) copyFileSync(src, path.join(SITE, asset));
+  }
+  if (!existsSync(path.join(SITE, 'index.html'))) throw new Error('index.html was not generated');
+  console.log(`Built ${manifest.length} pages into ${SITE}`);
+}
+
+// Run only when invoked directly (not when imported by the test file).
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
 }
