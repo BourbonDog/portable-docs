@@ -6,6 +6,8 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
+const NUL = String.fromCharCode(0);
+
 test('proposal: fenced @stats example survives as code; real @stats renders', () => {
   const eng = path.join(__dirname, '..', 'scripts', 'build-doc.js');
   const input = path.join(__dirname, 'fixtures', 'fence-proposal.md');
@@ -14,4 +16,5 @@ test('proposal: fenced @stats example survives as code; real @stats renders', ()
   const html = fs.readFileSync(out, 'utf-8');
   assert.ok(html.includes('label=\\"Example\\"') || html.includes('label="Example"'), 'fenced example survives as code');
   assert.ok(html.includes('Real'), 'real stat label renders');
+  assert.ok(!html.includes(NUL), 'no NUL fence sentinel leaks into output');
 });

@@ -21,4 +21,5 @@ test('slides: fenced --- does not split and fenced marker survives as code', () 
   const html = fs.readFileSync(out, 'utf-8');
   assert.ok(html.includes('@chart type='), 'fenced marker text survives as code in the slide');
   assert.ok(html.includes('Slide Two'), 'the real second slide is present');
+  assert.ok(!html.includes(String.fromCharCode(0)), 'no NUL fence sentinel leaks into output');
 });

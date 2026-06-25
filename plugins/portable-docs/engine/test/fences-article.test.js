@@ -17,4 +17,5 @@ test('article: fenced @chart example renders as code; real @chart renders WITH i
   // (b) the REAL chart rendered WITH its inline-fenced data — not a "no data" error card
   assert.ok(html.includes('Chrome'), 'real chart CSV data label is present (data fence preserved)');
   assert.ok(!html.includes('no data:'), 'real chart did not degrade to a no-data error');
+  assert.ok(!html.includes(String.fromCharCode(0)), 'no NUL fence sentinel leaks into output');
 });
