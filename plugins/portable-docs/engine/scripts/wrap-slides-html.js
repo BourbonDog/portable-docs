@@ -27,14 +27,14 @@ const { stripEsmLines, generateHTML } = require('./wrap-html.js');
  * @param {string} opts.jsx     - Raw slide deck JSX bundle text.
  * @param {string} opts.title   - Page <title>.
  * @param {string} opts.out     - Absolute path to write the HTML file.
- * @param {string} [opts.theme] - Theme name ('editorial' | 'dark' | 'brand').
+ * @param {string} [opts.theme] - Theme name ('vanderbilt' | 'editorial' | 'dark' | 'brand').
  */
 function wrapSlidesHtml({ jsx, title, out, theme }) {
   if (!jsx) throw new Error('wrapSlidesHtml: jsx is required');
   if (!out)  throw new Error('wrapSlidesHtml: out (output path) is required');
 
   const resolvedTitle = title || 'Slide Deck';
-  const resolvedTheme = theme || 'editorial';
+  const resolvedTheme = theme || 'vanderbilt';
   const stripped = stripEsmLines(jsx);
 
   // generateHTML produces the classic-runtime HTML shell with theme body-bg.

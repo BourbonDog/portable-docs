@@ -29,7 +29,7 @@ agent writes it to a temporary `.md` file before calling the engine.
 | `--style proposal` | Rich proposal / pitch layout (default). |
 | `--style article` | Long-form editorial layout. |
 | `--slides` | Slide deck. Wins over `--style article` when both are passed. |
-| `--theme <name>` | Visual theme: `editorial` (default), `dark`, or `brand`. |
+| `--theme <name>` | Visual theme: `vanderbilt` (default), `editorial`, `dark`, or `brand`. |
 | `--brand <name>` | Select a named brand preset from `portable-docs.config.json`. |
 | `--config <path>` | Use a specific config file instead of auto-discovery. |
 | `--no-config` | Skip config file loading for this build. |
@@ -43,7 +43,7 @@ agent writes it to a temporary `.md` file before calling the engine.
 **Behavior:**
 - Default output: `~/Documents/portable-docs/<slug>.html` (overridden by `--out`,
   `PORTABLE_DOCS_OUT`, or the config `outDir`).
-- Default theme: `editorial`.
+- Default theme: `vanderbilt`.
 - Default format: `proposal`.
 - Auto-lints every build and prints warnings to stderr; the build still completes
   unless `--strict` is also set.
@@ -60,7 +60,7 @@ source file or outline.
 **Invocation:**
 
 ```
-/slides <source> [--theme editorial|dark|brand] [--brand <name>] [--lint] [--strict] [--watch] [--jsx]
+/slides <source> [--theme vanderbilt|editorial|dark|brand] [--brand <name>] [--lint] [--strict] [--watch] [--jsx]
 ```
 
 **Behavior:**
@@ -184,7 +184,7 @@ slide deck or a long-form article.
 **Invocation:**
 
 ```
-/from-repo [path] [--style article] [--theme editorial|dark|brand] [--jsx]
+/from-repo [path] [--style article] [--theme vanderbilt|editorial|dark|brand] [--jsx]
 ```
 
 `path` defaults to the current working directory.
@@ -299,7 +299,7 @@ Every flag that exists in `parseArgs` in `engine/scripts/build-doc.js`:
 | `--input <path>` | string | _(required)_ | Path to the Markdown source file. |
 | `--out <path>` | string | see below | Output HTML path. Overrides env and config. |
 | `--title <text>` | string | from `@title` or filename | Document title; used in `<title>` and for output filename slug. |
-| `--theme <name>` | string | `editorial` | Visual theme: `editorial`, `dark`, `brand`. |
+| `--theme <name>` | string | `vanderbilt` | Visual theme: `vanderbilt`, `editorial`, `dark`, `brand`. |
 | `--style <name>` | string | `proposal` | Base format: `proposal` or `article`. |
 | `--type <name>` | string | none | Document type: `resume`, `case-study`, `changelog`, `newsletter`, `landing`, `rfp`. Sets format and theme defaults. |
 | `--slides` | boolean | false | Build a slide deck. Wins over `--style article` when both are passed. |

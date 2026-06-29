@@ -5,8 +5,8 @@
  * TDD: write tests first, then implement.
  *
  * Verifies:
- *  1. Default build (no PD_THEME) outputs editorial accent #5B21B6 and paper #FAFAFA
- *  2. --theme editorial produces same editorial values
+ *  1. Default build (no PD_THEME) injects the vanderbilt theme (gold #B49248, paper #FAFAFA)
+ *  2. --theme editorial still produces the original editorial values
  *  3. --theme dark produces a dark-palette value NOT in editorial output
  *  4. --theme dark body background is dark (not white)
  *  5. Built HTML contains NO "process.env" text (build-time injection proof)
@@ -55,24 +55,41 @@ async function runBuild({ outFile, theme, accent } = {}) {
   return fs.readFileSync(tmpHtml, 'utf8');
 }
 
-// ── Test 1: default build (no --theme) produces editorial values ─────────────
+// ── Test 1: default build (no --theme) injects the vanderbilt theme ──────────
+// The full THEMES map is inlined as source in every build, so a bare hex
+// substring (#B49248) is present regardless of the active theme. The
+// discriminating signals are the build-time-injected ACTIVE_THEME literal and
+// the data-pd-theme attribute.
 
-test('themes: default build (no --theme) contains editorial accent #5B21B6', async () => {
+test('themes: default build (no --theme) injects ACTIVE_THEME="vanderbilt"', async () => {
   const html = await runBuild({});
-  assert.ok(html.includes('#5B21B6'), 'editorial accent #5B21B6 must be present');
+  assert.ok(html.includes('ACTIVE_THEME = "vanderbilt"'), 'default build must inject ACTIVE_THEME = "vanderbilt"');
+  assert.ok(html.includes('data-pd-theme="vanderbilt"'), 'default build data-pd-theme must be "vanderbilt"');
+  assert.ok(!html.includes('data-pd-theme="editorial"'), 'default build must NOT be the editorial theme');
+  assert.ok(html.includes('#B49248'), 'vanderbilt gold accent #B49248 must be present');
 });
 
-test('themes: default build (no --theme) contains editorial paper #FAFAFA', async () => {
+test('themes: default build (no --theme) body background is vanderbilt paper #FAFAFA', async () => {
   const html = await runBuild({});
-  assert.ok(html.includes('#FAFAFA'), 'editorial paper #FAFAFA must be present');
+  assert.ok(html.includes('background: #FAFAFA'), 'vanderbilt body background must be paper #FAFAFA');
 });
 
-// ── Test 2: --theme editorial is byte-for-byte same brand values ─────────────
+// ── Test 2: --theme editorial still produces the original editorial values ────
 
 test('themes: --theme editorial contains #5B21B6 and #FAFAFA', async () => {
   const html = await runBuild({ theme: 'editorial' });
+  assert.ok(html.includes('ACTIVE_THEME = "editorial"'), 'editorial build must inject ACTIVE_THEME = "editorial"');
   assert.ok(html.includes('#5B21B6'), 'editorial accent must be present');
   assert.ok(html.includes('#FAFAFA'), 'editorial paper must be present');
+});
+
+// ── Test 2b: --theme vanderbilt injects the gold accent literal ──────────────
+
+test('themes: --theme vanderbilt injects ACTIVE_THEME="vanderbilt" and gold #B49248', async () => {
+  const html = await runBuild({ theme: 'vanderbilt' });
+  assert.ok(html.includes('ACTIVE_THEME = "vanderbilt"'), '--theme vanderbilt must inject ACTIVE_THEME = "vanderbilt"');
+  assert.ok(html.includes('data-pd-theme="vanderbilt"'), 'data-pd-theme must be "vanderbilt"');
+  assert.ok(html.includes('#B49248'), 'vanderbilt gold accent #B49248 must be present');
 });
 
 // ── Test 3: --theme dark has dark ACTIVE_THEME literal and dark body bg ───────
@@ -112,9 +129,9 @@ test('themes: --theme dark body background is dark', async () => {
   assert.ok(editorialHtml.includes('background: #FAFAFA'),  'editorial build must contain: background: #FAFAFA');
 });
 
-// ── Test 4b: default build == explicit --theme editorial (byte equality) ─────
-// Proves the "editorial unchanged" guarantee: the default path and the editorial
-// path must produce identical HTML.
+// ── Test 4b: default build == explicit --theme vanderbilt (byte equality) ────
+// Proves the default-theme guarantee: the default path and the explicit
+// vanderbilt path must produce identical HTML.
 //
 // Normalization applied: the JSX bundle comment header contains a build timestamp
 // ("Generated: <ISO timestamp>", from build.js line 171). Two sequential builds
@@ -126,17 +143,17 @@ test('themes: --theme dark body background is dark', async () => {
 // This is the only nondeterministic field identified; all other content is
 // deterministic given the same fixture + theme + env.
 
-test('themes: default build (no --theme) is byte-equal to --theme editorial', async () => {
+test('themes: default build (no --theme) is byte-equal to --theme vanderbilt', async () => {
   const TIMESTAMP_RE = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z/g;
   const normalize = (s) => s.replace(TIMESTAMP_RE, '<TIMESTAMP>');
 
-  const defaultHtml   = await runBuild({});
-  const editorialHtml = await runBuild({ theme: 'editorial' });
+  const defaultHtml    = await runBuild({});
+  const vanderbiltHtml = await runBuild({ theme: 'vanderbilt' });
 
   assert.strictEqual(
     normalize(defaultHtml),
-    normalize(editorialHtml),
-    'default build and --theme editorial must produce identical HTML (after timestamp normalization)',
+    normalize(vanderbiltHtml),
+    'default build and --theme vanderbilt must produce identical HTML (after timestamp normalization)',
   );
 });
 

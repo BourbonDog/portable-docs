@@ -18,18 +18,19 @@ to a full multi-brand configuration file.
 
 ## Themes
 
-Three themes ship with the engine. Select one at build time; the choice is
+Four themes ship with the engine. Select one at build time; the choice is
 **frozen into the HTML** — rebuild to change it.
 
 | Name | Description | Body background | Default for |
 |------|-------------|----------------|-------------|
-| `editorial` | Paper-white, deep-ink text, violet accent. "MIT Tech Review meets Wired." | `#FAFAFA` | All types (default) |
+| `vanderbilt` | Vanderbilt black & gold (light): paper-white ground, Vanderbilt-black ink, metallic-gold accent. | `#FAFAFA` | Global default |
+| `editorial` | Paper-white, deep-ink text, violet accent. "MIT Tech Review meets Wired." | `#FAFAFA` | `resume`, `case-study`, `changelog`, `newsletter` |
 | `dark` | Near-black base, electric-cyan accent. GitHub-dark / Obsidian-inspired. | `#0D1117` | — |
 | `brand` | Neutral slate, designed to receive an accent override. | `#FAFAFA` | `landing`, `rfp` |
 
 **Dark theme ink-scale note:** the `dark` theme's ink scale is **inverted** —
 `ink[900]` is the *lightest* text (near-white `#F0F0F2`) and `ink[50]` is the
-*deepest* background (`#0D1117`). This is the opposite of `editorial` and `brand`.
+*deepest* background (`#0D1117`). This is the opposite of `vanderbilt`, `editorial`, and `brand`.
 
 **Typography is identical across all themes.** Font stacks (Fraunces, Instrument
 Serif, Newsreader, DM Sans, IBM Plex Mono) and the full type scale are defined
@@ -48,7 +49,7 @@ PD_THEME=dark node engine/scripts/build-doc.js --input doc.md
 
 Or set `"theme"` in your [config file](#config-file-and-brand-presets).
 
-Precedence: `--theme flag > PD_THEME env > config file > built-in default (editorial)`.
+Precedence: `--theme flag > PD_THEME env > config file > built-in default (vanderbilt)`.
 
 See [references/theming.md](../references/theming.md) for the full token tables
 for each theme.
@@ -169,7 +170,7 @@ file is found, the global fallback is checked.
 
 | Key | Type | Default | Notes |
 |-----|------|---------|-------|
-| `theme` | string | `"editorial"` | `editorial` \| `dark` \| `brand` |
+| `theme` | string | `"vanderbilt"` | `vanderbilt` \| `editorial` \| `dark` \| `brand` |
 | `accent` | string | _(theme default)_ | Hex accent override |
 | `outDir` | string | `~/Documents/portable-docs` | Default output directory (**not** `out`) |
 | `style` | string | `"proposal"` | `proposal` \| `article` |
@@ -228,7 +229,7 @@ flag > env (PD_*) > config > --type default > built-in
 | Environment variable | `PD_THEME=dark`, `PD_ACCENT=#E63946`, `PORTABLE_DOCS_OUT=~/exports` |
 | Config file | `"theme": "brand"` in `portable-docs.config.json` |
 | `--type` default | `brand` theme for `landing` / `rfp` types |
-| Built-in default (lowest) | `editorial` theme, `~/Documents/portable-docs` output dir |
+| Built-in default (lowest) | `vanderbilt` theme, `~/Documents/portable-docs` output dir |
 
 An **empty string (`''`)** in an env var or config value is treated as
 **unset** and falls through to the next level. A non-empty flag always wins.
@@ -237,7 +238,7 @@ An **empty string (`''`)** in an env var or config value is treated as
 
 | Variable | Purpose |
 |----------|---------|
-| `PD_THEME` | Default theme (`editorial` \| `dark` \| `brand`) |
+| `PD_THEME` | Default theme (`vanderbilt` \| `editorial` \| `dark` \| `brand`) |
 | `PD_ACCENT` | Hex accent override |
 | `PORTABLE_DOCS_OUT` | Default output directory |
 | `PD_NO_CONFIG=1` | Disable config discovery for this invocation |

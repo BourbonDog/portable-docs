@@ -34,7 +34,7 @@ function loadAndResolveConfig(args, mdPath) {
   const eff = selectBrand(config, args.brand); // null when no config
   if (!eff) return;
 
-  // theme: flag > env > config (build pipelines fall back to 'editorial')
+  // theme: flag > env > config (build pipelines fall back to 'vanderbilt')
   if (!args.theme) {
     const t = pick(null, process.env.PD_THEME, eff.theme, null);
     if (t) args.theme = t;
@@ -251,7 +251,7 @@ async function runSlides(args, md) {
     if (args.theme) {
       process.env.PD_THEME = args.theme;
     } else if (!process.env.PD_THEME) {
-      process.env.PD_THEME = 'editorial';
+      process.env.PD_THEME = 'vanderbilt';
     }
 
     // 5. Bundle (reads PD_SLIDES_CONTENT_OUT, writes PD_JSX_OUT).
@@ -381,7 +381,7 @@ async function runArticle(args, md) {
     if (args.theme) {
       process.env.PD_THEME = args.theme;
     } else if (!process.env.PD_THEME) {
-      process.env.PD_THEME = 'editorial';
+      process.env.PD_THEME = 'vanderbilt';
     }
 
     // 5. Bundle (reads PD_ARTICLE_CONTENT_OUT, writes PD_JSX_OUT).
@@ -486,7 +486,7 @@ async function runProposal(args, md) {
     process.env.PD_JSX_OUT = jsxTmpPath;
 
     if (args.theme) process.env.PD_THEME = args.theme;
-    else if (!process.env.PD_THEME) process.env.PD_THEME = 'editorial';
+    else if (!process.env.PD_THEME) process.env.PD_THEME = 'vanderbilt';
 
     const { build } = require('../src/utils/build.js');
     build();

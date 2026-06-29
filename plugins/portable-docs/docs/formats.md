@@ -158,7 +158,7 @@ Parse → Bundle → Wrap → Done.
 - `--slides` **wins** over `--style article` if both are passed.
 - `--type <name>` applies a base format and theme as the *lowest-priority*
   defaults; an explicit `--slides` or `--style` flag always overrides them.
-- Default theme is `editorial` for all three formats unless you pass
+- Default theme is `vanderbilt` for all three formats unless you pass
   `--theme` or set it in `portable-docs.config.json`.
 
 See [commands-and-cli.md](commands-and-cli.md) for the full flag reference.

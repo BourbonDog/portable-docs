@@ -56,12 +56,13 @@ function stripEsmLines(source) {
 }
 
 // Body background per theme — keeps the browser chrome matching the document.
-// editorial/brand use paper white; dark gets the deep base.
+// vanderbilt/editorial/brand use paper white; dark gets the deep base.
 // design-tokens.js contains JSX (Icons), so we can't require() it here.
 const THEME_BODY_BG = {
-  editorial: '#FAFAFA',
-  dark:      '#0D1117',
-  brand:     '#FAFAFA',
+  vanderbilt: '#FAFAFA',
+  editorial:  '#FAFAFA',
+  dark:       '#0D1117',
+  brand:      '#FAFAFA',
 };
 
 /**
@@ -69,7 +70,7 @@ const THEME_BODY_BG = {
  *
  * @param {string} bundle      - Already-stripped JSX bundle text.
  * @param {string} title       - Page <title> text.
- * @param {string} theme       - Theme name: 'editorial' | 'dark' | 'brand' (default: 'editorial').
+ * @param {string} theme       - Theme name: 'vanderbilt' | 'editorial' | 'dark' | 'brand' (default: 'vanderbilt').
  * @param {Object} [opts]      - Optional flags.
  * @param {boolean} [opts.noScroll=false] - When true, prepends an
  *   `html, body { height: 100%; overflow: hidden; }` rule to the <style>
@@ -79,12 +80,12 @@ const THEME_BODY_BG = {
  *   unchanged.
  */
 function generateHTML(bundle, title, theme, opts) {
-  const resolvedTheme = theme || 'editorial';
+  const resolvedTheme = theme || 'vanderbilt';
   const format = (opts && opts.format) || 'proposal';
   const docType = (opts && opts.type) || null;
   const typeAttr = docType ? ` data-pd-type="${docType}"` : '';
   const themeAttr = ` data-pd-theme="${resolvedTheme}" data-pd-format="${format}"${typeAttr}`;
-  const bodyBg = THEME_BODY_BG[resolvedTheme] || THEME_BODY_BG.editorial;
+  const bodyBg = THEME_BODY_BG[resolvedTheme] || THEME_BODY_BG.vanderbilt;
   // PRINT_CSS + (slides only) SLIDES_PRINT_CSS + the inert RESUME_CSS (scoped to
   // html[data-pd-type="resume"], so it only affects `--type resume` documents).
   const printCss = PRINT_CSS + (format === 'slides' ? SLIDES_PRINT_CSS : '') + RESUME_CSS;

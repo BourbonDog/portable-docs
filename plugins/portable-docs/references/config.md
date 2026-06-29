@@ -75,7 +75,7 @@ input file's dir → parent → … → / → ~/.portable-docs.config.json → (
 
 | Key | Type | Default | Purpose |
 |-----|------|---------|---------|
-| `theme` | `string` | `"editorial"` | Default theme: `editorial` \| `dark` \| `brand` |
+| `theme` | `string` | `"vanderbilt"` | Default theme: `vanderbilt` \| `editorial` \| `dark` \| `brand` |
 | `accent` | `string` | _(theme default)_ | Hex accent color override (e.g. `"#E63946"`) |
 | `outDir` | `string` | `~/Documents/portable-docs` | Default output directory |
 | `style` | `string` | `"proposal"` | Default format: `proposal` \| `article` |
@@ -141,7 +141,7 @@ flag > env > config > built-in default
 | CLI flag (highest) | `--theme dark`, `--brand work` |
 | Environment variable | `PD_THEME=dark`, `PD_ACCENT=#E63946`, `PORTABLE_DOCS_OUT=~/exports` |
 | Config file | `"theme": "brand"` in `portable-docs.config.json` |
-| Built-in default (lowest) | `editorial` theme, `~/Documents/portable-docs` output dir |
+| Built-in default (lowest) | `vanderbilt` theme, `~/Documents/portable-docs` output dir |
 
 An explicit flag always wins. An empty string in an env var or config value is
 treated as "unset" (falls through to the next level).
@@ -186,7 +186,7 @@ Usage:
 ```bash
 /doc deck.md --brand acme        # Acme Corp theme + identity
 /doc proposal.md --brand consulting   # Consulting theme + identity
-/doc personal.md                 # Top-level editorial defaults + identity
+/doc personal.md                 # Top-level config defaults + identity
 ```
 
 ---

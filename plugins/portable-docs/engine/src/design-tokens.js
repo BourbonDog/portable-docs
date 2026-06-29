@@ -10,7 +10,7 @@
  * - Data visualization as art
  * - Confident white space
  *
- * THEMES: editorial (default) | dark | brand
+ * THEMES: vanderbilt (default) | editorial | dark | brand
  *   Selected at BUILD TIME via PD_THEME env var (injected by build.js).
  *   PD_ACCENT overrides the accent color for brand theming.
  */
@@ -20,8 +20,46 @@
 // =============================================================================
 
 const THEMES = {
-  // ── editorial (default) ─────────────────────────────────────────────────────
-  // Verbatim original palette — default output must never change.
+  // ── vanderbilt (default) ─────────────────────────────────────────────────────
+  // Vanderbilt University black & gold, light treatment: paper-white ground,
+  // Vanderbilt black ink (#1C1C1C), metallic-gold accent (#B49248, Pantone 871 C).
+  // Official brand colors: https://brand.vanderbilt.edu/color/
+  vanderbilt: {
+    ink: {
+      900: '#1C1C1C',        // Vanderbilt black — primary text
+      800: '#2E2E2E',
+      700: '#454545',
+      600: '#5C5C5C',        // Secondary text
+      500: '#757575',
+      400: '#9A9A9A',
+      300: '#BEBEBE',
+      200: '#DDDDDD',
+      100: '#F2F2F2',
+      50: '#FAFAFA',
+    },
+    accent: {
+      primary: '#B49248',    // Vanderbilt metallic gold (Pantone 871 C)
+      light: '#CFAE70',      // Lighter gold (Pantone 4024 / Nike Club Gold) — hover
+      muted: '#DCC79A',      // Soft gold — subtle fills
+      wash: 'rgba(180, 146, 72, 0.06)',
+      glow: 'rgba(180, 146, 72, 0.12)',
+    },
+    semantic: {
+      success: '#059669',
+      warning: '#D97706',
+      info: '#0891B2',
+    },
+    surface: {
+      paper: '#FAFAFA',
+      elevated: '#FFFFFF',
+      inset: '#F2F2F2',
+      dark: '#1C1C1C',       // Vanderbilt black — dark hero/sections (gold pops here)
+      darkElevated: '#2E2E2E',
+    },
+  },
+
+  // ── editorial ────────────────────────────────────────────────────────────────
+  // Verbatim original palette — preserved unchanged for `--theme editorial`.
   editorial: {
     ink: {
       900: '#0A0A0B',
@@ -136,15 +174,15 @@ const THEMES = {
 // ACTIVE THEME SELECTION
 // Browser-safe guarded read: `typeof process` never throws in a browser.
 // In Node (unit tests / build.js), picks up PD_THEME from env.
-// In the browser, this guard always yields 'editorial' — build.js MUST
+// In the browser, this guard always yields 'vanderbilt' — build.js MUST
 // string-replace this line with a literal before bundling.
 // =============================================================================
-const ACTIVE_THEME = (typeof process !== 'undefined' && process.env && process.env.PD_THEME) || 'editorial';
+const ACTIVE_THEME = (typeof process !== 'undefined' && process.env && process.env.PD_THEME) || 'vanderbilt';
 
 // =============================================================================
 // COLORS - Resolved from active theme (exported as single source of truth)
 // =============================================================================
-export const COLORS = THEMES[ACTIVE_THEME] || THEMES.editorial;
+export const COLORS = THEMES[ACTIVE_THEME] || THEMES.vanderbilt;
 
 // =============================================================================
 // ACCENT OVERRIDE - PD_ACCENT replaces accent.primary (and derives light/muted)

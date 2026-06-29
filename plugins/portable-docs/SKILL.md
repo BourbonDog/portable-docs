@@ -228,7 +228,7 @@ node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
 | `--input <md>` | (required) | Path to input markdown file |
 | `--out <html>` | `~/Documents/portable-docs/<slug>.html` | Output HTML path |
 | `--title <text>` | `@header` `@title`, else input filename | Document title; also drives the default output slug |
-| `--theme <name>` | `editorial` | Theme: `editorial` \| `dark` \| `brand` |
+| `--theme <name>` | `vanderbilt` | Theme: `vanderbilt` \| `editorial` \| `dark` \| `brand` |
 | `--style <name>` | `proposal` | Format: `proposal` \| `article` |
 | `--slides` | off | Slide deck format. If combined with `--style article`, `--slides` silently wins (no error). |
 | `--jsx` | off | Copy the JSX bundle next to the HTML output |

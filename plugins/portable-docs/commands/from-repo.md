@@ -1,6 +1,6 @@
 ---
 description: Scan a codebase and build a polished HTML overview (deck or long-form article)
-argument-hint: [path] [--style article] [--theme editorial|dark|brand] [--jsx]
+argument-hint: [path] [--style article] [--theme vanderbilt|editorial|dark|brand] [--jsx]
 ---
 
 Scan the codebase at the path in `$ARGUMENTS` (or the current working directory if omitted), draft a concise recap markdown, then build it with the portable-docs engine.

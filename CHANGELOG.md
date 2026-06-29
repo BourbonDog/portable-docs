@@ -6,6 +6,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.7.0] — 2026-06-29
+
+### Added
+- **New `vanderbilt` theme** — Vanderbilt University black & gold in a light treatment: paper-white ground, Vanderbilt-black ink (`#1C1C1C`), metallic-gold accent (`#B49248`, Pantone 871 C, with `#CFAE70` as the lighter hover shade). Mermaid diagrams pick up the gold accent automatically. Official brand colors: <https://brand.vanderbilt.edu/color/>.
+
+### Changed
+- **The default theme is now `vanderbilt`** (was `editorial`). A plain build with no `--theme`/`PD_THEME`/config theme now renders black & gold. The `editorial`, `dark`, and `brand` themes are unchanged and still selectable via `--theme`. Per-`--type` theme defaults are unchanged (`resume`/`case-study`/`changelog`/`newsletter` → `editorial`; `landing`/`rfp` → `brand`).
+
+---
+
 ## [0.6.3] — 2026-06-24
 
 ### Fixed

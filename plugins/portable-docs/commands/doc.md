@@ -1,6 +1,6 @@
 ---
 description: Generate a polished, self-contained HTML document from a source file or inline content
-argument-hint: <source> [--type resume|case-study|changelog|newsletter|landing|rfp] [--style proposal|article] [--slides] [--theme editorial|dark|brand] [--brand <name>] [--lint] [--strict] [--watch] [--jsx]
+argument-hint: <source> [--type resume|case-study|changelog|newsletter|landing|rfp] [--style proposal|article] [--slides] [--theme vanderbilt|editorial|dark|brand] [--brand <name>] [--lint] [--strict] [--watch] [--jsx]
 ---
 
 Turn `$ARGUMENTS` into a polished, portable HTML file using the portable-docs engine.
@@ -22,7 +22,8 @@ Extract any flags the user passed:
 | `--style proposal` | `--style proposal` | Default — rich proposal/pitch layout |
 | `--style article` | `--style article` | Long-form editorial layout |
 | `--slides` | `--slides` | Slide deck; wins over `--style article` if both present |
-| `--theme editorial` | `--theme editorial` | Default theme (paper-white, violet accent) |
+| `--theme vanderbilt` | `--theme vanderbilt` | Default theme — Vanderbilt black & gold (paper-white, gold accent) |
+| `--theme editorial` | `--theme editorial` | Paper-white, violet accent ("MIT Tech Review" look) |
 | `--theme dark` | `--theme dark` | Near-black, cyan accent — best for technical docs |
 | `--theme brand` | `--theme brand` | Neutral slate with `PD_ACCENT` override support |
 | `--brand <name>` | `--brand <name>` | Select a named preset from `portable-docs.config.json` |
@@ -47,7 +48,7 @@ Follow the SKILL.md workflow:
    - Proposal: add `<!-- @header -->` block, structure as numbered `## N.` sections, insert `@`-marker component blocks (`@stats`, `@cards`, `@chart`, `@timeline`, `@quotes`, `@pullquote`, etc.) where the content warrants them.
    - Article: use standard markdown headings and prose; optional `<!-- @header -->` for a full-bleed cover.
    - Slides: separate slides with `---`; optional `<!-- @header -->` before the first `---` for a title slide.
-3. **Choose a theme** if the user did not specify one (`editorial` is the default).
+3. **Choose a theme** if the user did not specify one (`vanderbilt` is the default).
 
 ## Step 4 — Build
 
@@ -57,7 +58,7 @@ Check Node ≥ 18 is available (`node --version`), then invoke:
 node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
   --input path/to/input.md \
   --out path/to/output.html \
-  --theme <editorial|dark|brand> \
+  --theme <vanderbilt|editorial|dark|brand> \
   [--style proposal|article] \
   [--slides] \
   [--jsx]

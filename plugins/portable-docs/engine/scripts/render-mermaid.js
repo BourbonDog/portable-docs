@@ -8,7 +8,7 @@
  * SVG (or a { source, error } fallback) is returned in `mermaids[N]`, threaded
  * into content.mermaids by build-doc.js. NEVER throws.
  *
- * Theme: maps the doc theme (editorial/dark/brand) + PD_ACCENT → Mermaid
+ * Theme: maps the doc theme (vanderbilt/editorial/dark/brand) + PD_ACCENT → Mermaid
  * themeVariables so diagrams sit cohesively in the doc. Deterministic ids keep
  * output stable build-to-build.
  */
@@ -45,15 +45,16 @@ function extractMermaidBlocks(md) {
 
 // ── Theme → Mermaid themeVariables ───────────────────────────────────────────
 const THEME_BASE = {
-  editorial: { base: 'base', bg: '#FAFAFA', ink: '#1A1A2E', line: '#9CA3AF' },
-  brand:     { base: 'base', bg: '#FFFFFF', ink: '#111827', line: '#9CA3AF' },
-  dark:      { base: 'dark', bg: '#0D1117', ink: '#E6EDF3', line: '#6B7280' },
+  vanderbilt: { base: 'base', bg: '#FAFAFA', ink: '#1C1C1C', line: '#9CA3AF' },
+  editorial:  { base: 'base', bg: '#FAFAFA', ink: '#1A1A2E', line: '#9CA3AF' },
+  brand:      { base: 'base', bg: '#FFFFFF', ink: '#111827', line: '#9CA3AF' },
+  dark:       { base: 'dark', bg: '#0D1117', ink: '#E6EDF3', line: '#6B7280' },
 };
 
 /** Map a doc theme + accent → { base, themeVariables } for mermaid.initialize. */
 function themeVariables(theme, accent) {
-  const t = THEME_BASE[theme] || THEME_BASE.editorial;
-  const primary = accent || (theme === 'dark' ? '#22D3EE' : '#5B21B6');
+  const t = THEME_BASE[theme] || THEME_BASE.vanderbilt;
+  const primary = accent || (theme === 'dark' ? '#22D3EE' : theme === 'vanderbilt' ? '#B49248' : '#5B21B6');
   return {
     base: t.base,
     themeVariables: {

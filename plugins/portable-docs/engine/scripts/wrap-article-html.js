@@ -25,7 +25,7 @@ const { stripEsmLines, generateHTML } = require('./wrap-html.js');
  * @param {string} opts.jsx     - Raw article JSX bundle text.
  * @param {string} opts.title   - Page <title>.
  * @param {string} opts.out     - Absolute path to write the HTML file.
- * @param {string} [opts.theme] - Theme name ('editorial' | 'dark' | 'brand').
+ * @param {string} [opts.theme] - Theme name ('vanderbilt' | 'editorial' | 'dark' | 'brand').
  */
 function wrapArticleHtml({ jsx, title, out, theme }) {
   if (!jsx) throw new Error('wrapArticleHtml: jsx is required');

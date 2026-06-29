@@ -1,6 +1,6 @@
 ---
 description: Build a slide deck from a source file or outline
-argument-hint: <source> [--theme editorial|dark|brand] [--brand <name>] [--lint] [--strict] [--watch] [--jsx]
+argument-hint: <source> [--theme vanderbilt|editorial|dark|brand] [--brand <name>] [--lint] [--strict] [--watch] [--jsx]
 ---
 
 Alias for `/doc $ARGUMENTS --slides`. Builds a slide deck from `$ARGUMENTS`.
@@ -17,7 +17,7 @@ node "$CLAUDE_PLUGIN_ROOT/engine/scripts/build-doc.js" \
   --input path/to/deck.md \
   --out path/to/output.html \
   --slides \
-  --theme <dark|editorial|brand> \
+  --theme <vanderbilt|editorial|dark|brand> \
   [--brand <name>] \
   [--lint] \
   [--strict] \

@@ -9,11 +9,12 @@ Injection behavior is derived from `engine/src/utils/build.js`
 
 ## Available themes
 
-Three themes ship with the engine. Select one at build time.
+Four themes ship with the engine. Select one at build time.
 
 | Name | Description | Body background |
 |------|-------------|----------------|
-| `editorial` | Default. Paper-white, deep-ink text, purple accent. "MIT Tech Review meets Wired." | `#FAFAFA` (near-white paper) |
+| `vanderbilt` | Default. Vanderbilt black & gold (light): paper-white ground, Vanderbilt-black ink, metallic-gold accent. | `#FAFAFA` (near-white paper) |
+| `editorial` | Paper-white, deep-ink text, purple accent. "MIT Tech Review meets Wired." | `#FAFAFA` (near-white paper) |
 | `dark` | GitHub-dark/Obsidian-inspired. Near-black base, electric-cyan accent. | `#0D1117` (near-black) |
 | `brand` | Clean neutral slate. Designed to receive a `PD_ACCENT` override. | `#FAFAFA` (near-white) |
 
@@ -35,7 +36,7 @@ PD_THEME=dark node scripts/build-doc.js --input doc.md
 ```
 
 `--theme` takes precedence over `PD_THEME`. If neither is set, the engine
-defaults to `editorial`.
+defaults to `vanderbilt`.
 
 **How injection works:** `build.js` reads `process.env.PD_THEME` at bundle
 time and string-replaces the `ACTIVE_THEME` guard with a literal string before
@@ -45,7 +46,27 @@ bundling, so the browser HTML never contains any `process.env` references.
 
 ## Palette details
 
-### `editorial` (default)
+### `vanderbilt` (default)
+
+Vanderbilt University black & gold, light treatment. Official brand colors:
+<https://brand.vanderbilt.edu/color/>
+
+| Role | Token | Value |
+|------|-------|-------|
+| Accent primary | `COLORS.accent.primary` | `#B49248` (metallic gold, Pantone 871 C) |
+| Accent light | `COLORS.accent.light` | `#CFAE70` (Nike Club Gold, Pantone 4024) |
+| Accent muted | `COLORS.accent.muted` | `#DCC79A` |
+| Accent wash | `COLORS.accent.wash` | `rgba(180,146,72,0.06)` |
+| Accent glow | `COLORS.accent.glow` | `rgba(180,146,72,0.12)` |
+| Text primary | `COLORS.ink[900]` | `#1C1C1C` (Vanderbilt black) |
+| Text secondary | `COLORS.ink[600]` | `#5C5C5C` |
+| Page background | `COLORS.surface.paper` | `#FAFAFA` |
+| Card surface | `COLORS.surface.elevated` | `#FFFFFF` |
+| Success | `COLORS.semantic.success` | `#059669` |
+| Warning | `COLORS.semantic.warning` | `#D97706` |
+| Info | `COLORS.semantic.info` | `#0891B2` |
+
+### `editorial`
 
 | Role | Token | Value |
 |------|-------|-------|
@@ -139,6 +160,7 @@ the theme even before React mounts.
 
 | Theme | `body` background |
 |-------|------------------|
+| `vanderbilt` | `#FAFAFA` |
 | `editorial` | `#FAFAFA` |
 | `dark` | `#0D1117` |
 | `brand` | `#FAFAFA` |

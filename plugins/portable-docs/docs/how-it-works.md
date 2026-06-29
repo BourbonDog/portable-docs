@@ -13,7 +13,7 @@ This page explains the pipeline and the guarantees it makes.
 | **Format** | The layout pipeline: `proposal` (default), `article`, or `slides` | [formats.md](formats.md) |
 | **Type** | A preset that bundles a default format, a default theme, and a lint profile — e.g. `--type resume` | [document-types.md](document-types.md) |
 | **Marker** | An `@`-prefixed component directive embedded in the Markdown — e.g. `@cta`, `@stats`, `@mermaid` | [markers.md](markers.md) |
-| **Theme** | A color palette applied at build time: `editorial` (default), `dark`, or `brand` | [theming-and-branding.md](theming-and-branding.md) |
+| **Theme** | A color palette applied at build time: `vanderbilt` (default), `editorial`, `dark`, or `brand` | [theming-and-branding.md](theming-and-branding.md) |
 
 ---
 

@@ -97,7 +97,7 @@ function extractDesignTokensCode(source) {
   // ── Build-time injection ──────────────────────────────────────────────────
   // Replace the ACTIVE_THEME guard with a literal so the browser never sees
   // `process`. Anchored on the const name for robustness.
-  const resolvedTheme = process.env.PD_THEME || 'editorial';
+  const resolvedTheme = process.env.PD_THEME || 'vanderbilt';
   code = code.replace(
     /const ACTIVE_THEME\s*=.*?;/,
     `const ACTIVE_THEME = ${JSON.stringify(resolvedTheme)};`
